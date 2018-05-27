@@ -7,6 +7,9 @@ import store from "./store";
 
 Vue.config.productionTip = false;
 
+Vue.config.backendServer = "http://127.0.0.1:8000";
+Vue.config.formId = document.querySelector( "body" ).dataset.formId;
+
 /* eslint-disable no-new */
 new Vue( {
 	el: "#app",

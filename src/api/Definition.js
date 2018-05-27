@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import Vue from "vue";
 
 const loaded = {};
 
@@ -43,7 +44,7 @@ export default class Definition {
 	 */
 	static load( formID, forceReload = false ) {
 		if ( forceReload || !loaded.hasOwnProperty( formID ) ) {
-			loaded[formID] = fetch( `http://127.0.0.1/form/describe/${formID}` )
+			loaded[formID] = fetch( `${Vue.config.backendServer}/form/describe/${formID}` )
 				.then( response => {
 					if ( !response.ok ) {
 						throw new Error( `fetching form description failed: ${response.status} ${response.statusText}` );

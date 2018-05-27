@@ -1,7 +1,7 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
+    <h1>{{ formLabel }}</h1>
+    <p>{{ formDescription }}</p>
     <ul>
       <li>
         <a
@@ -90,6 +90,14 @@ export default {
 		return {
 			msg: "Welcome to Your Vue.js App",
 		};
+	},
+	computed: {
+		formLabel() {
+			return this.$store.getters.formLabel;
+		},
+		formDescription() {
+			return this.$store.getters.formDescription;
+		},
 	},
 };
 </script>
