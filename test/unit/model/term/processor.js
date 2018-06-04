@@ -37,11 +37,11 @@ describe( "Term Processor", () => {
 	} );
 
 	it( "compiles term to invocable function", () => {
-		new TermProcessor( "ROUND( myvar.float ) == INTEGER( myVAR.INTEGER )" )
+		new TermProcessor( "ROUND( myvar.float, 1 ) == 0.5" )
 			.evaluate( {
 				myvar: {
 					integer: 1,
-					float: 0.5,
+					float: 0.53,
 				}
 			} )
 			.should.be.true();

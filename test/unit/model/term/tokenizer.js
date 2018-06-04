@@ -366,6 +366,26 @@ describe( "Term Tokenizer", () => {
 					.forEach( code => checkTypes( code, [ TokenTypes.PARENTHESIS, TokenTypes.PARENTHESIS ] ) );
 			} );
 
+			it( "parenthesis and integer", () => {
+				[
+					"(1",
+					"(-3",
+					")-5",
+					")0",
+				]
+					.forEach( code => checkTypes( code, [ TokenTypes.PARENTHESIS, TokenTypes.LITERAL_INTEGER ] ) );
+			} );
+
+			it( "keyword, parenthesis and integer", () => {
+				[
+					"some(1",
+					"a(-3",
+					"_)-5",
+					"ARBItraryLonGWord)0",
+				]
+					.forEach( code => checkTypes( code, [ TokenTypes.KEYWORD, TokenTypes.PARENTHESIS, TokenTypes.LITERAL_INTEGER ] ) );
+			} );
+
 			it( "commata", () => {
 				[
 					",,",
