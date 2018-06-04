@@ -37,14 +37,15 @@ const TokenType = TermTokenizer.Types;
  */
 class TermCompiler {
 	/**
-	 * Compiles some sequence of tokens into Javascript function evaluating term
+	 * Compiles source code of a term into Javascript function evaluating it
 	 * in context of data provided on invoking that function.
 	 *
-	 * @param {Token[]} tokens sequence of tokens to compile
+	 * @param {string} source source code of term to compile
 	 * @param {object<string,function>} functions set of functions available in term processing
 	 * @returns {Function} Javascript function implementing term
 	 */
-	static compile( tokens, functions = {} ) {
+	static compile( source, functions = {} ) {
+		const tokens = TermTokenizer.tokenizeString( source, true );
 		const reduced = this.reduceTokens( tokens, functions );
 		const grouped = this.groupTokens( reduced );
 		const code = this.compileTokens( grouped );
@@ -79,7 +80,6 @@ class TermCompiler {
 				case TokenType.UNARY_LOGIC_OPERATOR :
 					if ( token.value === "!" ) {
 						// logical negation of term -> detect and handle multiple occurrences
-						const current = read;
 						let advance;
 
 						for ( advance = read + 1; advance < numTokens; advance++ ) {
@@ -88,17 +88,12 @@ class TermCompiler {
 							}
 						}
 
-						// always skip any additional occurrence of operator
-						read = advance - 1;
-
-						if ( ( advance - current ) % 2 === 0 ) {
-							// even number of unary operators
-							// -> unnecessary at all, so don't consume
-							break;
+						if ( ( advance - read ) % 2 === 1 ) {
+							// odd number of unary operators
+							// -> consume first occurrence as-is below, but omit
+							//    all additional occurrences
+							read = advance - 1;
 						}
-
-						// odd number of unary operators
-						// -> consume first occurrence as-is below
 					}
 
 				// falls through
@@ -115,12 +110,12 @@ class TermCompiler {
 					reduced[write++] = token;
 					break;
 
-				case TokenType.LITERAL_STRING :
-					token.value = token.value.slice( 1, -1 );
-
-				// falls through
 				case TokenType.LITERAL_INTEGER :
 				case TokenType.LITERAL_FLOAT :
+					token.value = token.value.replace( /^([+-]?)(?:0+)(\d)/, "$1$2" );
+
+				// falls through
+				case TokenType.LITERAL_STRING :
 					token.operator = false;
 					token.operand = true;
 					token.path = null;
@@ -296,6 +291,7 @@ class TermCompiler {
 						tokens: [token],
 						offset: token.offset,
 					} );
+					break;
 
 				// falls through
 				default :
@@ -303,15 +299,12 @@ class TermCompiler {
 			}
 
 
-			const level = stack[0];
-			if ( level.group === "unary" ) {
-				if ( level.tokens.length > 1 ) {
-					stack.shift();
+			while ( stack[0].group === "unary" && stack[0].tokens.length > 1 ) {
+				const level = stack.shift();
 
-					level.group = "term";
+				level.group = "term";
 
-					stack[0].tokens.push( this.normalizeTermGroup( level ) );
-				}
+				stack[0].tokens.push( this.normalizeTermGroup( level ) );
 			}
 
 
@@ -334,7 +327,7 @@ class TermCompiler {
 	 */
 	static normalizeTermGroup( group ) {
 		const { tokens, offset } = group;
-		const numTokens = tokens.length;
+		let numTokens = tokens.length;
 
 		if ( !numTokens ) {
 			throw new Error( "invalid empty term" );
@@ -354,7 +347,7 @@ class TermCompiler {
 					break;
 				}
 
-				throw new Error( "invalid combination of unary operator w/ non-operand" );
+				throw new Error( `expecting operand after unary operator at ${tokens[1].offset}, but found ${tokens[1].group || tokens[1].type.toString()}` );
 
 			default :
 				for ( let i = 0; i < numTokens; i++ ) {
@@ -368,6 +361,28 @@ class TermCompiler {
 						if ( token.type === TokenType.UNARY_LOGIC_OPERATOR ) {
 							throw new Error( `unexpected unary operator ${token.value} in term at ${token.offset}` );
 						}
+					} else if ( token.operand && ( token.type === TokenType.LITERAL_INTEGER || token.type === TokenType.LITERAL_FLOAT ) && "+-".indexOf( token.value.charAt( 0 ) ) > -1 ) {
+						// misinterpreted binary operator as sign of succeeding integer before
+						// -> fix here
+						const operator = token.value.charAt( 0 );
+
+						token.offset++;
+						token.value = token.value.slice( 1 );
+
+						tokens.splice( i, 0, {
+							type: TokenType.BINARY_ARITHMETIC_OPERATOR,
+							value: operator,
+							offset: token.offset,
+							operand: false,
+							operator: true,
+							path: null,
+							literal: false,
+							variable: false,
+							function: false,
+						} );
+
+						numTokens++;
+						i++;
 					} else {
 						throw new Error( `expecting operator in term at ${token.offset} but found ${token.group || token.type.toString()}` );
 					}
@@ -529,6 +544,11 @@ class TermCompiler {
 									}
 								}
 							}
+							break;
+
+						case TokenType.LITERAL_INTEGER :
+						case TokenType.LITERAL_FLOAT :
+							code[i] = `(${token.value})`;
 							break;
 
 						default :

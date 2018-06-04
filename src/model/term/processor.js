@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-const TermTokenizer = require( "./tokenizer" );
 const TermCompiler = require( "./compiler" );
 const TermFunctions = require( "./functions" );
 
@@ -57,7 +56,7 @@ class TermProcessor {
 			 * @property {function(data:object):*}
 			 * @readonly
 			 */
-			code: { value: TermCompiler.compile( TermTokenizer.tokenizeString( source, true ), Object.assign( {}, TermFunctions, customFunctions ) ) },
+			code: { value: TermCompiler.compile( source, Object.assign( {}, TermFunctions, customFunctions ) ) },
 		} );
 	}
 

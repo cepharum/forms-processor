@@ -276,7 +276,7 @@ class TermTokenizer {
 						} );
 
 						start = cursor + 1;
-						newType = null;
+						type = newType = null;
 						break;
 
 					default :

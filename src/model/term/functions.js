@@ -35,6 +35,14 @@
  */
 module.exports = {
 	/**
+	 * Detects if any provided argument is set (neither `undefined` nor `null`).
+	 *
+	 * @param {*} args one of several arguments
+	 * @returns {boolean} true if at least one provided argument is neither `undefined` nor `null`
+	 */
+	isset: ( ...args ) => args.some( i => i != null ),
+
+	/**
 	 * Casts provided arbitrary value to boolean value.
 	 *
 	 * @param {*} input arbitrary input value
