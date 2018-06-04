@@ -101,4 +101,31 @@ module.exports = {
 	 * @returns {number} rounded value
 	 */
 	round: ( input, precision = 0 ) => Math.round( input * Math.pow( 10, precision ) ) / Math.pow( 10, precision ),
+
+	/**
+	 * Concatenates string representations of all provided arguments.
+	 *
+	 * @param {*} args arbitrary data
+	 * @returns {string} concatenation of all values' string representations
+	 */
+	concat: ( ...args ) => args.map( arg => String( arg ) ).join( "" ),
+
+	/**
+	 * Fetches number of elements in an array or number of characters in a
+	 * string.
+	 *
+	 * @param {string|Array} data array or string to be inspected
+	 * @returns {string} number of elements in array or number of characters in string
+	 */
+	length: data => ( data ? data.length || 0 : 0 ),
+
+	/**
+	 * Fetches element of array selected by its zero-based index.
+	 *
+	 * @param {Array} array set of items
+	 * @param {int} index zero-based index of item to fetch
+	 * @param {*} fallbackIfMissing value to return if selected item does not exist
+	 * @returns {*} selected item of array, provided fallback or `null` if item is missing
+	 */
+	item: ( array, index, fallbackIfMissing = null ) => ( Array.isArray( array ) && index < array.length ? array[index] : fallbackIfMissing ),
 };
