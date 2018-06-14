@@ -3,10 +3,7 @@ image: node:latest
 before_script:
   - npm install
 
-unit_test:
+code_quality:
   script:
     - npm run test
-
-code_style:
-  script:
     - npm run lint
