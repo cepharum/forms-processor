@@ -1,6 +1,6 @@
 image: node:latest
 
-pre_script:
+before_script:
   - npm install
 
 unit_test:
