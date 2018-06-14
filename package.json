@@ -9,6 +9,7 @@
     "start": "npm run dev",
     "e2e": "node test/e2e/runner.js",
     "test": "mocha --ui tdd test/unit/**/*.js",
+    "fixing-lint": "eslint --fix --ext .js,.vue src test/e2e/specs",
     "lint": "eslint --ext .js,.vue src test/e2e/specs",
     "build": "node build/build.js"
   },
