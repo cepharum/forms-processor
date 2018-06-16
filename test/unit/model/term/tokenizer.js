@@ -26,13 +26,14 @@
  * @author: cepharum
  */
 
-const { describe, it } = require( "mocha" );
-const Should = require( "should" );
+import { describe, it } from "mocha";
+import Should from "should";
 
-const TermTokenizer = require( "../../../../src/model/term/tokenizer" );
-const TokenTypes = TermTokenizer.Types;
+import TermTokenizer from "../../../../src/model/term/tokenizer";
 
 describe( "Term Tokenizer", () => {
+	const TokenTypes = TermTokenizer.Types;
+
 	/**
 	 * Checks tokenizer for converting provided code into expected sequence of
 	 * types of tokens.

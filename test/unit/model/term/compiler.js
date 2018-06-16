@@ -28,14 +28,15 @@
 
 /* eslint-disable max-nested-callbacks */
 
-const { describe, it } = require( "mocha" );
-const Should = require( "should" );
+import { describe, it } from "mocha";
+import Should from "should";
 
-const TermTokenizer = require( "../../../../src/model/term/tokenizer" );
-const TermCompiler = require( "../../../../src/model/term/compiler" );
-const TokenTypes = TermTokenizer.Types;
+import TermTokenizer from "../../../../src/model/term/tokenizer";
+import TermCompiler from "../../../../src/model/term/compiler";
 
 describe( "Term Compiler", () => {
+	const TokenTypes = TermTokenizer.Types;
+
 	it( "is available", () => {
 		Should.exist( TermCompiler );
 	} );

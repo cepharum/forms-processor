@@ -26,12 +26,12 @@
  * @author: cepharum
  */
 
-const FormModel = require( "./form" );
+import FormModel from "./form";
 
 /**
  * Wraps definition of a sequence of forms.
  */
-class FormSequenceModel {
+export default class FormSequenceModel {
 	/**
 	 * @param {object} definition definition of a sequence of forms
 	 * @param {object} data variable space fed form fields
@@ -79,5 +79,3 @@ class FormSequenceModel {
 		return data;
 	}
 }
-
-module.exports = FormSequenceModel;

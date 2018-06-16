@@ -26,10 +26,10 @@
  * @author: cepharum
  */
 
-const { describe, it } = require( "mocha" );
-const Should = require( "should" );
+import { describe, it } from "mocha";
+import Should from "should";
 
-const TermProcessor = require( "../../../../src/model/term/processor" );
+import TermProcessor from "../../../../src/model/term/processor";
 
 describe( "Term Processor", () => {
 	it( "is available", () => {

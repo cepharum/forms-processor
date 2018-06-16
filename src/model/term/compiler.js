@@ -26,16 +26,13 @@
  * @author: cepharum
  */
 
-const TermTokenizer = require( "./tokenizer" );
-
-const TokenType = TermTokenizer.Types;
-
+import TermTokenizer from "./tokenizer";
 
 /**
  * Implements compiler converting sequence of tokens into function invocable for
  * processing term in context of some provided variable space.
  */
-class TermCompiler {
+export default class TermCompiler {
 	/**
 	 * Compiles source code of a term into Javascript function evaluating it
 	 * in context of data provided on invoking that function.
@@ -70,20 +67,20 @@ class TermCompiler {
 			const token = tokens[read];
 
 			switch ( token.type ) {
-				case TokenType.WHITESPACE :
+				case TermTokenizer.Types.WHITESPACE :
 					// compiler expects sequence of tokens not including any whitespace token
 					throw new Error( `unexpected whitespace token at ${token.offset}` );
 
-				case TokenType.DEREF_OPERATOR :
+				case TermTokenizer.Types.DEREF_OPERATOR :
 					throw new Error( `unexpected dereferencing operator at ${token.offset}` );
 
-				case TokenType.UNARY_LOGIC_OPERATOR :
+				case TermTokenizer.Types.UNARY_LOGIC_OPERATOR :
 					if ( token.value === "!" ) {
 						// logical negation of term -> detect and handle multiple occurrences
 						let advance;
 
 						for ( advance = read + 1; advance < numTokens; advance++ ) {
-							if ( tokens[advance].type !== TokenType.UNARY_LOGIC_OPERATOR ) {
+							if ( tokens[advance].type !== TermTokenizer.Types.UNARY_LOGIC_OPERATOR ) {
 								break;
 							}
 						}
@@ -97,9 +94,9 @@ class TermCompiler {
 					}
 
 				// falls through
-				case TokenType.BINARY_COMPARISON_OPERATOR :
-				case TokenType.BINARY_ARITHMETIC_OPERATOR :
-				case TokenType.BINARY_LOGIC_OPERATOR :
+				case TermTokenizer.Types.BINARY_COMPARISON_OPERATOR :
+				case TermTokenizer.Types.BINARY_ARITHMETIC_OPERATOR :
+				case TermTokenizer.Types.BINARY_LOGIC_OPERATOR :
 					token.operator = true;
 					token.operand = false;
 					token.path = null;
@@ -110,12 +107,12 @@ class TermCompiler {
 					reduced[write++] = token;
 					break;
 
-				case TokenType.LITERAL_INTEGER :
-				case TokenType.LITERAL_FLOAT :
+				case TermTokenizer.Types.LITERAL_INTEGER :
+				case TermTokenizer.Types.LITERAL_FLOAT :
 					token.value = token.value.replace( /^([+-]?)(?:0+)(\d)/, "$1$2" );
 
 				// falls through
-				case TokenType.LITERAL_STRING :
+				case TermTokenizer.Types.LITERAL_STRING :
 					token.operator = false;
 					token.operand = true;
 					token.path = null;
@@ -126,7 +123,7 @@ class TermCompiler {
 					reduced[write++] = token;
 					break;
 
-				case TokenType.KEYWORD : {
+				case TermTokenizer.Types.KEYWORD : {
 					token.operator = false;
 					token.operand = true;
 
@@ -134,7 +131,7 @@ class TermCompiler {
 
 					for ( j = read + 1, wantDeref = true; j < numTokens; j++, wantDeref = !wantDeref ) {
 						const succeedingToken = tokens[j];
-						if ( !succeedingToken || succeedingToken.type !== ( wantDeref ? TokenType.DEREF_OPERATOR : TokenType.KEYWORD ) ) {
+						if ( !succeedingToken || succeedingToken.type !== ( wantDeref ? TermTokenizer.Types.DEREF_OPERATOR : TermTokenizer.Types.KEYWORD ) ) {
 							break;
 						}
 					}
@@ -175,7 +172,7 @@ class TermCompiler {
 
 							default : {
 								const nextToken = tokens[j];
-								const isInvoking = Boolean( nextToken && nextToken.type === TokenType.PARENTHESIS && nextToken.value === "(" );
+								const isInvoking = Boolean( nextToken && nextToken.type === TermTokenizer.Types.PARENTHESIS && nextToken.value === "(" );
 								if ( isInvoking ) {
 									if ( !functions.hasOwnProperty( token.value ) || typeof functions[token.value] !== "function" ) {
 										throw new Error( `invocation of unknown function at ${token.offset}` );
@@ -228,7 +225,7 @@ class TermCompiler {
 			const token = tokens[i];
 
 			switch ( token.type ) {
-				case TokenType.PARENTHESIS :
+				case TermTokenizer.Types.PARENTHESIS :
 					switch ( token.value ) {
 						case "(" :
 							if ( previousToken.function ) {
@@ -285,7 +282,7 @@ class TermCompiler {
 					}
 					break;
 
-				case TokenType.UNARY_LOGIC_OPERATOR :
+				case TermTokenizer.Types.UNARY_LOGIC_OPERATOR :
 					stack.unshift( {
 						group: "unary",
 						tokens: [token],
@@ -334,7 +331,7 @@ class TermCompiler {
 		}
 
 		switch ( tokens[0].type ) {
-			case TokenType.UNARY_LOGIC_OPERATOR :
+			case TermTokenizer.Types.UNARY_LOGIC_OPERATOR :
 				if ( numTokens < 2 ) {
 					throw new Error( "invalid unary operator w/o operand" );
 				}
@@ -358,10 +355,10 @@ class TermCompiler {
 							throw new Error( `expecting operand in term at ${token.offset} but found ${token.type.toString()}` );
 						}
 					} else if ( token.operator ) {
-						if ( token.type === TokenType.UNARY_LOGIC_OPERATOR ) {
+						if ( token.type === TermTokenizer.Types.UNARY_LOGIC_OPERATOR ) {
 							throw new Error( `unexpected unary operator ${token.value} in term at ${token.offset}` );
 						}
-					} else if ( token.operand && ( token.type === TokenType.LITERAL_INTEGER || token.type === TokenType.LITERAL_FLOAT ) && "+-".indexOf( token.value.charAt( 0 ) ) > -1 ) {
+					} else if ( token.operand && ( token.type === TermTokenizer.Types.LITERAL_INTEGER || token.type === TermTokenizer.Types.LITERAL_FLOAT ) && "+-".indexOf( token.value.charAt( 0 ) ) > -1 ) {
 						// misinterpreted binary operator as sign of succeeding integer before
 						// -> fix here
 						const operator = token.value.charAt( 0 );
@@ -370,7 +367,7 @@ class TermCompiler {
 						token.value = token.value.slice( 1 );
 
 						tokens.splice( i, 0, {
-							type: TokenType.BINARY_ARITHMETIC_OPERATOR,
+							type: TermTokenizer.Types.BINARY_ARITHMETIC_OPERATOR,
 							value: operator,
 							offset: token.offset,
 							operand: false,
@@ -420,7 +417,7 @@ class TermCompiler {
 		let start = 0;
 
 		for ( let i = 0; i < numTokens; i++ ) {
-			if ( tokens[i].type === TokenType.COMMA ) {
+			if ( tokens[i].type === TermTokenizer.Types.COMMA ) {
 				if ( i > start ) {
 					args.push( tokens.slice( start, i ) );
 				} else {
@@ -454,7 +451,7 @@ class TermCompiler {
 
 			if ( arg == null ) {
 				args[i] = {
-					type: TokenType.KEYWORD,
+					type: TermTokenizer.Types.KEYWORD,
 					value: "null",
 					operand: true,
 					operator: false,
@@ -522,7 +519,7 @@ class TermCompiler {
 
 				default :
 					switch ( token.type ) {
-						case TokenType.BINARY_COMPARISON_OPERATOR :
+						case TermTokenizer.Types.BINARY_COMPARISON_OPERATOR :
 							if ( token.value === "<>" ) {
 								code[i] = "!=";
 							} else {
@@ -530,7 +527,7 @@ class TermCompiler {
 							}
 							break;
 
-						case TokenType.KEYWORD :
+						case TermTokenizer.Types.KEYWORD :
 							if ( token.literal ) {
 								code[i] = token.value;
 							} else {
@@ -546,8 +543,8 @@ class TermCompiler {
 							}
 							break;
 
-						case TokenType.LITERAL_INTEGER :
-						case TokenType.LITERAL_FLOAT :
+						case TermTokenizer.Types.LITERAL_INTEGER :
+						case TermTokenizer.Types.LITERAL_FLOAT :
 							code[i] = `(${token.value})`;
 							break;
 
@@ -560,8 +557,6 @@ class TermCompiler {
 		return code.join( "" );
 	}
 }
-
-module.exports = TermCompiler;
 
 
 /**

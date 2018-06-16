@@ -26,7 +26,8 @@
  * @author: cepharum
  */
 
+import FormFieldTextModel from "./text";
 
-module.exports = {
-	text: require( "./text" ),
+export default {
+	text: FormFieldTextModel,
 };

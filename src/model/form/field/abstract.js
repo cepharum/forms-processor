@@ -26,13 +26,13 @@
  * @author: cepharum
  */
 
-const TermProcessor = require( "../../term/processor" );
+import TermProcessor from "../../term/processor";
 
 /**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
  */
-class FormFieldAbstractModel {
+export default class FormFieldAbstractModel {
 	/**
 	 * @param {FormSequenceModel} form manages whole sequence of forms this field is part of
 	 * @param {object} definition properties and constraints of single form field
@@ -115,5 +115,3 @@ class FormFieldAbstractModel {
 		};
 	}
 }
-
-module.exports = FormFieldAbstractModel;

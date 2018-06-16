@@ -26,14 +26,14 @@
  * @author: cepharum
  */
 
-const TermCompiler = require( "./compiler" );
-const TermFunctions = require( "./functions" );
+import TermCompiler from "./compiler";
+import * as TermFunctions from "./functions";
 
 
 /**
  * Implements handling of computable terms.
  */
-class TermProcessor {
+export default class TermProcessor {
 	/**
 	 * @param {string} source source code of term
 	 * @param {object<string,function>} customFunctions map of custom functions to support in term
@@ -70,5 +70,3 @@ class TermProcessor {
 		return this.code( data, TermFunctions );
 	}
 }
-
-module.exports = TermProcessor;

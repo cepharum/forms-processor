@@ -26,12 +26,12 @@
  * @author: cepharum
  */
 
-const FormFieldAbstractModel = require( "./abstract" );
+import FormFieldAbstractModel from "./abstract";
 
 /**
  * Manages single field of form representing text input.
  */
-class FormFieldTextModel extends FormFieldAbstractModel {
+export class FormFieldTextModel extends FormFieldAbstractModel {
 	/**
 	 * Fetches description of a Vue component representing this field.
 	 *
@@ -53,5 +53,3 @@ class FormFieldTextModel extends FormFieldAbstractModel {
 		};
 	}
 }
-
-module.exports = FormFieldTextModel;

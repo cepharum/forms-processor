@@ -26,12 +26,12 @@
  * @author: cepharum
  */
 
-const FieldManagers = require( "./field" );
+import FieldManagers from "./field";
 
 /**
  * Manages single form as described in provided definition.
  */
-class FormModel {
+export default class FormModel {
 	/**
 	 * @param {FormSequenceModel} sequence refers to sequence this form belongs to
 	 * @param {FormDefinition} definition current form's definition
@@ -97,8 +97,6 @@ class FormModel {
 		};
 	}
 }
-
-module.exports = FormModel;
 
 
 /**

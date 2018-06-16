@@ -64,7 +64,7 @@ const DoubleCharOperators = [
 /**
  * Converts string of characters into string of tokens.
  */
-class TermTokenizer {
+export default class TermTokenizer {
 	/**
 	 * Exposes all types of tokens supported by tokenizer.
 	 *
@@ -301,8 +301,6 @@ class TermTokenizer {
 		return tokens;
 	}
 }
-
-module.exports = TermTokenizer;
 
 
 /**

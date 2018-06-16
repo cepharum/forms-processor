@@ -27,6 +27,7 @@
  */
 
 import Definition from "../../api/Definition";
+import FormSequenceModel from "../../model/form/sequence";
 
 export default {
 	state: {
