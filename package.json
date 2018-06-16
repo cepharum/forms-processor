@@ -8,7 +8,7 @@
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
     "e2e": "node test/e2e/runner.js",
-    "test": "mocha --ui tdd test/unit/**/*.js",
+    "test": "cross-env NODE_ENV=test mocha --require babel-register --ui tdd test/unit/**/*.js",
     "fixing-lint": "eslint --fix --ext .js,.vue src test/e2e/specs",
     "lint": "eslint --ext .js,.vue src test/e2e/specs",
     "build": "node build/build.js"
@@ -19,6 +19,7 @@
     "vuex": "^3.0.1"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.0.0-beta.51",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-eslint": "^8.2.1",
@@ -33,6 +34,7 @@
     "chalk": "^2.0.1",
     "chromedriver": "^2.27.2",
     "copy-webpack-plugin": "^4.0.1",
+    "cross-env": "^5.2.0",
     "cross-spawn": "^5.0.1",
     "css-loader": "^0.28.0",
     "eslint": "^4.15.0",
