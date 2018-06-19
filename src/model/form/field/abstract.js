@@ -65,17 +65,20 @@ export default class FormFieldAbstractModel {
 						} else {
 							const slices = propertyValue.split( ptnBinding );
 							const numSlices = slices.length;
+							let isDynamic = false;
 
 							for ( let i = 0; i < numSlices; i++ ) {
 								const slice = slices[i];
 								const match = slice.match( ptnBinding );
 								if ( match ) {
 									slices[i] = new TermProcessor( slice.slice( 2, -2 ), {}, termCache );
+									isDynamic = true;
 								}
 							}
 
-							getters[propertyName] = { value: () => {
-								const rendered = new Array( numSlices );
+							if ( isDynamic ) {
+								getters[propertyName] = { get: () => {
+									const rendered = new Array( numSlices );
 
 									for ( let i = 0; i < numSlices; i++ ) {
 										const slice = slices[i];
@@ -87,8 +90,11 @@ export default class FormFieldAbstractModel {
 										}
 									}
 
-								return rendered.join( "" );
-							} };
+									return rendered.join( "" );
+								} };
+							} else {
+								getters[propertyName] = { value: propertyValue };
+							}
 						}
 				}
 			} );
