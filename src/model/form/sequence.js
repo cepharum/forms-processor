@@ -78,4 +78,51 @@ export default class FormSequenceModel {
 
 		return data;
 	}
+
+	/**
+	 * Renders description of Vue component listing all fields of form.
+	 *
+	 * @returns {{components, template: string}} description of Vue component
+	 */
+	renderComponent() {
+		const forms = this.forms;
+		const numForms = forms.length;
+		const components = new Array( numForms );
+
+		for ( let i = 0; i < numForms; i++ ) {
+			components[i] = forms[i].renderComponent();
+		}
+
+		return {
+			render: function( createElement ) {
+				const elements = new Array( numForms );
+				for ( let i = 0; i < numForms; i++ ) {
+					elements[i] = createElement( components[i] );
+				}
+
+				const steps = new Array( numForms );
+				for ( let i = 0; i < numForms; i++ ) {
+					steps[i] = createElement( "a", {
+						class: "nav-step",
+					}, [
+						createElement( "span", {
+							class: "number",
+						}, `${i + 1}` ),
+						` ${forms[i].label}`,
+					] );
+				}
+
+				return createElement( "div", {
+					class: "form-sequence",
+				}, [
+					createElement( "nav", {
+						class: "progress",
+					}, steps ),
+					createElement( "div", {
+						class: "forms",
+					}, elements ),
+				] );
+			},
+		};
+	}
 }

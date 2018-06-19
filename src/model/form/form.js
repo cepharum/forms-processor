@@ -37,17 +37,49 @@ export default class FormModel {
 	 * @param {FormDefinition} definition current form's definition
 	 */
 	constructor( sequence, definition ) {
-		const { label = "", description = "", fields = [] } = definition;
+		const { name = "", label = "", title = "", description = "", fields = [] } = definition;
 
 		Object.defineProperties( this, {
 			/**
-			 * Provides label of form.
+			 * Provides name of form.
 			 *
-			 * @name FormModel#description
+			 * A form's name is used on organizing and accessing data collected
+			 * by this form. It should be unique in a sequence and comply with
+			 * common syntax of keywords.
+			 *
+			 * @name FormModel#name
 			 * @property {string}
 			 * @readonly
 			 */
-			label: { value: label },
+			name: { value: name },
+
+			/**
+			 * Provides label of form.
+			 *
+			 * A form's label is a brief label e.g. to be used in a progress bar
+			 * to name steps in a sequence of forms.
+			 *
+			 * Form's title is provided if its label has been omitted.
+			 *
+			 * @name FormModel#label
+			 * @property {string}
+			 * @readonly
+			 */
+			label: { value: label || title },
+
+			/**
+			 * Provides title of form.
+			 *
+			 * A form's title is displayed as a headline above form when it is
+			 * selected to be current in a sequence of forms.
+			 *
+			 * Form's label is provided if its title has been omitted.
+			 *
+			 * @name FormModel#title
+			 * @property {string}
+			 * @readonly
+			 */
+			title: { value: title || label },
 
 			/**
 			 * Provides description of form.
@@ -78,23 +110,41 @@ export default class FormModel {
 		} );
 	}
 
-	renderFields() {
+	/**
+	 * Renders description of Vue component listing all fields of form.
+	 *
+	 * @returns {{render:function()}} description of Vue component
+	 */
+	renderComponent() {
 		const fields = this.fields;
 		const numFields = fields.length;
-
-		const components = {};
-		const templates = new Array( numFields );
+		const components = new Array( numFields );
 
 		for ( let i = 0; i < numFields; i++ ) {
-			const name = `field-${i}`;
-			templates.push( `<${name}/>` );
-			components[name] = this.fields[i];
+			components[i] = fields[i].renderComponent();
 		}
 
+		const { title, description } = this;
+
 		return {
-			components,
-			template: `<div class="fields">${templates.join( "" )}</div>`,
+			render: function( createElement ) {
+				const elements = new Array( numFields );
+				for ( let i = 0; i < numFields; i++ ) {
+					elements[i] = createElement( components[i] );
+				}
+
+				return createElement( "div", {
+					class: "form",
+				}, [
+					createElement( "h2", title ),
+					createElement( "p", description ),
+					createElement( "div", {
+						class: "fields",
+					}, elements ),
+				] );
+			},
 		};
+
 	}
 }
 

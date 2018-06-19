@@ -31,24 +31,42 @@ import FormFieldAbstractModel from "./abstract";
 /**
  * Manages single field of form representing text input.
  */
-export class FormFieldTextModel extends FormFieldAbstractModel {
+export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/**
 	 * Fetches description of a Vue component representing this field.
 	 *
 	 * @returns {object} description of Vue component
 	 */
 	renderComponent() {
+		const { label } = this;
+
 		return {
-			template: `
-<div class="widget">
-	<span class="label">{{ label }}</span>
-	<span class="field">
-		<input type="text" v-model="" />
-	</span>
-</div>
-`,
-			computeds: {
-				label: () => this.label,
+			render: function( createElement ) {
+				return createElement( "div", {
+					class: "field type-text",
+				}, [
+					createElement( "span", {
+						class: "label",
+					}, label ),
+					createElement( "span", {
+						class: "field",
+					}, [
+						createElement( "input", {
+							domProps: {
+								type: "text",
+								value: this.value,
+							},
+							on: {
+								input: event => {
+									const value = event.target.value;
+
+									this.$store.commit( "writeInput", value );
+									this.$emit( "input", value );
+								},
+							},
+						} ),
+					] ),
+				] );
 			},
 		};
 	}

@@ -110,15 +110,20 @@ export default class FormFieldAbstractModel {
 	 * @returns {object} description of Vue component
 	 */
 	renderComponent() {
+		const { label } = this;
+
 		return {
-			template: `
-<div class="widget">
-	<span class="label">{{ label }}</span>
-	<span class="field"></span>
-</div>
-`,
-			computeds: {
-				label: () => this.label,
+			render: function( createElement ) {
+				return createElement( "div", {
+					class: "field type-abstract",
+				}, [
+					createElement( "span", {
+						class: "label",
+					}, label ),
+					createElement( "span", {
+						class: "field",
+					} ),
+				] );
 			},
 		};
 	}
