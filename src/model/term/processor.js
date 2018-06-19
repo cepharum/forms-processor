@@ -37,8 +37,9 @@ export default class TermProcessor {
 	/**
 	 * @param {string} source source code of term
 	 * @param {object<string,function>} customFunctions map of custom functions to support in term
+	 * @param {Map<string,function>} compilerCache refers to optional cache containing previously compiled terms
 	 */
-	constructor( source, customFunctions = {} ) {
+	constructor( source, customFunctions = {}, compilerCache = null ) {
 		Object.defineProperties( this, {
 			/**
 			 * Provides code of term as provided on term creation.
@@ -56,7 +57,7 @@ export default class TermProcessor {
 			 * @property {function(data:object):*}
 			 * @readonly
 			 */
-			code: { value: TermCompiler.compile( source, Object.assign( {}, TermFunctions, customFunctions ) ) },
+			code: { value: TermCompiler.compile( source, Object.assign( {}, TermFunctions, customFunctions ), compilerCache ) },
 		} );
 	}
 

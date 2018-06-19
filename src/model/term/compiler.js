@@ -39,15 +39,28 @@ export default class TermCompiler {
 	 *
 	 * @param {string} source source code of term to compile
 	 * @param {object<string,function>} functions set of functions available in term processing
+	 * @param {Map<string,Function>} cache refers to optional cache containing previously compiled terms
 	 * @returns {Function} Javascript function implementing term
 	 */
-	static compile( source, functions = {} ) {
-		const tokens = TermTokenizer.tokenizeString( source, true );
-		const reduced = this.reduceTokens( tokens, functions );
-		const grouped = this.groupTokens( reduced );
-		const code = this.compileTokens( grouped );
+	static compile( source, functions = {}, cache = null ) {
+		let result;
 
-		return new Function( "data", "functions", `return ${code};` );
+		if ( cache && cache.has( source ) ) {
+			result = cache.get( source );
+		} else {
+			const tokens = TermTokenizer.tokenizeString( source, true );
+			const reduced = this.reduceTokens( tokens, functions );
+			const grouped = this.groupTokens( reduced );
+			const code = this.compileTokens( grouped );
+
+			result = new Function( "data", "functions", `return ${code};` );
+
+			if ( cache ) {
+				cache.set( source, result );
+			}
+		}
+
+		return result;
 	}
 
 	/**
