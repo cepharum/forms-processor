@@ -28,6 +28,8 @@
 
 import TermProcessor from "../../term/processor";
 
+const termCache = new Map();
+
 /**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
@@ -51,39 +53,39 @@ export default class FormFieldAbstractModel {
 				switch ( propertyName ) {
 					case "required" :
 					case "visible" :
-						terms[propertyName] = new TermProcessor( String( propertyValue ) );
+						terms[propertyName] = new TermProcessor( String( propertyValue ), {}, termCache );
 						getters[propertyName] = { get: () => terms[propertyName].evaluate( form.data ) };
 						break;
 
 					default :
 						propertyValue = propertyValue.trim();
 						if ( propertyValue.charAt( 0 ) === "=" ) {
-							terms[propertyName] = new TermProcessor( propertyValue.slice( 1 ) );
+							terms[propertyName] = new TermProcessor( propertyValue.slice( 1 ), {}, termCache );
 							getters[propertyName] = { get: () => terms[propertyName].evaluate( form.data ) };
 						} else {
-							const slices = propertyValue.slice( 1 ).split( ptnBinding );
+							const slices = propertyValue.split( ptnBinding );
 							const numSlices = slices.length;
 
 							for ( let i = 0; i < numSlices; i++ ) {
 								const slice = slices[i];
 								const match = slice.match( ptnBinding );
 								if ( match ) {
-									slices[i] = new TermProcessor( slice.slice( 2, -2 ) );
+									slices[i] = new TermProcessor( slice.slice( 2, -2 ), {}, termCache );
 								}
 							}
 
 							getters[propertyName] = { value: () => {
 								const rendered = new Array( numSlices );
 
-								for ( let i = 0; i < numSlices; i++ ) {
-									const slice = slices[i];
+									for ( let i = 0; i < numSlices; i++ ) {
+										const slice = slices[i];
 
-									if ( slice instanceof TermProcessor ) {
-										rendered[i] = slice.evaluate( form.data );
-									} else {
-										rendered[i] = slice;
+										if ( slice instanceof TermProcessor ) {
+											rendered[i] = slice.evaluate( form.data );
+										} else {
+											rendered[i] = slice;
+										}
 									}
-								}
 
 								return rendered.join( "" );
 							} };
