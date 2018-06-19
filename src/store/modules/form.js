@@ -33,16 +33,27 @@ export default {
 	state: {
 		id: null,
 		definition: {},
+		currentStep: null,
+		input: {},
 	},
 	getters: {
-		formID( state ) {
+		hasForm( state ) {
+			return state.id != null;
+		},
+		formSequenceID( state ) {
 			return state.id;
 		},
-		formLabel( state ) {
+		formSequenceLabel( state ) {
 			return state.definition.label || "";
 		},
-		formDescription( state ) {
+		formSequenceDescription( state ) {
 			return state.definition.description || "";
+		},
+		formSequenceManager( state ) {
+			return new FormSequenceModel( state.definition, state.input );
+		},
+		formSequenceInput( state ) {
+			return state.input;
 		},
 	},
 	mutations: {
@@ -51,6 +62,19 @@ export default {
 				state.id = id;
 				state.definition = definition;
 			}
+		},
+
+		resetFormInput( state ) {
+			const initial = new FormSequenceModel( state.definition, state.input ).getInitialData();
+
+			Object.keys( initial )
+				.forEach( name => {
+					state.input[name] = initial[name] == null ? null : initial[name];
+				} );
+		},
+
+		writeInput( state, { name, value } ) {
+			state.input[name] = value;
 		},
 	},
 	actions: {
@@ -61,7 +85,13 @@ export default {
 						id,
 						definition,
 					} );
+
+					commit( "resetFormInput" );
 				} );
+		},
+
+		writeInput( { commit }, name, value ) {
+			commit( "writeInput", { name, value } );
 		},
 	},
 };
