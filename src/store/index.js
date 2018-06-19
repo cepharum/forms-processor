@@ -29,6 +29,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
+import l10n from "./modules/l10n";
 import application from "./modules/application";
 import form from "./modules/form";
 import report from "./modules/report";
@@ -40,6 +41,7 @@ const debug = process.env.NODE_ENV !== "production";
 export default new Vuex.Store( {
 	strict: debug,
 	modules: [
+		l10n,
 		application,
 		form,
 		report,
