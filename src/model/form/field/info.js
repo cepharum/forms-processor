@@ -26,10 +26,29 @@
  * @author: cepharum
  */
 
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
+import FormFieldAbstractModel from "./abstract";
 
-export default {
-	info: FormFieldInfoModel,
-	text: FormFieldTextModel,
-};
+/**
+ * Manages single field of form representing non-editable text display.
+ */
+export default class FormFieldInfoModel extends FormFieldAbstractModel {
+	/**
+	 * Fetches description of a Vue component representing this field.
+	 *
+	 * @returns {object} description of Vue component
+	 */
+	renderComponent() {
+		return {
+			template: `
+<div class="field type-info">
+	<span class="label">{{ label }}</span>
+	<span class="field">{{ text }}</span>
+</div>
+			`,
+			computed: {
+				label: () => this.label,
+				text: () => this.text,
+			},
+		};
+	}
+}
