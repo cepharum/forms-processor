@@ -41,15 +41,6 @@ export default class FormSequenceModel {
 
 		Object.defineProperties( this, {
 			/**
-			 * Lists forms of sequence.
-			 *
-			 * @name FormSequenceModel#forms
-			 * @property {FormModel[]}
-			 * @readonly
-			 */
-			forms: { value: sequence.map( formDefinition => new FormModel( this, formDefinition ) ) },
-
-			/**
 			 * Provides variable space of all forms in a sequence of forms.
 			 *
 			 * @name FormSequenceModel#data
@@ -57,6 +48,19 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			data: { value: data },
+		} );
+
+		// defer definition of additional properties requiring public access
+		// on those defined before
+		Object.defineProperties( this, {
+			/**
+			 * Lists forms of sequence.
+			 *
+			 * @name FormSequenceModel#forms
+			 * @property {FormModel[]}
+			 * @readonly
+			 */
+			forms: { value: sequence.map( formDefinition => new FormModel( this, formDefinition ) ) },
 		} );
 	}
 

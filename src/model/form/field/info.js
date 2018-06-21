@@ -32,22 +32,21 @@ import FormFieldAbstractModel from "./abstract";
  * Manages single field of form representing non-editable text display.
  */
 export default class FormFieldInfoModel extends FormFieldAbstractModel {
-	/**
-	 * Fetches description of a Vue component representing this field.
-	 *
-	 * @returns {object} description of Vue component
-	 */
-	renderComponent() {
+	/** @inheritDoc */
+	renderFieldComponent() {
+		const that = this;
+
 		return {
-			template: `
-<div class="field type-info">
-	<span class="label">{{ label }}</span>
-	<span class="field">{{ text }}</span>
-</div>
-			`,
-			computed: {
-				label: () => this.label,
-				text: () => this.text,
+			template: `<span>{{ text }}</span>`,
+			data() {
+				return {
+					text: that.text,
+				};
+			},
+			methods: {
+				updateOnDataChanged() {
+					this.text = that.text;
+				},
 			},
 		};
 	}

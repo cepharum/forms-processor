@@ -31,37 +31,75 @@ import TermProcessor from "../../term/processor";
 const termCache = new Map();
 
 /**
+ * Declares default values of commonly supported field properties.
+ *
+ * @type {object<string,string>}
+ */
+const DefaultProperties = {
+	required: "false",
+	visible: "true",
+};
+
+/**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
  */
 export default class FormFieldAbstractModel {
 	/**
-	 * @param {FormSequenceModel} form manages whole sequence of forms this field is part of
+	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
 	 */
 	constructor( form, definition ) {
 		const { name } = definition;
 
-		const terms = {};
+		if ( !name ) {
+			throw new TypeError( `missing field name in definition` );
+		}
+
+		const normalizedName = String( name ).trim().toLowerCase();
+
+
+		/**
+		 * @type {TermProcessor[]}
+		 */
+		const terms = [];
+
+		/**
+		 * @type {object<string,({value:*}|{get:function, set:function})>}
+		 */
 		const getters = {};
+
 		const ptnBinding = /({{[^}]+}})/;
 
-		Object.keys( definition )
+		const qualifiedDefinition = Object.assign( DefaultProperties, definition );
+
+
+		Object.keys( qualifiedDefinition )
 			.forEach( propertyName => {
-				let propertyValue = definition[propertyName];
+				let propertyValue = qualifiedDefinition[propertyName];
 
 				switch ( propertyName ) {
 					case "required" :
-					case "visible" :
-						terms[propertyName] = new TermProcessor( String( propertyValue ), {}, termCache );
-						getters[propertyName] = { get: () => terms[propertyName].evaluate( form.data ) };
+					case "visible" : {
+						// listed definition properties are always considered to hold a term for evaluation
+						const term = new TermProcessor( String( propertyValue ), {}, termCache, qualifyVariable );
+						terms.push( term );
+						getters[propertyName] = { get: () => term.evaluate( form.data ) };
+						break;
+					}
+
+					case "name" :
+					case "qualifiedName" :
+						// ignore these properties here for being processed explicitly below
 						break;
 
 					default :
+						// handle all else definition properties
 						propertyValue = propertyValue.trim();
 						if ( propertyValue.charAt( 0 ) === "=" ) {
-							terms[propertyName] = new TermProcessor( propertyValue.slice( 1 ), {}, termCache );
-							getters[propertyName] = { get: () => terms[propertyName].evaluate( form.data ) };
+							const term = new TermProcessor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
+							terms.push( term );
+							getters[propertyName] = { get: () => term.evaluate( form.data ) };
 						} else {
 							const slices = propertyValue.split( ptnBinding );
 							const numSlices = slices.length;
@@ -71,27 +109,31 @@ export default class FormFieldAbstractModel {
 								const slice = slices[i];
 								const match = slice.match( ptnBinding );
 								if ( match ) {
-									slices[i] = new TermProcessor( slice.slice( 2, -2 ), {}, termCache );
+									const term = new TermProcessor( slice.slice( 2, -2 ), {}, termCache, qualifyVariable );
+									terms.push( term );
+									slices[i] = term;
 									isDynamic = true;
 								}
 							}
 
 							if ( isDynamic ) {
-								getters[propertyName] = { get: () => {
-									const rendered = new Array( numSlices );
+								getters[propertyName] = {
+									get: () => {
+										const rendered = new Array( numSlices );
 
-									for ( let i = 0; i < numSlices; i++ ) {
-										const slice = slices[i];
+										for ( let i = 0; i < numSlices; i++ ) {
+											const slice = slices[i];
 
-										if ( slice instanceof TermProcessor ) {
-											rendered[i] = slice.evaluate( form.data );
-										} else {
-											rendered[i] = slice;
+											if ( slice instanceof TermProcessor ) {
+												rendered[i] = slice.evaluate( form.data );
+											} else {
+												rendered[i] = slice;
+											}
 										}
-									}
 
-									return rendered.join( "" );
-								} };
+										return rendered.join( "" );
+									}
+								};
 							} else {
 								getters[propertyName] = { value: propertyValue };
 							}
@@ -99,9 +141,88 @@ export default class FormFieldAbstractModel {
 				}
 			} );
 
+
+		// collect combined dependencies of all terms processed before
+		const collectedDependencies = {};
+		for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
+			const dependencies = terms[i].dependsOn;
+
+			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
+				collectedDependencies[dependencies[j].join( "." )] = true;
+			}
+		}
+
+
 		Object.defineProperties( this, Object.assign( getters, {
-			name: { value: name },
+			/**
+			 * Provides reference on instance managing form containing field.
+			 *
+			 * @name FormFieldAbstractModel#form
+			 * @property {FormModel}
+			 * @readonly
+			 */
+			form: { value: form },
+
+			/**
+			 * Provides defined name of field.
+			 *
+			 * @name FormFieldAbstractModel#name
+			 * @property {string}
+			 * @readonly
+			 */
+			name: { value: normalizedName },
+
+			/**
+			 * Provides qualified name of field consisting of its containing
+			 * form's name and its own name.
+			 *
+			 * @name FormFieldAbstractModel#qualifiedName
+			 * @property {string}
+			 * @readonly
+			 */
+			qualifiedName: { value: `${form.name}.${normalizedName}` },
+
+			/**
+			 * Lists paths of variables this field depends on due to terms used
+			 * in field's definition.
+			 *
+			 * @name FormFieldAbstractModel#dependsOn
+			 * @property {Array<string[]>}
+			 * @readonly
+			 */
+			dependsOn: { value: Object.keys( collectedDependencies ) },
 		} ) );
+
+
+
+		/**
+		 * Qualifies variable names found in terms used in definition.
+		 *
+		 * @param {string[]} originalPath segments of path addressing variable as given in term
+		 * @returns {string[]} optionally qualified list of segments for addressing some variable globally
+		 */
+		function qualifyVariable( originalPath ) {
+			if ( originalPath.length === 1 ) {
+				return [ form.name, originalPath[0] ];
+			}
+
+			return originalPath;
+		}
+	}
+
+	/**
+	 * Updates reactive properties of component provided by renderComponent().
+	 *
+	 * @param {object} component refers to component to be updated
+	 * @returns {void}
+	 */
+	updateComponentOnDataChanged( component ) {
+		/* eslint-disable no-param-reassign */
+		component.label = this.label;
+		component.required = this.required;
+		component.visible = this.visible;
+		component.hint = this.hint;
+		/* eslint-enable no-param-reassign */
 	}
 
 	/**
@@ -109,21 +230,71 @@ export default class FormFieldAbstractModel {
 	 *
 	 * @returns {object} description of Vue component
 	 */
-	renderComponent() {
-		const { label } = this;
-
+	renderFieldComponent() {
 		return {
 			render: function( createElement ) {
-				return createElement( "div", {
-					class: "field type-abstract",
-				}, [
-					createElement( "span", {
-						class: "label",
-					}, label ),
-					createElement( "span", {
-						class: "field",
-					} ),
-				] );
+				return createElement( "<!-------->" );
+			},
+		};
+	}
+
+	/**
+	 * Provides definition of field's component.
+	 *
+	 * @returns {object} provides definition of field's component
+	 */
+	renderComponent() {
+		const that = this;
+		const { label, required, visible, hint, type, qualifiedName, dependsOn } = that;
+
+		return {
+			components: {
+				FieldComponent: this.renderFieldComponent(),
+			},
+			template: `
+<div class="field" :class="[ required ? 'mandatory' : 'optional', 'type-${type}', 'name-${qualifiedName}' ]" v-if="required || visible">
+	<span class="label">
+		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
+	</span>
+	<span class="widget">
+		<FieldComponent ref="fieldComponent" v-model="value" />
+		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
+	</span>
+	<span class="currentValue">{{ value }}</span>
+</div>
+			`,
+			data() {
+				return {
+					label,
+					required,
+					visible,
+					hint,
+					value: null,
+				};
+			},
+			beforeMount() {
+				this._unsubscribe = this.$store.subscribe( mutation => {
+					if ( mutation.type === "writeInput" ) {
+						const { name } = mutation.payload;
+
+						if ( dependsOn.indexOf( name ) > -1 ) {
+							that.updateComponentOnDataChanged( this );
+
+							const field = this.$refs.fieldComponent;
+							if ( field ) {
+								const fieldUpdater = field.updateOnDataChanged;
+								if ( typeof fieldUpdater === "function" ) {
+									fieldUpdater();
+								}
+							}
+						}
+					}
+				} );
+			},
+			beforeDestroy() {
+				if ( this._unsubscribe ) {
+					this._unsubscribe();
+				}
 			},
 		};
 	}

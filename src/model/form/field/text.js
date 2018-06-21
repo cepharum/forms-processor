@@ -32,41 +32,29 @@ import FormFieldAbstractModel from "./abstract";
  * Manages single field of form representing text input.
  */
 export default class FormFieldTextModel extends FormFieldAbstractModel {
-	/**
-	 * Fetches description of a Vue component representing this field.
-	 *
-	 * @returns {object} description of Vue component
-	 */
-	renderComponent() {
-		const { label } = this;
+	/** @inheritDoc */
+	renderFieldComponent() {
+		const { qualifiedName } = this;
 
 		return {
+			props: [qualifiedName],
 			render: function( createElement ) {
-				return createElement( "div", {
-					class: "field type-text",
-				}, [
-					createElement( "span", {
-						class: "label",
-					}, label ),
-					createElement( "span", {
-						class: "field",
-					}, [
-						createElement( "input", {
-							domProps: {
-								type: "text",
-								value: this.value,
-							},
-							on: {
-								input: event => {
-									const value = event.target.value;
+				const initialValue = this.$store.getters.formReadInput( qualifiedName );
 
-									this.$store.commit( "writeInput", value );
-									this.$emit( "input", value );
-								},
-							},
-						} ),
-					] ),
-				] );
+				return createElement( "input", {
+					domProps: {
+						type: "text",
+						value: this[qualifiedName] || initialValue,
+					},
+					on: {
+						input: event => {
+							const value = event.target.value;
+
+							this.$store.dispatch( "writeInput", [ qualifiedName, value ] );
+							this.$emit( "input", value );
+						},
+					},
+				} );
 			},
 		};
 	}

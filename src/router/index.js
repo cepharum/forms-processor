@@ -1,15 +1,21 @@
 import Vue from "vue";
 import Router from "vue-router";
-import HelloWorld from "@/components/HelloWorld";
+import Splash from "@/components/Splash";
+import FormView from "@/components/FormView";
 
 Vue.use( Router );
 
 export default new Router( {
 	routes: [
 		{
-			path: "/",
-			name: "HelloWorld",
-			component: HelloWorld,
+			path: "/splash",
+			name: "Splash",
+			component: Splash,
+		},
+		{
+			path: "/form",
+			name: "FormView",
+			component: FormView,
 		},
 	],
 } );

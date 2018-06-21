@@ -91,15 +91,6 @@ export default class FormModel {
 			description: { value: description },
 
 			/**
-			 * Lists fields of form.
-			 *
-			 * @name FormModel#fields
-			 * @property {FormFieldAbstractModel[]}
-			 * @readonly
-			 */
-			fields: { value: fields.map( field => createField( this, field ) ).filter( i => i ) },
-
-			/**
 			 * Provides variable space of all forms in a sequence of forms.
 			 *
 			 * @name FormModel#data
@@ -107,6 +98,18 @@ export default class FormModel {
 			 * @readonly
 			 */
 			data: { value: sequence.data },
+		} );
+
+		// define properties including code relying on properties defined before
+		Object.defineProperties( this, {
+			/**
+			 * Lists fields of form.
+			 *
+			 * @name FormModel#fields
+			 * @property {FormFieldAbstractModel[]}
+			 * @readonly
+			 */
+			fields: { value: fields.map( field => createField( this, field ) ).filter( i => i ) },
 		} );
 	}
 

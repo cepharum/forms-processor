@@ -1,28 +1,53 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <router-view/>
+    <div class="header"/>
+    <div class="body">
+      <router-view/>
+    </div>
+    <div class="footer"/>
   </div>
 </template>
 
 <script>
 import Vue from "vue";
 
+let first = true;
+
 export default {
 	name: "App",
 	created() {
-		this.$store.dispatch( "selectForm", Vue.config.formId );
+		const store = this.$store;
+
+		store.subscribe( mutation => {
+			switch ( mutation.type ) {
+				case "selectForm" :
+					this.$router.replace( { name: "FormView" } );
+					break;
+
+				case "setLocale" :
+					if ( first ) {
+						this.$router.replace( { name: "Splash" } );
+						first = false;
+					}
+					break;
+			}
+		} );
+
+		return store.dispatch( "setLocale" )
+			.then( () => store.dispatch( "selectForm", Vue.config.formId ) );
 	},
 };
 </script>
 
 <style>
-	#app {
-		font-family: 'Avenir', Helvetica, Arial, sans-serif;
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
-		text-align: center;
-		color: #2c3e50;
-		margin-top: 60px;
-	}
+  #app {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    min-height: 100%;
+  }
+
+  .body {
+
+  }
 </style>

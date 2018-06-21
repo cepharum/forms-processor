@@ -55,6 +55,15 @@ export default {
 		formSequenceInput( state ) {
 			return state.input;
 		},
+		formReadInput: state => qualifiedName => {
+			const [ formName, fieldName ] = String( qualifiedName ).split( /\s*\.\s*/ );
+
+			if ( formName && fieldName && state.input.hasOwnProperty( formName ) ) {
+				return state.input[formName][fieldName];
+			}
+
+			return null;
+		},
 	},
 	mutations: {
 		selectForm( state, { id, definition } ) {
@@ -74,7 +83,24 @@ export default {
 		},
 
 		writeInput( state, { name, value } ) {
-			state.input[name] = value;
+			const segments = name.split( "." );
+			let data = state.input;
+
+			for ( let i = 0, numSegments = segments.length - 1; i < numSegments; i++ ) {
+				const segment = segments[i];
+
+				if ( data.hasOwnProperty( segment ) && typeof data[segment] === "object" ) {
+					data = data[segment];
+				} else {
+					// don't adjust state as request is addressing unknown section
+					return;
+				}
+			}
+
+			const lastSegment = segments.pop();
+			if ( lastSegment && data.hasOwnProperty( lastSegment ) ) {
+				data[lastSegment] = value;
+			}
 		},
 	},
 	actions: {
@@ -90,7 +116,7 @@ export default {
 				} );
 		},
 
-		writeInput( { commit }, name, value ) {
+		writeInput( { commit }, [ name, value ] ) {
 			commit( "writeInput", { name, value } );
 		},
 	},
