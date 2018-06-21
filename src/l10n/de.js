@@ -30,13 +30,19 @@
 /**
  * Exports function generating German translation of static strings.
  *
- * @returns {Promise<object<string,string>>|object<string,string>} map of German translations
+ * @returns {Promise<LocaleTranslationTree>|LocaleTranslationTree} map of German translations
  */
 export default function() {
 	return {
 		LOADING: {
 			WAIT_PROMPT: "Bitte warten.",
 			WAIT_EXPLANATION: "Das Formular wird geladen.",
+		},
+		VALIDATION: {
+			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
+			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
+			TOO_SHORT: "Ihre Angabe ist zu kurz.",
+			TOO_LONG: "Ihre Angabe ist zu lang.",
 		},
 	};
 }

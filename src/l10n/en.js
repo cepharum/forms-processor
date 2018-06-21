@@ -30,13 +30,19 @@
 /**
  * Exports function generating German translation of static strings.
  *
- * @returns {Promise<object<string,string>>|object<string,string>} map of German translations
+ * @returns {Promise<LocaleTranslationTree>|LocaleTranslationTree} map of German translations
  */
 export default function() {
 	return {
 		LOADING: {
 			WAIT_PROMPT: "Please wait!",
 			WAIT_EXPLANATION: "Loading Form ...",
+		},
+		VALIDATION: {
+			UNEXPECTED_ERROR: "Validation failed unexpectedly.",
+			MISSING_REQUIRED: "This information is required.",
+			TOO_SHORT: "Provided information is too short.",
+			TOO_LONG: "Provided information is too long.",
 		},
 	};
 }
