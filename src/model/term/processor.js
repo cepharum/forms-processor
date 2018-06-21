@@ -38,13 +38,16 @@ export default class TermProcessor {
 	 * @param {string} source source code of term
 	 * @param {object<string,function>} customFunctions map of custom functions to support in term
 	 * @param {Map<string,function>} compilerCache refers to optional cache containing previously compiled terms
+	 * @param {function(string[]):string[]} variableQualifier gets invoked to qualify variables accessed by term
 	 */
-	constructor( source, customFunctions = {}, compilerCache = null ) {
+	constructor( source, customFunctions = {}, compilerCache = null, variableQualifier = null ) {
+		const compiled = TermCompiler.compile( source, Object.assign( {}, TermFunctions, customFunctions ), compilerCache, variableQualifier );
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides code of term as provided on term creation.
 			 *
-			 * @name Processor#code
+			 * @name TermProcessor#code
 			 * @property {string}
 			 * @readonly
 			 */
@@ -53,11 +56,20 @@ export default class TermProcessor {
 			/**
 			 * Evaluates term in context of a provided variable space.
 			 *
-			 * @name Processor#eval
+			 * @name TermProcessor#eval
 			 * @property {function(data:object):*}
 			 * @readonly
 			 */
-			code: { value: TermCompiler.compile( source, Object.assign( {}, TermFunctions, customFunctions ), compilerCache ) },
+			code: { value: compiled },
+
+			/**
+			 * Lists paths of variables this term depends on.
+			 *
+			 * @name TermProcessor#dependsOn
+			 * @property {Array<string[]>}
+			 * @readonly
+			 */
+			dependsOn: { value: compiled.dependsOn },
 		} );
 	}
 

@@ -29,6 +29,11 @@
 import TermTokenizer from "./tokenizer";
 
 /**
+ * @typedef {function} CompiledTerm
+ * @property {Array<string[]>} dependsOn lists path names of variables this term depends on (by reading values from listed variables)
+ */
+
+/**
  * Implements compiler converting sequence of tokens into function invocable for
  * processing term in context of some provided variable space.
  */
@@ -40,16 +45,17 @@ export default class TermCompiler {
 	 * @param {string} source source code of term to compile
 	 * @param {object<string,function>} functions set of functions available in term processing
 	 * @param {Map<string,Function>} cache refers to optional cache containing previously compiled terms
-	 * @returns {Function} Javascript function implementing term
+	 * @param {function(string[]):string[]} variableQualifier gets invoked to qualify variables accessed by term
+	 * @returns {CompiledTerm} Javascript function implementing term
 	 */
-	static compile( source, functions = {}, cache = null ) {
+	static compile( source, functions = {}, cache = null, variableQualifier = null ) {
 		let result;
 
 		if ( cache && cache.has( source ) ) {
 			result = cache.get( source );
 		} else {
 			const tokens = TermTokenizer.tokenizeString( source, true );
-			const reduced = this.reduceTokens( tokens, functions );
+			const reduced = this.reduceTokens( tokens, functions, variableQualifier );
 			const grouped = this.groupTokens( reduced );
 			const code = this.compileTokens( grouped );
 
@@ -58,6 +64,35 @@ export default class TermCompiler {
 			if ( cache ) {
 				cache.set( source, result );
 			}
+
+			result.dependsOn = this.listReadVariables( reduced );
+		}
+
+		return result;
+	}
+
+	/**
+	 * Lists names of variables addressed in provided sequence of tagged tokens.
+	 *
+	 * @param {TaggedToken[]} taggedTokens lists tagged tokens
+	 * @returns {Array<string[]>} lists paths of addressed variables
+	 */
+	static listReadVariables( taggedTokens ) {
+		const paths = new Map();
+
+		for ( let i = 0, numTokens = taggedTokens.length; i < numTokens; i++ ) {
+			const taggedToken = taggedTokens[i];
+
+			if ( taggedToken.variable ) {
+				paths.set( taggedToken.path, true );
+			}
+		}
+
+		const result = new Array( paths.size );
+		let write = 0;
+
+		for ( const path of paths.keys() ) {
+			result[write++] = path;
 		}
 
 		return result;
@@ -69,9 +104,10 @@ export default class TermCompiler {
 	 *
 	 * @param {Token[]} tokens sequence of tokens to reduce and tag
 	 * @param {object<string,function>} functions functions available in term processing
+	 * @param {function(string[]):string[]} variableQualifier gets invoked to qualify variables accessed by term
 	 * @returns {TaggedToken[]} reduced and tagged set of tokens
 	 */
-	static reduceTokens( tokens, functions ) {
+	static reduceTokens( tokens, functions, variableQualifier = null ) {
 		const numTokens = tokens.length;
 		const reduced = new Array( numTokens );
 		let write = 0;
@@ -198,6 +234,10 @@ export default class TermCompiler {
 								token.function = isInvoking;
 							}
 						}
+					}
+
+					if ( token.variable && typeof variableQualifier === "function" ) {
+						token.path = variableQualifier( token.path );
 					}
 
 					reduced[write++] = token;
