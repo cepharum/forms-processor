@@ -260,7 +260,6 @@ export default class FormFieldAbstractModel {
 		<FieldComponent ref="fieldComponent" v-model="value" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 	</span>
-	<span class="currentValue">{{ value }}</span>
 </div>
 			`,
 			data() {
