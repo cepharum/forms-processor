@@ -76,7 +76,9 @@ export default class FormSequenceModel {
 			data[form.name] = {};
 
 			form.fields.forEach( field => {
-				data[form.name][field.name] = field.initial;
+				if ( field.constructor.isInteractive ) {
+					data[form.name][field.name] = field.constructor.normalizeValue( field.initial );
+				}
 			} );
 		} );
 

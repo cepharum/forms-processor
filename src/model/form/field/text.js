@@ -33,11 +33,20 @@ import FormFieldAbstractModel from "./abstract";
  */
 export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
+	static get isInteractive() {
+		return true;
+	}
+
+	/** @inheritDoc */
+	static normalizeValue( value ) {
+		return value == null ? "" : String( value );
+	}
+
+	/** @inheritDoc */
 	renderFieldComponent() {
 		const { qualifiedName } = this;
 
 		return {
-			props: [qualifiedName],
 			render: function( createElement ) {
 				const initialValue = this.$store.getters.formReadInput( qualifiedName );
 

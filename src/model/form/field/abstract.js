@@ -46,6 +46,16 @@ const DefaultProperties = {
  */
 export default class FormFieldAbstractModel {
 	/**
+	 * Indicates if current type of field is interactive thus providing any
+	 * input data.
+	 *
+	 * @returns {boolean} true if fields of this type are generating input data
+	 */
+	static get isInteractive() {
+		return false;
+	}
+
+	/**
 	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
 	 */
@@ -296,5 +306,15 @@ export default class FormFieldAbstractModel {
 				}
 			},
 		};
+	}
+
+	/**
+	 * Normalizes provided input value in compliance with current type of field.
+	 *
+	 * @param {*} value some input value or similar
+	 * @returns {*} normalized value
+	 */
+	static normalizeValue( value ) {
+		return value;
 	}
 }
