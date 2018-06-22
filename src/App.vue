@@ -33,7 +33,7 @@ export default {
 			}
 		} );
 
-		return store.dispatch( "setLocale" )
+		return store.dispatch( "setLocale", navigator.language )
 			.then( () => store.dispatch( "selectForm", Vue.config.formId ) );
 	},
 };
