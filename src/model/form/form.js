@@ -39,6 +39,8 @@ export default class FormModel {
 	constructor( sequence, definition ) {
 		const { name = "", label = "", title = "", description = "", fields = [] } = definition;
 
+		const formName = ( name == null ? "" : String( name ) ).trim().toLowerCase();
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides name of form.
@@ -51,7 +53,7 @@ export default class FormModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			name: { value: name },
+			name: { value: formName },
 
 			/**
 			 * Provides label of form.

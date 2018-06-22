@@ -73,11 +73,13 @@ export default class FormSequenceModel {
 		const data = {};
 
 		this.forms.forEach( form => {
-			data[form.name] = {};
+			const formName = form.name;
+
+			data[formName] = {};
 
 			form.fields.forEach( field => {
 				if ( field.constructor.isInteractive ) {
-					data[form.name][field.name] = field.constructor.normalizeValue( field.initial );
+					data[formName][field.name] = field.constructor.normalizeValue( field.initial );
 				}
 			} );
 		} );

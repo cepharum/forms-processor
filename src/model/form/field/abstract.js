@@ -26,6 +26,8 @@
  * @author: cepharum
  */
 
+import L10N from "../../../service/l10n";
+
 import TermProcessor from "../../term/processor";
 
 const termCache = new Map();
@@ -58,8 +60,9 @@ export default class FormFieldAbstractModel {
 	/**
 	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
+	 * @param {string[]} omitProperties lists properties of definition to omit
 	 */
-	constructor( form, definition ) {
+	constructor( form, definition, omitProperties = [] ) {
 		const { name } = definition;
 
 		if ( !name ) {
@@ -83,6 +86,15 @@ export default class FormFieldAbstractModel {
 
 		const qualifiedDefinition = Object.assign( DefaultProperties, definition );
 
+		/**
+		 * Lists errors encountered in recent-most validation of field. Value is
+		 * null if there was no previous validation or any previous validation
+		 * isn't uptodate anymore.
+		 *
+		 * @type {null|string[]}
+		 */
+		let validationErrors = null;
+
 
 		Object.keys( qualifiedDefinition )
 			.forEach( propertyName => {
@@ -103,7 +115,17 @@ export default class FormFieldAbstractModel {
 						// ignore these properties here for being processed explicitly below
 						break;
 
+					case "value" :
+					case "valid" :
+					case "errors" :
+						// ignore these properties here for being reserved properties for internal use
+						break;
+
 					default :
+						if ( omitProperties.indexOf( propertyName ) > -1 ) {
+							break;
+						}
+
 						// handle all else definition properties
 						propertyValue = propertyValue.trim();
 						if ( propertyValue.charAt( 0 ) === "=" ) {
@@ -163,6 +185,9 @@ export default class FormFieldAbstractModel {
 		}
 
 
+		const formName = form.name;
+		const formData = form.data;
+
 		Object.defineProperties( this, Object.assign( getters, {
 			/**
 			 * Provides reference on instance managing form containing field.
@@ -190,7 +215,29 @@ export default class FormFieldAbstractModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			qualifiedName: { value: `${form.name}.${normalizedName}` },
+			qualifiedName: { value: `${formName}.${normalizedName}` },
+
+			/**
+			 * Reads current value of field.
+			 *
+			 * @name FormFieldAbstractModel#value
+			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
+			 * @readonly
+			 */
+			value: {
+				get: () => {
+					if ( formData.hasOwnProperty( formName ) ) {
+						const formSectionData = formData[formName];
+						if ( formSectionData && typeof formSectionData === "object" ) {
+							if ( normalizedName in formSectionData ) {
+								return formSectionData[normalizedName];
+							}
+						}
+					}
+
+					return this.constructor.normalizeValue( this.initial );
+				},
+			},
 
 			/**
 			 * Lists paths of variables this field depends on due to terms used
@@ -201,6 +248,47 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			dependsOn: { value: Object.keys( collectedDependencies ) },
+
+			/**
+			 * Indicates if field is considered valid, currently.
+			 *
+			 * @note By assigning any value (which is ignored) any previously
+			 *       validation result is dropped.
+			 *
+			 * @name FormFieldAbstractModel#valid
+			 * @property {boolean}
+ 			 */
+			valid: {
+				get: () => {
+					if ( validationErrors == null ) {
+						try {
+							validationErrors = this._validate();
+						} catch ( e ) {
+							validationErrors = [L10N.translations.VALIDATION.UNEXPECTED_ERROR];
+						}
+					}
+
+					return !validationErrors.length;
+				},
+				set: () => {
+					validationErrors = null;
+				},
+			},
+
+			/**
+			 * Lists errors encountered during recent-most validation of field.
+			 *
+			 * @name FormFieldAbstractModel#errors
+			 * @property {string[]}
+			 * @readonly
+ 			 */
+			errors: { get: () => {
+				if ( validationErrors == null ) {
+					validationErrors = this._validate();
+				}
+
+				return validationErrors;
+			} },
 		} ) );
 
 
@@ -255,20 +343,32 @@ export default class FormFieldAbstractModel {
 	 */
 	renderComponent() {
 		const that = this;
-		const { label, required, visible, hint, type, qualifiedName, dependsOn } = that;
+		const {
+			label, required, visible, hint, valid, errors, type, qualifiedName,
+			dependsOn,
+		} = that;
 
 		return {
 			components: {
 				FieldComponent: this.renderFieldComponent(),
 			},
 			template: `
-<div class="field" :class="[ required ? 'mandatory' : 'optional', 'type-${type}', 'name-${qualifiedName}' ]" v-if="required || visible">
+<div v-if="required || visible" :class="[ 
+	'field',
+	'type-${type}', 
+	'name-${qualifiedName}',
+	required ? 'mandatory' : 'optional', 
+	valid ? 'valid' : 'invalid',
+]">
 	<span class="label">
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" v-model="value" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
+		<span class="errors" v-if="errors.length">
+			<span v-for="error in errors">{{ error }}</span>
+		</span>
 	</span>
 </div>
 			`,
@@ -278,6 +378,8 @@ export default class FormFieldAbstractModel {
 					required,
 					visible,
 					hint,
+					valid,
+					errors,
 					value: null,
 				};
 			},
@@ -286,7 +388,16 @@ export default class FormFieldAbstractModel {
 					if ( mutation.type === "writeInput" ) {
 						const { name } = mutation.payload;
 
+						if ( name === qualifiedName ) {
+							that.valid = null; // drop previous validation of field
+
+							this.valid = this.pristine || that.valid;
+							this.errors = this.pristine ? [] : that.errors;
+						}
+
 						if ( dependsOn.indexOf( name ) > -1 ) {
+							that.valid = null; // drop previous validation of field
+
 							that.updateComponentOnDataChanged( this );
 
 							const field = this.$refs.fieldComponent;
@@ -316,5 +427,19 @@ export default class FormFieldAbstractModel {
 	 */
 	static normalizeValue( value ) {
 		return value;
+	}
+
+	/**
+	 * Validates current state of field.
+	 *
+	 * @note This method is automatically invoked on updating this field's data.
+	 *       As a result the properties `valid` and `errors` are updated. You
+	 *       basically should rely on those properties instead of invoking this
+	 *       method (explicitly again).
+	 *
+	 * @returns {string[]} lists validation error messages, empty list indicates valid field
+	 */
+	_validate() {
+		return [];
 	}
 }

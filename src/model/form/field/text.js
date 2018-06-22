@@ -26,12 +26,32 @@
  * @author: cepharum
  */
 
+import L10N from "../../../service/l10n";
+import Range from "../utility/range";
+
 import FormFieldAbstractModel from "./abstract";
 
 /**
  * Manages single field of form representing text input.
  */
 export default class FormFieldTextModel extends FormFieldAbstractModel {
+	/**
+	 * @param {FormModel} form reference on form this field belongs to
+	 * @param {object} definition definition of field
+	 */
+	constructor( form, definition ) {
+		super( form, definition, ["size"] );
+
+		Object.defineProperties( this, {
+			/**
+			 * @name FormFieldTextModel#size
+			 * @property {Range}
+			 * @readonly
+			 */
+			size: { value: new Range( definition.size ) },
+		} );
+	}
+
 	/** @inheritDoc */
 	static get isInteractive() {
 		return true;
@@ -44,7 +64,8 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	renderFieldComponent() {
-		const { qualifiedName } = this;
+		const that = this;
+		const { qualifiedName } = that;
 
 		return {
 			render: function( createElement ) {
@@ -59,12 +80,33 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						input: event => {
 							const value = event.target.value;
 
-							this.$store.dispatch( "writeInput", [ qualifiedName, value ] );
+							this.$store.dispatch( "writeInput", [ qualifiedName, that.constructor.normalizeValue( value ) ] );
 							this.$emit( "input", value );
 						},
 					},
 				} );
 			},
 		};
+	}
+
+	/** @inheritDoc */
+	_validate() {
+		const errors = super._validate();
+
+		const value = this.value.trim();
+
+		if ( this.required && !value.length ) {
+			errors.push( L10N.translations.VALIDATION.MISSING_REQUIRED );
+		}
+
+		if ( this.size.isBelowRange( value.length ) ) {
+			errors.push( L10N.translations.VALIDATION.TOO_SHORT );
+		}
+
+		if ( this.size.isAboveRange( value.length ) ) {
+			errors.push( L10N.translations.VALIDATION.TOO_LONG );
+		}
+
+		return errors;
 	}
 }
