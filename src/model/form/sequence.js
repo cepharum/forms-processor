@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import Property from "./utility/property";
 import FormModel from "./form";
 
 /**
@@ -39,7 +40,42 @@ export default class FormSequenceModel {
 	constructor( definition, data ) {
 		const { sequence = [] } = definition;
 
+		const label = Property.localizeValue( definition.label );
+		const title = Property.localizeValue( definition.title );
+		const description = Property.localizeValue( definition.description );
+
 		Object.defineProperties( this, {
+			/**
+			 * Provides label of sequence.
+			 *
+			 * The title is provided as fallback if label has been omitted.
+			 *
+			 * @name FormSequenceModel#label
+			 * @property {string}
+			 * @readonly
+			 */
+			label: { value: label || title },
+
+			/**
+			 * Provides title of sequence.
+			 *
+			 * The label is provided as fallback if title has been omitted.
+			 *
+			 * @name FormSequenceModel#title
+			 * @property {string}
+			 * @readonly
+			 */
+			title: { value: title || label },
+
+			/**
+			 * Provides description of sequence.
+			 *
+			 * @name FormSequenceModel#description
+			 * @property {string}
+			 * @readonly
+			 */
+			description: { value: description },
+
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
 			 *

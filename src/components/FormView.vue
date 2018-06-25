@@ -1,5 +1,7 @@
 <template>
-  <div class="form-view">
+  <div
+    class="form-view"
+    v-if="available">
     <h1>{{ sequenceLabel }}</h1>
     <p>{{ sequenceDescription }}</p>
     <FormSequence />
@@ -29,11 +31,18 @@ export default {
 		} ),
 	},
 	computed: {
+		available() {
+			return this.$store.getters.formSequenceManager;
+		},
 		sequenceLabel() {
-			return this.$store.getters.formSequenceLabel;
+			const manager = this.$store.getters.formSequenceManager;
+
+			return manager ? manager.label : "";
 		},
 		sequenceDescription() {
-			return this.$store.getters.formSequenceDescription;
+			const manager = this.$store.getters.formSequenceManager;
+
+			return manager ? manager.description : "";
 		},
 	},
 };

@@ -29,6 +29,7 @@
 import L10N from "../../../service/l10n";
 
 import TermProcessor from "../../term/processor";
+import Property from "../utility/property";
 
 const termCache = new Map();
 
@@ -127,7 +128,13 @@ export default class FormFieldAbstractModel {
 						}
 
 						// handle all else definition properties
-						propertyValue = propertyValue.trim();
+						propertyValue = Property.localizeValue( propertyValue );
+						if ( propertyValue == null ) {
+							break;
+						}
+
+						propertyValue = String( propertyValue ).trim();
+
 						if ( propertyValue.charAt( 0 ) === "=" ) {
 							const term = new TermProcessor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
 							terms.push( term );
@@ -388,13 +395,6 @@ export default class FormFieldAbstractModel {
 					if ( mutation.type === "writeInput" ) {
 						const { name } = mutation.payload;
 
-						if ( name === qualifiedName ) {
-							that.valid = null; // drop previous validation of field
-
-							this.valid = this.pristine || that.valid;
-							this.errors = this.pristine ? [] : that.errors;
-						}
-
 						if ( dependsOn.indexOf( name ) > -1 ) {
 							that.valid = null; // drop previous validation of field
 
@@ -407,6 +407,13 @@ export default class FormFieldAbstractModel {
 									fieldUpdater();
 								}
 							}
+						}
+
+						if ( name === qualifiedName ) {
+							that.valid = null; // drop previous validation of field
+
+							this.valid = this.pristine || that.valid;
+							this.errors = this.pristine ? [] : that.errors;
 						}
 					}
 				} );

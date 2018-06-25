@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import Property from "./utility/property";
 import FieldManagers from "./field";
 
 /**
@@ -37,7 +38,11 @@ export default class FormModel {
 	 * @param {FormDefinition} definition current form's definition
 	 */
 	constructor( sequence, definition ) {
-		const { name = "", label = "", title = "", description = "", fields = [] } = definition;
+		const { name = "", fields = [] } = definition;
+
+		const label = Property.localizeValue( definition.label );
+		const title = Property.localizeValue( definition.title );
+		const description = Property.localizeValue( definition.description );
 
 		const formName = ( name == null ? "" : String( name ) ).trim().toLowerCase();
 
