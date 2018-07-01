@@ -39,15 +39,7 @@ export default {
 };
 </script>
 
-<style>
-  #app {
-    display: flex;
-    flex-direction: column;
-    justify-content: stretch;
-    min-height: 100%;
-  }
+<style src="./assets/theme.scss" lang="scss"></style>
 
-  .body {
-
-  }
+<style scoped lang="scss">
 </style>
