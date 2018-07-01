@@ -99,12 +99,14 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			errors.push( L10N.translations.VALIDATION.MISSING_REQUIRED );
 		}
 
-		if ( this.size.isBelowRange( value.length ) ) {
-			errors.push( L10N.translations.VALIDATION.TOO_SHORT );
-		}
+		if ( value.length ) {
+			if ( this.size.isBelowRange( value.length ) ) {
+				errors.push( L10N.translations.VALIDATION.TOO_SHORT );
+			}
 
-		if ( this.size.isAboveRange( value.length ) ) {
-			errors.push( L10N.translations.VALIDATION.TOO_LONG );
+			if ( this.size.isAboveRange( value.length ) ) {
+				errors.push( L10N.translations.VALIDATION.TOO_LONG );
+			}
 		}
 
 		return errors;
