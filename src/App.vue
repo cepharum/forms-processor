@@ -1,10 +1,25 @@
 <template>
   <div id="app">
-    <div class="header"/>
-    <div class="body">
-      <router-view/>
+    <div class="title">
+      <div class="inside">
+        <router-view name="title"/>
+      </div>
     </div>
-    <div class="footer"/>
+    <div class="progress">
+      <div class="inside">
+        <router-view name="progress"/>
+      </div>
+    </div>
+    <div class="body">
+      <div class="inside">
+        <router-view name="body"/>
+      </div>
+    </div>
+    <div class="control">
+      <div class="inside">
+        <router-view name="control"/>
+      </div>
+    </div>
   </div>
 </template>
 

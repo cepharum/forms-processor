@@ -124,9 +124,9 @@ export default class FormSequenceModel {
 	}
 
 	/**
-	 * Renders description of Vue component listing all fields of form.
+	 * Describes Vue component listing all forms in sequence.
 	 *
-	 * @returns {{components, template: string}} description of Vue component
+	 * @returns {{render: function}} description of Vue component
 	 */
 	renderComponent() {
 		const forms = this.forms;
@@ -144,6 +144,33 @@ export default class FormSequenceModel {
 					elements[i] = createElement( components[i] );
 				}
 
+				return createElement( "div", {
+					class: "form-sequence",
+				}, [
+					createElement( "div", {
+						class: "forms",
+					}, elements ),
+				] );
+			},
+		};
+	}
+
+	/**
+	 * Describes Vue component rendering progress in sequence of forms.
+	 *
+	 * @returns {{render: function}} description of Vue component
+	 */
+	renderProgressComponent() {
+		const forms = this.forms;
+		const numForms = forms.length;
+		const components = new Array( numForms );
+
+		for ( let i = 0; i < numForms; i++ ) {
+			components[i] = forms[i].renderComponent();
+		}
+
+		return {
+			render: function( createElement ) {
 				const steps = new Array( numForms );
 				for ( let i = 0; i < numForms; i++ ) {
 					steps[i] = createElement( "a", {
@@ -162,9 +189,46 @@ export default class FormSequenceModel {
 					createElement( "nav", {
 						class: "progress",
 					}, steps ),
-					createElement( "div", {
-						class: "forms",
-					}, elements ),
+				] );
+			},
+		};
+	}
+
+	/**
+	 * Describes Vue component rendering controls for sequentially navigating
+	 * through the sequence of forms.
+	 *
+	 * @returns {{render: function}} description of Vue component
+	 */
+	renderControlComponent() {
+		const forms = this.forms;
+		const numForms = forms.length;
+		const components = new Array( numForms );
+
+		for ( let i = 0; i < numForms; i++ ) {
+			components[i] = forms[i].renderComponent();
+		}
+
+		return {
+			render: function( createElement ) {
+				const steps = new Array( numForms );
+				for ( let i = 0; i < numForms; i++ ) {
+					steps[i] = createElement( "a", {
+						class: "nav-step",
+					}, [
+						createElement( "span", {
+							class: "number",
+						}, `${i + 1}` ),
+						` ${forms[i].label}`,
+					] );
+				}
+
+				return createElement( "div", {
+					class: "form-sequence",
+				}, [
+					createElement( "nav", {
+						class: "progress",
+					}, steps ),
 				] );
 			},
 		};
