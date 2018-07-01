@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="form-view"
-    v-if="available">
+  <div v-if="available" class="form-view">
     <h1>{{ sequenceLabel }}</h1>
     <p>{{ sequenceDescription }}</p>
   </div>

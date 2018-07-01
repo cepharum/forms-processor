@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="form-progress"
-    v-if="available">
+  <div v-if="available" class="form-progress">
     <FormProgressSequence />
   </div>
 </template>
@@ -31,16 +29,6 @@ export default {
 	computed: {
 		available() {
 			return this.$store.getters.formSequenceManager;
-		},
-		sequenceLabel() {
-			const manager = this.$store.getters.formSequenceManager;
-
-			return manager ? manager.label : "";
-		},
-		sequenceDescription() {
-			const manager = this.$store.getters.formSequenceManager;
-
-			return manager ? manager.description : "";
 		},
 	},
 };
