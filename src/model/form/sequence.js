@@ -46,6 +46,16 @@ export default class FormSequenceModel {
 
 		Object.defineProperties( this, {
 			/**
+			 * Indicates if sequence is empty
+			 *
+			 * @name FormSequenceModel#isEmpty
+			 * @property {boolean}
+			 */
+			isEmpty: {
+				value: !sequence.length,
+			},
+
+			/**
 			 * Provides label of sequence.
 			 *
 			 * The title is provided as fallback if label has been omitted.
@@ -99,6 +109,119 @@ export default class FormSequenceModel {
 			forms: { value: sequence.map( formDefinition => new FormModel( this, formDefinition ) ) },
 		} );
 
+
+		let currentFormIndex = 0;
+		let latestVisited = 0;
+
+		Object.defineProperties( this, {
+			/**
+			 * Addresses current form in sequence of forms by its index.
+			 *
+			 * @name FormSequenceModel#currentIndex
+			 * @property {int}
+			 */
+			currentIndex: {
+				get: () => ( this.isEmpty ? -1 : currentFormIndex ),
+				set: index => {
+					if ( this.isEmpty ) {
+						return;
+					}
+
+					const forms = this.forms;
+					const numForms = forms.length;
+					let validIndex = -1;
+
+					if ( index < 0 || index >= numForms || !forms[index] ) {
+						throw new TypeError( `rejecting selection of form by invalid index ${index}` );
+					}
+
+					index = parseInt( index ); // eslint-disable-line no-param-reassign
+
+					for ( let i = 0; i < numForms; i++ ) {
+						const form = forms[i];
+
+						if ( !form.pristine && !form.valid ) {
+							break;
+						}
+
+						validIndex = i;
+					}
+
+					if ( index < validIndex ) {
+						currentFormIndex = index;
+						latestVisited = Math.max( latestVisited, index );
+					}
+				},
+			},
+
+			/**
+			 * Provides instance managing current form in sequence of forms.
+			 *
+			 * @name FormSequenceModel#currentForm
+			 * @property {FormModel}
+			 * @readonly
+			 */
+			currentForm: {
+				get: () => this.forms[currentFormIndex],
+			},
+
+			/**
+			 * Addresses current form in sequence of forms by its name.
+			 *
+			 * @name FormSequenceModel#currentName
+			 * @property {string}
+			 */
+			currentName: {
+				get: () => this.forms[currentFormIndex].name,
+				set: name => {
+					const forms = this.forms;
+					const numForms = forms.length;
+					let nameIndex = -1;
+
+					for ( let i = 0; i < numForms; i++ ) {
+						if ( forms[i].name === name ) {
+							nameIndex = i;
+							break;
+						}
+					}
+
+					if ( nameIndex < 0 ) {
+						throw new TypeError( `rejecting selection of form by unknown name "${name}"` );
+					}
+
+					this.currentIndex = nameIndex;
+				},
+			},
+
+			/**
+			 * Finds index of first invalid form in sequence of forms.
+			 *
+			 * @name FormSequenceModel#firstInvalidIndex
+			 * @property {int}
+			 * @readonly
+			 */
+			firstInvalidIndex: {
+				get: () => {
+					const forms = this.forms;
+					const numForms = forms.length;
+
+					for ( let i = 0; i < numForms; i++ ) {
+						if ( i > latestVisited ) {
+							break;
+						}
+
+						const form = forms[i];
+
+						if ( !form.pristine && !form.valid ) {
+							return i;
+						}
+					}
+
+					return -1;
+				},
+			},
+		} );
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides component rendering forms of sequence.
@@ -128,6 +251,45 @@ export default class FormSequenceModel {
 			 */
 			controlComponent: { value: this._renderControlComponent() },
 		} );
+	}
+
+	/**
+	 * Switches to next form in sequence of forms unless current form or any
+	 * other previously visited form is invalid.
+	 *
+	 * @returns {boolean} true if advancing succeeded, false if first invalid form has been selected instead
+	 */
+	advance() {
+		if ( !this.forms[this.currentIndex].valid ) {
+			return false;
+		}
+
+		const index = this.firstInvalidIndex;
+		if ( index < -1 ) {
+			this.currentIndex++;
+
+			return true;
+		}
+
+		this.currentIndex = index;
+
+		return false;
+	}
+
+	/**
+	 * Switches to previous form in sequence of forms.
+	 *
+	 * @returns {boolean} true if current form has been actually rewinded
+	 */
+	rewind() {
+		const index = this.currentIndex;
+		if ( index > 0 ) {
+			this.currentIndex--;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

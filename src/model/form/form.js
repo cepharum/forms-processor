@@ -119,6 +119,45 @@ export default class FormModel {
 			fields: { value: fields.map( field => createField( this, field ) ).filter( i => i ) },
 		} );
 
+		let pristine = true;
+
+		Object.defineProperties( this, {
+			/**
+			 * Indicates if all fields of form are valid.
+			 *
+			 * @name FormModel#valid
+			 * @property {Boolean}
+			 * @readonly
+			 */
+			valid: {
+				get: () => {
+					pristine = false;
+
+					const numFields = this.fields.length;
+
+					for ( let i = 0; i < numFields; i++ ) {
+						if ( !this.fields[i].valid ) {
+							return false;
+						}
+					}
+
+					return true;
+				},
+			},
+
+			/**
+			 * Marks if form is pristine and thus haven't been ever validated
+			 * before.
+			 *
+			 * @name FormModel#pristine
+			 * @property {boolean}
+			 * @readonly
+			 */
+			pristine: {
+				get: () => pristine,
+			},
+		} );
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides component rendering fields of form.
