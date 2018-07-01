@@ -17,12 +17,12 @@ export default {
 			const getters = store.getters;
 
 			if ( getters.hasForm ) {
-				resolve( getters.formSequenceManager.renderControlComponent() );
+				resolve( getters.formSequenceManager.controlComponent );
 			} else {
 				const unsubscribe = store.subscribe( () => {
 					if ( getters.hasForm ) {
 						unsubscribe();
-						resolve( getters.formSequenceManager.renderControlComponent() );
+						resolve( getters.formSequenceManager.controlComponent );
 					}
 				} );
 			}

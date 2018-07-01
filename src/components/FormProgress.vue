@@ -15,12 +15,12 @@ export default {
 			const getters = store.getters;
 
 			if ( getters.hasForm ) {
-				resolve( getters.formSequenceManager.renderProgressComponent() );
+				resolve( getters.formSequenceManager.progressComponent );
 			} else {
 				const unsubscribe = store.subscribe( () => {
 					if ( getters.hasForm ) {
 						unsubscribe();
-						resolve( getters.formSequenceManager.renderProgressComponent() );
+						resolve( getters.formSequenceManager.progressComponent );
 					}
 				} );
 			}

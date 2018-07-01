@@ -118,6 +118,17 @@ export default class FormModel {
 			 */
 			fields: { value: fields.map( field => createField( this, field ) ).filter( i => i ) },
 		} );
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides component rendering fields of form.
+			 *
+			 * @name FormModel#component
+			 * @property {{render:function}}
+			 * @readonly
+			 */
+			component: { value: this._renderComponent() },
+		} );
 	}
 
 	/**
@@ -125,7 +136,7 @@ export default class FormModel {
 	 *
 	 * @returns {{render:function()}} description of Vue component
 	 */
-	renderComponent() {
+	_renderComponent() {
 		const fields = this.fields;
 		const numFields = fields.length;
 		const components = new Array( numFields );

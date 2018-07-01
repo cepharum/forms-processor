@@ -98,6 +98,36 @@ export default class FormSequenceModel {
 			 */
 			forms: { value: sequence.map( formDefinition => new FormModel( this, formDefinition ) ) },
 		} );
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides component rendering forms of sequence.
+			 *
+			 * @name FormSequenceModel#formsComponent
+			 * @property {{render:function}}
+			 * @readonly
+			 */
+			formsComponent: { value: this._renderComponent() },
+
+			/**
+			 * Provides component rendering progress bar in sequence of forms.
+			 *
+			 * @name FormSequenceModel#progressComponent
+			 * @property {{render:function}}
+			 * @readonly
+			 */
+			progressComponent: { value: this._renderProgressComponent() },
+
+			/**
+			 * Provides component rendering controls for navigating sequence of
+			 * forms sequentially.
+			 *
+			 * @name FormSequenceModel#controlComponent
+			 * @property {{render:function}}
+			 * @readonly
+			 */
+			controlComponent: { value: this._renderControlComponent() },
+		} );
 	}
 
 	/**
@@ -127,14 +157,15 @@ export default class FormSequenceModel {
 	 * Describes Vue component listing all forms in sequence.
 	 *
 	 * @returns {{render: function}} description of Vue component
+	 * @protected
 	 */
-	renderComponent() {
+	_renderComponent() {
 		const forms = this.forms;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
 		for ( let i = 0; i < numForms; i++ ) {
-			components[i] = forms[i].renderComponent();
+			components[i] = forms[i].component;
 		}
 
 		return {
@@ -159,15 +190,11 @@ export default class FormSequenceModel {
 	 * Describes Vue component rendering progress in sequence of forms.
 	 *
 	 * @returns {{render: function}} description of Vue component
+	 * @protected
 	 */
-	renderProgressComponent() {
+	_renderProgressComponent() {
 		const forms = this.forms;
 		const numForms = forms.length;
-		const components = new Array( numForms );
-
-		for ( let i = 0; i < numForms; i++ ) {
-			components[i] = forms[i].renderComponent();
-		}
 
 		return {
 			render: function( createElement ) {
@@ -199,15 +226,11 @@ export default class FormSequenceModel {
 	 * through the sequence of forms.
 	 *
 	 * @returns {{render: function}} description of Vue component
+	 * @protected
 	 */
-	renderControlComponent() {
+	_renderControlComponent() {
 		const forms = this.forms;
 		const numForms = forms.length;
-		const components = new Array( numForms );
-
-		for ( let i = 0; i < numForms; i++ ) {
-			components[i] = forms[i].renderComponent();
-		}
 
 		return {
 			render: function( createElement ) {
