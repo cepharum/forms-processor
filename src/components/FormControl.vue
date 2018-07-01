@@ -1,8 +1,8 @@
 <template>
-  <div
-    class="form-control"
-    v-if="available">
-    <FormControlSequence />
+  <div v-if="available" class="form-control">
+    <button v-if="!isSole" :disabled="!isFirst">{{ labelPrevious }}</button>
+    <button v-if="!isLast">{{ labelNext }}</button>
+    <button v-if="isLast">{{ labelSubmit }}</button>
   </div>
 </template>
 
@@ -32,15 +32,23 @@ export default {
 		available() {
 			return this.$store.getters.formSequenceManager;
 		},
-		sequenceLabel() {
-			const manager = this.$store.getters.formSequenceManager;
-
-			return manager ? manager.label : "";
+		isSole() {
+			return this.$store.getters.formSequenceManager.forms.length < 2;
 		},
-		sequenceDescription() {
-			const manager = this.$store.getters.formSequenceManager;
-
-			return manager ? manager.description : "";
+		isFirst() {
+			return true;
+		},
+		isLast() {
+			return true;
+		},
+		labelPrevious() {
+			return this.$store.getters.l10n.BUTTONS.PREVIOUS;
+		},
+		labelNext() {
+			return this.$store.getters.l10n.BUTTONS.NEXT;
+		},
+		labelSubmit() {
+			return this.$store.getters.l10n.BUTTONS.SUBMIT;
 		},
 	},
 };

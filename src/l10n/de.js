@@ -44,5 +44,10 @@ export default function() {
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
 		},
+		BUTTONS: {
+			PREVIOUS: "Zurück",
+			NEXT: "Weiter",
+			SUBMIT: "Absenden",
+		},
 	};
 }
