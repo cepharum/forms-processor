@@ -20,7 +20,7 @@ export default new Router( {
 		},
 		{
 			path: "/form",
-			name: "FormView",
+			name: "ShowForm",
 			components: {
 				title: FormTitle,
 				progress: FormProgress,

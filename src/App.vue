@@ -36,7 +36,7 @@ export default {
 		store.subscribe( mutation => {
 			switch ( mutation.type ) {
 				case "selectForm" :
-					this.$router.replace( { name: "FormView" } );
+					this.$router.replace( { name: "ShowForm" } );
 					break;
 
 				case "setLocale" :
