@@ -374,7 +374,7 @@ export default class FormFieldAbstractModel {
 		<FieldComponent ref="fieldComponent" v-model="value" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 		<span class="errors" v-if="errors.length">
-			<span v-for="error in errors">{{ error }}</span>
+			<span class="error" v-for="error in errors">{{ error }}</span>
 		</span>
 	</span>
 </div>

@@ -1,0 +1,32 @@
+.form {
+	.field {
+		position: relative;
+		overflow: hidden;
+
+		.errors {
+			display: block;
+			background: rgba(255,0,0,0.05);
+			color: #600;
+			margin: 0 0 0.5em 0;
+			padding: 0.5em 1em;
+
+			.error {
+				display: block;
+
+				+ .error {
+					margin-top: 0.5em;
+				}
+			}
+		}
+
+		.label {
+			&:after {
+				content: ":";
+			}
+
+			.mandatory {
+				color: red;
+			}
+		}
+	}
+}

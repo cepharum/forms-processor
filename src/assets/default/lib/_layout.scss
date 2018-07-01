@@ -29,7 +29,9 @@ body {
 		background: $navBarColor;
 		color: $navBarTextColor;
 
-		padding: 0.5em 0;
+		.form-progress {
+			padding: 0.5em 0;
+		}
 	}
 
 	.body {

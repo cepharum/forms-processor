@@ -1,0 +1,21 @@
+.form-progress {
+	nav.progress {
+		display: flex;
+		align-items: center;
+	}
+
+	.nav-step {
+		display: flex;
+		align-items: center;
+
+		&:not(:last-child) {
+			margin-right: 1em;
+		}
+
+		.number {
+			font-size: 200%;
+			font-weight: bold;
+			margin-right: 0.2em;
+		}
+	}
+}
