@@ -106,7 +106,7 @@ export default class FormSequenceModel {
 			 * @property {FormModel[]}
 			 * @readonly
 			 */
-			forms: { value: sequence.map( formDefinition => new FormModel( this, formDefinition ) ) },
+			forms: { value: sequence.map( ( formDefinition, index ) => new FormModel( this, formDefinition, index ) ) },
 		} );
 
 

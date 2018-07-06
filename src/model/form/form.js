@@ -36,8 +36,9 @@ export default class FormModel {
 	/**
 	 * @param {FormSequenceModel} sequence refers to sequence this form belongs to
 	 * @param {FormDefinition} definition current form's definition
+	 * @param {int} index index of form in containing sequence of forms
 	 */
-	constructor( sequence, definition ) {
+	constructor( sequence, definition, index ) {
 		const { name = "", fields = [] } = definition;
 
 		const label = Property.localizeValue( definition.label );
@@ -47,6 +48,15 @@ export default class FormModel {
 		const formName = ( name == null ? "" : String( name ) ).trim().toLowerCase();
 
 		Object.defineProperties( this, {
+			/**
+			 * Provides index of form in containing sequence of forms.
+			 *
+			 * @name FormModel#index
+			 * @property {int}
+			 * @readonly
+			 */
+			index: { value: index },
+
 			/**
 			 * Provides name of form.
 			 *
