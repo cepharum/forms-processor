@@ -10,7 +10,7 @@ export default {
 	name: "FormTitle",
 	computed: {
 		available() {
-			return this.$store.getters.formSequenceManager;
+			return this.$store.getters.hasLocalization && this.$store.getters.formSequenceManager;
 		},
 		sequenceLabel() {
 			const manager = this.$store.getters.formSequenceManager;

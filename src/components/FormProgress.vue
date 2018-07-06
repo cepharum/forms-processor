@@ -28,7 +28,7 @@ export default {
 	},
 	computed: {
 		available() {
-			return this.$store.getters.formSequenceManager;
+			return this.$store.getters.hasLocalization && this.$store.getters.formSequenceManager;
 		},
 	},
 };

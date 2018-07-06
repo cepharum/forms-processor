@@ -11,7 +11,7 @@ export default {
 	name: "FormControl",
 	computed: {
 		available() {
-			return this.$store.getters.formSequenceManager;
+			return this.$store.getters.hasLocalization && this.$store.getters.formSequenceManager;
 		},
 		isSole() {
 			return this.$store.getters.formSequenceManager.forms.length < 2;

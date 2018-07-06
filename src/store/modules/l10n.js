@@ -30,15 +30,18 @@ export default {
 	state: {
 		locale: null,
 		translations: {},
+		loaded: false,
 	},
 	getters: {
 		locale: state => state.locale || normalizeLocale( navigator.language ),
 		l10n: state => state.translations,
+		hasLocalization: state => state.loaded,
 	},
 	mutations: {
 		setTranslations( state, translations ) {
 			if ( translations && typeof translations === "object" && !Array.isArray( translations ) ) {
 				state.translations = translations;
+				state.loaded = true;
 			}
 		},
 
