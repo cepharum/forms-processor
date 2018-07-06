@@ -9,7 +9,7 @@ import Vue from "vue";
 import store from "../store";
 
 export default {
-	name: "FormView",
+	name: "FormProgress",
 	components: {
 		FormProgressSequence: Vue.component( "FormProgressSequence", function( resolve ) {
 			const getters = store.getters;
