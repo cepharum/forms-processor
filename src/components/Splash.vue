@@ -1,5 +1,5 @@
 <template>
-  <div class="splash">
+  <div v-if="available" class="splash">
     <h1>{{ splashHeadline }}</h1>
     <p>{{ splashExplanation }}</p>
   </div>
@@ -9,6 +9,9 @@
 export default {
 	name: "Splash",
 	computed: {
+		available() {
+			return this.$store.getters.hasLocalization;
+		},
 		splashHeadline() {
 			return this.$store.getters.l10n.LOADING.WAIT_PROMPT;
 		},
