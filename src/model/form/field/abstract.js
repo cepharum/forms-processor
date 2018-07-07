@@ -41,6 +41,7 @@ const termCache = new Map();
 const DefaultProperties = {
 	required: "false",
 	visible: "true",
+	type: "text",
 };
 
 /**
