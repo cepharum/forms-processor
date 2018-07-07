@@ -116,6 +116,11 @@ export default class FormFieldAbstractModel {
 						// ignore these properties here for being processed explicitly below
 						break;
 
+					case "type" :
+						// listed definition properties are always considered to have static value
+						getters[propertyName] = { value: propertyValue };
+						break;
+
 					case "value" :
 					case "pristine" :
 					case "valid" :
