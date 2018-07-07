@@ -120,7 +120,7 @@ export default class Range {
 					throw new TypeError( "invalid range definition" );
 				}
 			}
-		} else {
+		} else if ( definition != null ) {
 			throw new TypeError( "invalid range definition" );
 		}
 
