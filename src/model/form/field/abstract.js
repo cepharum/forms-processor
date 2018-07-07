@@ -384,9 +384,10 @@ export default class FormFieldAbstractModel {
 	/**
 	 * Fetches description of a Vue component representing this field.
 	 *
+	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} description of Vue component
 	 */
-	_renderFieldComponent() {
+	_renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		return {
 			render: function( createElement ) {
 				return createElement( "<!-------->" );
@@ -406,7 +407,7 @@ export default class FormFieldAbstractModel {
 
 		return {
 			components: {
-				FieldComponent: this._renderFieldComponent(),
+				FieldComponent: this._renderFieldComponent( reactiveFieldInfo ),
 			},
 			template: `
 <div v-if="required || visible" :class="[ 

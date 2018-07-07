@@ -33,7 +33,7 @@ import FormFieldAbstractModel from "./abstract";
  */
 export default class FormFieldInfoModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	_renderFieldComponent() {
+	_renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		const that = this;
 
 		return {
