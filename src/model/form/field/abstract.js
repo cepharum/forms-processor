@@ -225,6 +225,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.valid = null;
+		reactiveFieldInfo.isset = false;
 		reactiveFieldInfo.value = this.constructor.normalizeValue( this.initial );
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
@@ -415,6 +416,7 @@ export default class FormFieldAbstractModel {
 	'type-${type}', 
 	'name-${qualifiedName}',
 	required ? 'mandatory' : 'optional', 
+	isset || !pristine ? 'set' : 'unset',
 	pristine ? 'pristine' : 'touched',
 	valid ? 'valid' : 'invalid',
 ]">
