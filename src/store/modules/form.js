@@ -116,7 +116,7 @@ export default {
 				} );
 		},
 
-		writeInput( { commit }, [ name, value ] ) {
+		writeInput( { commit }, { name, value } ) {
 			commit( "writeInput", { name, value } );
 		},
 	},

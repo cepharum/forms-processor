@@ -439,11 +439,19 @@ export default class FormFieldAbstractModel {
 				this._unsubscribe = this.$store.subscribe( mutation => {
 					if ( mutation.type === "writeInput" ) {
 						const { name, value } = mutation.payload;
+						const itsMe = name === qualifiedName;
 
 						if ( dependsOn.indexOf( name ) > -1 ) {
 							// current field has term depending on mutated field
 
 							that.updateFieldInformation( reactiveFieldInfo );
+
+							if ( !itsMe && this.pristine && !this.isset ) {
+								this.$store.dispatch( "writeInput", {
+									name: qualifiedName,
+									value: that.initial,
+								} );
+							}
 
 							const field = this.$refs.fieldComponent;
 							if ( field ) {
@@ -454,11 +462,11 @@ export default class FormFieldAbstractModel {
 							}
 						}
 
-						if ( name === qualifiedName ) {
+						if ( itsMe ) {
+							// subscribed mutation might have been committed w/o
+							// adjusting value of field's component first
+							// -> adopt update in store on component
 							this.value = value;
-
-							this.pristine = false;
-							that.form.pristine = false;
 
 							this.valid = null;
 							const valid = that.valid; // eslint-disable-line no-unused-vars

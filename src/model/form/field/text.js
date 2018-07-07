@@ -81,7 +81,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						input: event => {
 							const value = event.target.value;
 
-							this.$store.dispatch( "writeInput", [ qualifiedName, that.constructor.normalizeValue( value ) ] );
+							reactiveFieldInfo.pristine = false;
+							that.form.pristine = false;
+
+							this.$store.dispatch( "writeInput", {
+								name: qualifiedName,
+								value: that.constructor.normalizeValue( value ),
+							} );
 							this.$emit( "input", value );
 						},
 					},
