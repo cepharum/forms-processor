@@ -87,7 +87,7 @@ export default class FormFieldAbstractModel {
 
 		const ptnBinding = /({{[^}]+}})/;
 
-		const qualifiedDefinition = Object.assign( DefaultProperties, definition );
+		const qualifiedDefinition = Object.assign( {}, DefaultProperties, definition );
 
 
 		Object.keys( qualifiedDefinition )
