@@ -33,11 +33,11 @@ import FormFieldAbstractModel from "./abstract";
  */
 export default class FormFieldInfoModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	renderFieldComponent() {
+	_renderFieldComponent() {
 		const that = this;
 
 		return {
-			template: `<span>{{ text }}</span>`,
+			template: `<span class="static-info">{{ text }}</span>`,
 			data() {
 				return {
 					text: that.text,

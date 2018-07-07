@@ -37,8 +37,9 @@ export default class FormModel {
 	 * @param {FormSequenceModel} sequence refers to sequence this form belongs to
 	 * @param {FormDefinition} definition current form's definition
 	 * @param {int} index index of form in containing sequence of forms
+	 * @param {object} reactiveFormInfo provides object to contain all reactive information on form
 	 */
-	constructor( sequence, definition, index ) {
+	constructor( sequence, definition, index, reactiveFormInfo ) {
 		const { name = "", fields = [] } = definition;
 
 		const label = Property.localizeValue( definition.label );
@@ -117,6 +118,8 @@ export default class FormModel {
 			data: { value: sequence.data },
 		} );
 
+		reactiveFormInfo.fields = new Array( fields.length );
+
 		// define properties including code relying on properties defined before
 		Object.defineProperties( this, {
 			/**
@@ -126,10 +129,14 @@ export default class FormModel {
 			 * @property {FormFieldAbstractModel[]}
 			 * @readonly
 			 */
-			fields: { value: fields.map( field => createField( this, field ) ).filter( i => i ) },
+			fields: { value: fields.map( ( field, fieldIndex ) => {
+				const reactiveFieldInfo = reactiveFormInfo.fields[fieldIndex] = {};
+				return createField( this, field, fieldIndex, reactiveFieldInfo );
+			} ).filter( i => i ) },
 		} );
 
-		let pristine = true;
+		reactiveFormInfo.valid = null;
+		reactiveFormInfo.pristine = true;
 
 		Object.defineProperties( this, {
 			/**
@@ -141,17 +148,21 @@ export default class FormModel {
 			 */
 			valid: {
 				get: () => {
-					pristine = false;
-
 					const numFields = this.fields.length;
+					let valid = true;
 
 					for ( let i = 0; i < numFields; i++ ) {
 						if ( !this.fields[i].valid ) {
-							return false;
+							valid = false;
+							break;
 						}
 					}
 
-					return true;
+					if ( reactiveFormInfo.valid !== valid ) {
+						reactiveFormInfo.valid = valid;
+					}
+
+					return valid;
 				},
 			},
 
@@ -161,10 +172,16 @@ export default class FormModel {
 			 *
 			 * @name FormModel#pristine
 			 * @property {boolean}
-			 * @readonly
 			 */
 			pristine: {
-				get: () => pristine,
+				get: () => reactiveFormInfo.pristine,
+				set: state => {
+					const newPristine = Boolean( reactiveFormInfo.pristine && state );
+
+					if ( reactiveFormInfo.pristine !== newPristine ) {
+						reactiveFormInfo.pristine = newPristine;
+					}
+				},
 			},
 		} );
 
@@ -176,35 +193,46 @@ export default class FormModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			component: { value: this._renderComponent() },
+			component: { value: this._renderComponent( reactiveFormInfo ) },
 		} );
 	}
 
 	/**
 	 * Renders description of Vue component listing all fields of form.
 	 *
+	 * @param {object} formInfo provides reactive information on form
 	 * @returns {{render:function()}} description of Vue component
 	 */
-	_renderComponent() {
+	_renderComponent( formInfo ) {
 		const fields = this.fields;
 		const numFields = fields.length;
 		const components = new Array( numFields );
 
 		for ( let i = 0; i < numFields; i++ ) {
-			components[i] = fields[i].renderComponent();
+			components[i] = fields[i].component;
 		}
 
-		const { title, description } = this;
+		const { name, title, description } = this;
 
 		return {
+			data() {
+				return formInfo;
+			},
 			render: function( createElement ) {
 				const elements = new Array( numFields );
 				for ( let i = 0; i < numFields; i++ ) {
 					elements[i] = createElement( components[i] );
 				}
 
+				const classes = [
+					"form",
+					this.pristine ? "pristine" : "touched",
+					this.valid ? "valid" : "invalid",
+				];
+
 				return createElement( "div", {
-					class: "form",
+					class: classes.join( " " ),
+					"data-name": name,
 				}, [
 					createElement( "h2", title ),
 					createElement( "p", description ),
@@ -224,15 +252,17 @@ export default class FormModel {
  *
  * @param {FormModel} form refers to form created field is going zo belong to
  * @param {object} fieldDefinition definition of field to create
+ * @param {int} fieldIndex index of field in set of containing form's fields
+ * @param {object} reactiveFieldInfo provided object to contain reactive information of field
  * @returns {?FormFieldAbstractModel} manager for handling defined field
  */
-function createField( form, fieldDefinition ) {
+function createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
 	let { type = "text" } = fieldDefinition;
 
 	type = type.trim().toLowerCase();
 
 	if ( FieldManagers.hasOwnProperty( type ) ) {
-		return new FieldManagers[type]( form, fieldDefinition );
+		return new FieldManagers[type]( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
 	}
 
 	console.error( `missing manager for handling form fields of type ${type}` ); // eslint-disable-line no-console

@@ -61,9 +61,11 @@ export default class FormFieldAbstractModel {
 	/**
 	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
+	 * @param {int} fieldIndex index of field in set of containing form's fields
+	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 * @param {string[]} omitProperties lists properties of definition to omit
 	 */
-	constructor( form, definition, omitProperties = [] ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, omitProperties = [] ) {
 		const { name } = definition;
 
 		if ( !name ) {
@@ -87,15 +89,6 @@ export default class FormFieldAbstractModel {
 
 		const qualifiedDefinition = Object.assign( DefaultProperties, definition );
 
-		/**
-		 * Lists errors encountered in recent-most validation of field. Value is
-		 * null if there was no previous validation or any previous validation
-		 * isn't uptodate anymore.
-		 *
-		 * @type {null|string[]}
-		 */
-		let validationErrors = null;
-
 
 		Object.keys( qualifiedDefinition )
 			.forEach( propertyName => {
@@ -107,7 +100,14 @@ export default class FormFieldAbstractModel {
 						// listed definition properties are always considered to hold a term for evaluation
 						const term = new TermProcessor( String( propertyValue ), {}, termCache, qualifyVariable );
 						terms.push( term );
-						getters[propertyName] = { get: () => term.evaluate( form.data ) };
+
+						getters[propertyName] = { get: () => {
+							const result = term.evaluate( form.data );
+
+							reactiveFieldInfo[propertyName] = result;
+
+							return result;
+						} };
 						break;
 					}
 
@@ -117,6 +117,7 @@ export default class FormFieldAbstractModel {
 						break;
 
 					case "value" :
+					case "pristine" :
 					case "valid" :
 					case "errors" :
 						// ignore these properties here for being reserved properties for internal use
@@ -138,7 +139,17 @@ export default class FormFieldAbstractModel {
 						if ( propertyValue.charAt( 0 ) === "=" ) {
 							const term = new TermProcessor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
 							terms.push( term );
-							getters[propertyName] = { get: () => term.evaluate( form.data ) };
+							getters[propertyName] = { get: () => {
+								const result = term.evaluate( form.data );
+
+								switch ( propertyName ) {
+									case "label" :
+									case "hint" :
+										reactiveFieldInfo[propertyName] = result;
+								}
+
+								return result;
+							} };
 						} else {
 							const slices = propertyValue.split( ptnBinding );
 							const numSlices = slices.length;
@@ -170,15 +181,26 @@ export default class FormFieldAbstractModel {
 											}
 										}
 
-										return rendered.join( "" );
+										const result = rendered.join( "" );
+
+										switch ( propertyName ) {
+											case "label" :
+											case "hint" :
+												reactiveFieldInfo[propertyName] = result;
+										}
+
+										return result;
 									}
 								};
 							} else {
 								getters[propertyName] = { value: propertyValue };
+								reactiveFieldInfo[propertyName] = propertyValue;
 							}
 						}
 				}
 			} );
+
+		Object.defineProperties( this, getters );
 
 
 		// collect combined dependencies of all terms processed before
@@ -192,10 +214,21 @@ export default class FormFieldAbstractModel {
 		}
 
 
+		// define some field information required to be reactive
+		reactiveFieldInfo.required = this.required;
+		reactiveFieldInfo.visible = this.visible;
+		reactiveFieldInfo.pristine = true;
+		reactiveFieldInfo.valid = null;
+		reactiveFieldInfo.value = null;
+		reactiveFieldInfo.label = this.label;
+		reactiveFieldInfo.hint = this.hint;
+		reactiveFieldInfo.errors = [];
+
+
 		const formName = form.name;
 		const formData = form.data;
 
-		Object.defineProperties( this, Object.assign( getters, {
+		Object.defineProperties( this, {
 			/**
 			 * Provides reference on instance managing form containing field.
 			 *
@@ -264,21 +297,25 @@ export default class FormFieldAbstractModel {
 			 *
 			 * @name FormFieldAbstractModel#valid
 			 * @property {boolean}
+			 * @readonly
  			 */
 			valid: {
 				get: () => {
-					if ( validationErrors == null ) {
-						try {
-							validationErrors = this._validate();
-						} catch ( e ) {
-							validationErrors = [L10N.translations.VALIDATION.UNEXPECTED_ERROR];
+					if ( reactiveFieldInfo.valid == null ) {
+						if ( reactiveFieldInfo.pristine ) {
+							reactiveFieldInfo.valid = true;
+						} else {
+							try {
+								reactiveFieldInfo.errors = this._validate();
+							} catch ( e ) {
+								reactiveFieldInfo.errors = [L10N.translations.VALIDATION.UNEXPECTED_ERROR];
+							}
+
+							reactiveFieldInfo.valid = reactiveFieldInfo.errors.length === 0;
 						}
 					}
 
-					return !validationErrors.length;
-				},
-				set: () => {
-					validationErrors = null;
+					return reactiveFieldInfo.valid;
 				},
 			},
 
@@ -289,14 +326,8 @@ export default class FormFieldAbstractModel {
 			 * @property {string[]}
 			 * @readonly
  			 */
-			errors: { get: () => {
-				if ( validationErrors == null ) {
-					validationErrors = this._validate();
-				}
-
-				return validationErrors;
-			} },
-		} ) );
+			errors: { get: () => reactiveFieldInfo.errors },
+		} );
 
 
 
@@ -313,21 +344,35 @@ export default class FormFieldAbstractModel {
 
 			return originalPath;
 		}
+
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides description of component representing current field.
+			 *
+			 * @name FormFieldAbstractModel#component
+			 * @property {Vue.Component}
+			 * @readonly
+			 */
+			component: { value: this._renderComponent( reactiveFieldInfo ) },
+		} );
 	}
 
 	/**
-	 * Updates reactive properties of component provided by renderComponent().
+	 * Updates reactive information on current field probably re-evaluating
+	 * terms used in definition of that information.
 	 *
-	 * @param {object} component refers to component to be updated
+	 * @note Overload this method to extend list of properties to be
+	 *       re-evaluated per type of field.
+	 *
+	 * @param {object} reactiveFieldInformation contains reactive properties of field
 	 * @returns {void}
 	 */
-	updateComponentOnDataChanged( component ) {
-		/* eslint-disable no-param-reassign */
-		component.label = this.label;
-		component.required = this.required;
-		component.visible = this.visible;
-		component.hint = this.hint;
-		/* eslint-enable no-param-reassign */
+	updateFieldInformation( reactiveFieldInformation ) {
+		reactiveFieldInformation.label = this.label;
+		reactiveFieldInformation.hint = this.hint;
+		reactiveFieldInformation.required = this.required;
+		reactiveFieldInformation.visible = this.visible;
 	}
 
 	/**
@@ -335,7 +380,7 @@ export default class FormFieldAbstractModel {
 	 *
 	 * @returns {object} description of Vue component
 	 */
-	renderFieldComponent() {
+	_renderFieldComponent() {
 		return {
 			render: function( createElement ) {
 				return createElement( "<!-------->" );
@@ -346,18 +391,16 @@ export default class FormFieldAbstractModel {
 	/**
 	 * Provides definition of field's component.
 	 *
+	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} provides definition of field's component
 	 */
-	renderComponent() {
+	_renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const {
-			label, required, visible, hint, valid, errors, type, qualifiedName,
-			dependsOn,
-		} = that;
+		const { type, qualifiedName, dependsOn } = this;
 
 		return {
 			components: {
-				FieldComponent: this.renderFieldComponent(),
+				FieldComponent: this._renderFieldComponent(),
 			},
 			template: `
 <div v-if="required || visible" :class="[ 
@@ -365,6 +408,7 @@ export default class FormFieldAbstractModel {
 	'type-${type}', 
 	'name-${qualifiedName}',
 	required ? 'mandatory' : 'optional', 
+	pristine ? 'pristine' : 'touched',
 	valid ? 'valid' : 'invalid',
 ]">
 	<span class="label">
@@ -380,25 +424,17 @@ export default class FormFieldAbstractModel {
 </div>
 			`,
 			data() {
-				return {
-					label,
-					required,
-					visible,
-					hint,
-					valid,
-					errors,
-					value: null,
-				};
+				return reactiveFieldInfo;
 			},
 			beforeMount() {
 				this._unsubscribe = this.$store.subscribe( mutation => {
 					if ( mutation.type === "writeInput" ) {
-						const { name } = mutation.payload;
+						const { name, value } = mutation.payload;
 
 						if ( dependsOn.indexOf( name ) > -1 ) {
-							that.valid = null; // drop previous validation of field
+							// current field has term depending on mutated field
 
-							that.updateComponentOnDataChanged( this );
+							that.updateFieldInformation( reactiveFieldInfo );
 
 							const field = this.$refs.fieldComponent;
 							if ( field ) {
@@ -410,10 +446,13 @@ export default class FormFieldAbstractModel {
 						}
 
 						if ( name === qualifiedName ) {
-							that.valid = null; // drop previous validation of field
+							this.value = value;
 
-							this.valid = this.pristine || that.valid;
-							this.errors = this.pristine ? [] : that.errors;
+							this.pristine = false;
+							that.form.pristine = false;
+
+							this.valid = null;
+							const valid = that.valid; // eslint-disable-line no-unused-vars
 						}
 					}
 				} );

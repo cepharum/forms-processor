@@ -44,6 +44,10 @@ export default class FormSequenceModel {
 		const title = Property.localizeValue( definition.title );
 		const description = Property.localizeValue( definition.description );
 
+		const reactiveInfo = {
+			forms: new Array( sequence.length ),
+		};
+
 		Object.defineProperties( this, {
 			/**
 			 * Indicates if sequence is empty
@@ -106,7 +110,11 @@ export default class FormSequenceModel {
 			 * @property {FormModel[]}
 			 * @readonly
 			 */
-			forms: { value: sequence.map( ( formDefinition, index ) => new FormModel( this, formDefinition, index ) ) },
+			forms: { value: sequence.map( ( formDefinition, index ) => {
+				const reactiveFormInfo = reactiveInfo.forms[index] = {};
+
+				return new FormModel( this, formDefinition, index, reactiveFormInfo );
+			} ) },
 		} );
 
 
@@ -135,7 +143,7 @@ export default class FormSequenceModel {
 						throw new TypeError( `rejecting selection of form by invalid index ${index}` );
 					}
 
-					index = parseInt( index ); // eslint-disable-line no-param-reassign
+					index = parseInt( index );
 
 					for ( let i = 0; i < numForms; i++ ) {
 						const form = forms[i];
@@ -240,17 +248,41 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			progressComponent: { value: this._renderProgressComponent() },
-
-			/**
-			 * Provides component rendering controls for navigating sequence of
-			 * forms sequentially.
-			 *
-			 * @name FormSequenceModel#controlComponent
-			 * @property {{render:function}}
-			 * @readonly
-			 */
-			controlComponent: { value: this._renderControlComponent() },
 		} );
+	}
+
+	/**
+	 * Handles notification on named property of form having changed.
+	 *
+	 * This method is available to forms of sequence to notify sequence manager
+	 * to update its components rendering contained forms.
+	 *
+	 * @note The method might be called w/o actually having updated value.
+	 *
+	 * @param {int} formIndex index of form in containing sequence of forms
+	 * @param {string} infoName name of updated property
+	 * @param {*} infoValue new value of updated property
+	 * @returns {void}
+	 */
+	updateFormInfo( formIndex, infoName, infoValue ) {
+		if ( formIndex < 0 || formIndex >= this.forms.length ) {
+			throw new TypeError( `invalid index of form #${formIndex}` );
+		}
+
+		const components = [ this.progressComponent, this.formsComponent ];
+		const numComponents = components.length;
+
+		for ( let i = 0; i < numComponents; i++ ) {
+			const component = components[i];
+			if ( component ) {
+				const info = component.forms[formIndex];
+
+				if ( infoName in info ) {
+					info[infoName] = infoValue;
+					component.$set( component.forms, formIndex, info );
+				}
+			}
+		}
 	}
 
 	/**
@@ -316,6 +348,32 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Describes all forms in sequence by extracting selected properties per
+	 * form to be available in components managed by sequence.
+	 *
+	 * @returns {Array<object>} lists extracted information per form
+	 * @private
+	 */
+	_infos() {
+		const forms = this.forms;
+		const numForms = forms.length;
+
+		const formsInfo = new Array( numForms );
+		for ( let i = 0; i < numForms; i++ ) {
+			const form = forms[i];
+
+			formsInfo[i] = {
+				name: form.name,
+				label: form.label,
+				pristine: form.pristine,
+				valid: form.valid,
+			};
+		}
+
+		return formsInfo;
+	}
+
+	/**
 	 * Describes Vue component listing all forms in sequence.
 	 *
 	 * @returns {{render: function}} description of Vue component
@@ -355,67 +413,39 @@ export default class FormSequenceModel {
 	 * @protected
 	 */
 	_renderProgressComponent() {
-		const forms = this.forms;
-		const numForms = forms.length;
+		const numForms = this.forms.length;
+		const formsInfo = this._infos();
 
 		return {
 			render: function( createElement ) {
+				const forms = this.forms;
 				const steps = new Array( numForms );
+
 				for ( let i = 0; i < numForms; i++ ) {
+					const form = forms[i];
+
+					const classes = ["step"];
+					classes.push( form.pristine ? "pristine" : "touched" );
+					classes.push( form.valid ? "valid" : "invalid" );
+
 					steps[i] = createElement( "a", {
-						class: "nav-step",
+						class: classes.join( " " ),
+						"data-name": form.name,
 					}, [
 						createElement( "span", {
 							class: "number",
 						}, `${i + 1}` ),
-						` ${forms[i].label}`,
+						` ${form.label}`,
 					] );
 				}
 
-				return createElement( "div", {
-					class: "form-sequence",
-				}, [
-					createElement( "nav", {
-						class: "progress",
-					}, steps ),
-				] );
+				return createElement( "nav", {
+					class: "steps",
+				}, steps );
 			},
-		};
-	}
-
-	/**
-	 * Describes Vue component rendering controls for sequentially navigating
-	 * through the sequence of forms.
-	 *
-	 * @returns {{render: function}} description of Vue component
-	 * @protected
-	 */
-	_renderControlComponent() {
-		const forms = this.forms;
-		const numForms = forms.length;
-
-		return {
-			render: function( createElement ) {
-				const steps = new Array( numForms );
-				for ( let i = 0; i < numForms; i++ ) {
-					steps[i] = createElement( "a", {
-						class: "nav-step",
-					}, [
-						createElement( "span", {
-							class: "number",
-						}, `${i + 1}` ),
-						` ${forms[i].label}`,
-					] );
-				}
-
-				return createElement( "div", {
-					class: "form-sequence",
-				}, [
-					createElement( "nav", {
-						class: "progress",
-					}, steps ),
-				] );
-			},
+			data: () => ( {
+				forms: formsInfo,
+			} ),
 		};
 	}
 }

@@ -38,9 +38,11 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/**
 	 * @param {FormModel} form reference on form this field belongs to
 	 * @param {object} definition definition of field
+	 * @param {int} fieldIndex index of field in set of containing form's fields
+	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
-	constructor( form, definition ) {
-		super( form, definition, ["size"] );
+	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
 
 		Object.defineProperties( this, {
 			/**
@@ -63,7 +65,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent() {
+	_renderFieldComponent() {
 		const that = this;
 		const { qualifiedName } = that;
 
