@@ -70,13 +70,12 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		const { qualifiedName } = that;
 
 		return {
+			props: ["value"],
 			render: function( createElement ) {
-				const initialValue = this.$store.getters.formReadInput( qualifiedName );
-
 				return createElement( "input", {
 					domProps: {
 						type: "text",
-						value: this[qualifiedName] || initialValue,
+						value: this.value,
 					},
 					on: {
 						input: event => {
