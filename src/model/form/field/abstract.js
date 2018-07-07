@@ -224,7 +224,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.valid = null;
-		reactiveFieldInfo.value = null;
+		reactiveFieldInfo.value = this.constructor.normalizeValue( this.initial );
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
 		reactiveFieldInfo.errors = [];
