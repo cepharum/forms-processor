@@ -11,7 +11,7 @@ body {
 	flex-direction: row;
 	align-items: stretch;
 
-	font: normal 12pt/18pt sans-serif;
+	font: normal #{$fontSize}/#{$fontLineHeight} #{$fontFamily};
 }
 
 #app {
@@ -30,7 +30,7 @@ body {
 		color: $navBarTextColor;
 
 		.form-progress {
-			padding: 0.5em 0;
+			padding: 1em 0;
 		}
 	}
 

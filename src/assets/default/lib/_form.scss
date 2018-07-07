@@ -2,13 +2,58 @@
 	.field {
 		position: relative;
 		overflow: hidden;
+		display: flex;
+		flex-direction: row;
+
+		+ .field {
+			margin-top: 1em;
+		}
+
+		.label {
+			border-top: 1px solid transparent;
+			padding-top: 0.2em;
+			flex: 1 0 30%;
+			text-align: right;
+			box-sizing: border-box;
+			padding-right: 0.5em;
+
+			&:after {
+				content: ":\00a0";
+			}
+
+			.mandatory {
+				color: red;
+				font-weight: bold;
+				display: inline-block;
+				transform: scale(1.5);
+				padding: 0 0.1em;
+			}
+		}
+
+		.widget {
+			flex: 1 1 70%;
+		}
+
+		input[type=text] {
+			-moz-appearance: none;
+			-webkit-appearance: none;
+			background: rgba(0,0,0,0.05);
+			border: 1px solid rgba(0,0,0,0.1);
+			padding: 0.2em 0.5em;
+			font: inherit;
+			width: 100%;
+			box-sizing: border-box;
+		}
+
+		&.type-info > .widget {
+			border: 1px solid transparent;
+			padding: 0.2em 0.5em;
+		}
 
 		.errors {
 			display: block;
-			background: rgba(255,0,0,0.05);
-			color: #600;
+			color: red;
 			margin: 0 0 0.5em 0;
-			padding: 0.5em 1em;
 
 			.error {
 				display: block;
@@ -16,16 +61,6 @@
 				+ .error {
 					margin-top: 0.5em;
 				}
-			}
-		}
-
-		.label {
-			&:after {
-				content: ":";
-			}
-
-			.mandatory {
-				color: red;
 			}
 		}
 	}

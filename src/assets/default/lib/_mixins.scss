@@ -1,4 +1,6 @@
 @mixin pageWidth {
 	max-width: $desktopPageWidth;
 	margin: 0 auto;
+	padding: 0 1em;
+	box-sizing: border-box;
 }
