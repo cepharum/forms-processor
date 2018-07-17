@@ -30,6 +30,7 @@ import L10N from "../../../service/l10n";
 
 import TermProcessor from "../../term/processor";
 import Property from "../utility/property";
+import Pattern from "../utility/pattern";
 
 const termCache = new Map();
 
@@ -120,6 +121,17 @@ export default class FormFieldAbstractModel {
 					case "type" :
 						// listed definition properties are always considered to have static value
 						getters[propertyName] = { value: propertyValue };
+						break;
+
+					case "pattern" :
+						/**
+						 * Exposes compiled pattern optionally defined on field.
+						 *
+						 * @name FormFieldAbstractModel#pattern
+						 * @property {?CompiledPattern}
+						 * @readonly
+						 */
+						getters[propertyName] = { value: propertyValue == null ? null : Pattern.compilePattern( propertyValue ) };
 						break;
 
 					case "value" :
@@ -226,7 +238,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.valid = null;
 		reactiveFieldInfo.isset = false;
-		reactiveFieldInfo.value = this.constructor.normalizeValue( this.initial );
+		reactiveFieldInfo.value = this.normalizeValue( this.initial );
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
 		reactiveFieldInfo.errors = [];
@@ -282,7 +294,7 @@ export default class FormFieldAbstractModel {
 						}
 					}
 
-					return this.constructor.normalizeValue( this.initial );
+					return this.normalizeValue( this.initial );
 				},
 			},
 
@@ -447,12 +459,17 @@ export default class FormFieldAbstractModel {
 							that.updateFieldInformation( reactiveFieldInfo );
 
 							if ( !itsMe && this.pristine && !this.isset ) {
+								// some other field has been updated
+								// -> my initial value might depend on it, so
+								//    re-assign my initial unless field has been
+								//    adjusted before
 								this.$store.dispatch( "writeInput", {
 									name: qualifiedName,
 									value: that.initial,
 								} );
 							}
 
+							// dispatch "update event" to field's actual component
 							const field = this.$refs.fieldComponent;
 							if ( field ) {
 								const fieldUpdater = field.updateOnDataChanged;
@@ -486,9 +503,10 @@ export default class FormFieldAbstractModel {
 	 * Normalizes provided input value in compliance with current type of field.
 	 *
 	 * @param {*} value some input value or similar
+	 * @param {object} options additional options
 	 * @returns {*} normalized value
 	 */
-	static normalizeValue( value ) {
+	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
 		return value;
 	}
 

@@ -28,8 +28,8 @@
 
 import L10N from "../../../service/l10n";
 import Range from "../utility/range";
-
 import FormFieldAbstractModel from "./abstract";
+import Pattern from "../utility/pattern";
 
 /**
  * Manages single field of form representing text input.
@@ -60,8 +60,15 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static normalizeValue( value ) {
-		return value == null ? "" : String( value );
+	normalizeValue( value, options = {} ) {
+		const fixedValue = value == null ? "" : String( value );
+
+		const pattern = this.pattern;
+		if ( pattern ) {
+			return Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
+		}
+
+		return fixedValue;
 	}
 
 	/** @inheritDoc */
@@ -79,15 +86,24 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					},
 					on: {
 						input: event => {
-							const value = event.target.value;
+							const options = {
+								removing: event.target.value.length < this.value.length,
+							};
+
+							const value = that.normalizeValue( event.target.value, options );
+							if ( value === this.value ) {
+								event.target.value = value;
+								return;
+							}
 
 							reactiveFieldInfo.pristine = false;
 							that.form.pristine = false;
 
 							this.$store.dispatch( "writeInput", {
 								name: qualifiedName,
-								value: that.constructor.normalizeValue( value ),
+								value,
 							} );
+
 							this.$emit( "input", value );
 						},
 					},

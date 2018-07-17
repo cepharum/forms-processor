@@ -339,7 +339,7 @@ export default class FormSequenceModel {
 
 			form.fields.forEach( field => {
 				if ( field.constructor.isInteractive ) {
-					data[formName][field.name] = field.constructor.normalizeValue( field.initial );
+					data[formName][field.name] = field.normalizeValue( field.initial );
 				}
 			} );
 		} );
