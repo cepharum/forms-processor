@@ -26,10 +26,11 @@
  * @author: cepharum
  */
 
+import FormFieldAbstractModel from "./abstract";
 import L10N from "../../../service/l10n";
 import Range from "../utility/range";
-import FormFieldAbstractModel from "./abstract";
 import Pattern from "../utility/pattern";
+import Format from "../utility/format";
 
 /**
  * Manages single field of form representing text input.
@@ -61,11 +62,11 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
-		const fixedValue = value == null ? "" : String( value );
+		let fixedValue = value == null ? "" : String( value );
 
 		const pattern = this.pattern;
 		if ( pattern ) {
-			return Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
+			fixedValue = Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
 		}
 
 		return fixedValue;
@@ -113,7 +114,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	_validate() {
+	_validate( live ) {
 		const errors = super._validate();
 
 		const value = this.value.trim();
@@ -129,6 +130,18 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 			if ( this.size.isAboveRange( value.length ) ) {
 				errors.push( L10N.translations.VALIDATION.TOO_LONG );
+			}
+		}
+
+		let format = this.format;
+		if ( format ) {
+			format = String( format ).trim().toLowerCase();
+
+			if ( typeof Format[format] === "function" ) {
+				const result = Format[format]( value, Boolean( live ), this );
+				if ( result.errors ) {
+					errors.splice( errors.length, 0, ...result.errors );
+				}
 			}
 		}
 

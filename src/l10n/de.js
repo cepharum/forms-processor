@@ -49,5 +49,12 @@ export default function() {
 			NEXT: "Weiter",
 			SUBMIT: "Absenden",
 		},
+		FORMATS: {
+			IP4: {
+				INVALID_CHARACTER: "Eine IPv4-Adresse besteht nur aus Dezimalziffern und Punkten.",
+				INVALID_SIZE: "Eine IPv4-Adresse besteht aus vier durch einzelne Punkte getrennten Zahlen.",
+				INVALID_VALUE: "In einer IPv4-Adresse sind nur Zahlen im Bereich 0 bis 255 zulässig.",
+			},
+		},
 	};
 }

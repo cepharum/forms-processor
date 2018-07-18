@@ -518,9 +518,10 @@ export default class FormFieldAbstractModel {
 	 *       basically should rely on those properties instead of invoking this
 	 *       method (explicitly again).
 	 *
+	 * @param {boolean} live indicates whether validation occurs live while user is providing input
 	 * @returns {string[]} lists validation error messages, empty list indicates valid field
 	 */
-	_validate() {
+	_validate( live ) { // eslint-disable-line no-unused-vars
 		return [];
 	}
 }

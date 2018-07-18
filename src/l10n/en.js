@@ -49,5 +49,12 @@ export default function() {
 			NEXT: "Next",
 			SUBMIT: "Submit",
 		},
+		FORMATS: {
+			IP4: {
+				INVALID_CHARACTER: "An IPv4 address consists of decimal digits and periods, only.",
+				INVALID_SIZE: "An IPv4 address is a sequence of four decimal numbers separated by single periods from each other.",
+				INVALID_VALUE: "Every decimal number in an IPv4 address must be in range 0-255.",
+			},
+		},
 	};
 }
