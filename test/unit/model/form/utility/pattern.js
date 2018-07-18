@@ -34,8 +34,12 @@ import Pattern from "../../../../../src/model/form/utility/pattern";
 const MajorLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const MinorLetters = "abcdefghijklmnopqrstuvwxyz";
 const AllLetters = MajorLetters + MinorLetters;
-const AllNumbers = "0123456789";
+const AllDigits = "0123456789";
+const AllHexDigits = "0123456789ABCDEFabcdef";
 const AllSpecials = ",.-;:_#+*?=)(/&%$§\"!<>[]{}^`´'~|";
+
+const IsDecimalDigit = /^[0-9]$/i;
+const IsHexLetter = /^[a-f]$/i;
 
 
 describe( "Utility class Pattern", () => {
@@ -57,11 +61,11 @@ describe( "Utility class Pattern", () => {
 		} );
 
 		it( "returns separate item in resulting array for every element in provided pattern", () => {
-			Pattern.compilePattern( "X" ).should.be.an.Array().which.has.length( 1 );
-			Pattern.compilePattern( "+X" ).should.be.an.Array().which.has.length( 2 );
-			Pattern.compilePattern( "X_X" ).should.be.an.Array().which.has.length( 3 );
-			Pattern.compilePattern( "X _X" ).should.be.an.Array().which.has.length( 4 );
-			Pattern.compilePattern( "+ X" ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "A" ).should.be.an.Array().which.has.length( 1 );
+			Pattern.compilePattern( "+A" ).should.be.an.Array().which.has.length( 2 );
+			Pattern.compilePattern( "A_A" ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "A _A" ).should.be.an.Array().which.has.length( 4 );
+			Pattern.compilePattern( "+ A" ).should.be.an.Array().which.has.length( 3 );
 		} );
 
 		it( "ignores trailing literals defined in pattern", () => {
@@ -90,7 +94,7 @@ describe( "Utility class Pattern", () => {
 		} );
 
 		it( "returns object per functional element in provided pattern", () => {
-			const source = "XxXX##";
+			const source = "AaAA##";
 			const compiled = Pattern.compilePattern( source );
 
 			compiled.should.be.an.Array().which.has.length( 6 );
@@ -101,11 +105,11 @@ describe( "Utility class Pattern", () => {
 			}
 		} );
 
-		it( "accepts functional character 'X' for case-insensitively matching any latin letter to be formatted uppercase", () => {
-			const compiled = Pattern.compilePattern( "X" );
+		it( "accepts functional character 'A' for case-insensitively matching any latin letter to be formatted uppercase", () => {
+			const compiled = Pattern.compilePattern( "A" );
 
 			compiled.should.be.an.Array();
-			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "X" );
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "A" );
 			compiled[0].should.be.an.Object().which.has.property( "regexp" );
 			compiled[0].should.be.an.Object().which.has.property( "format" );
 			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
@@ -116,10 +120,16 @@ describe( "Utility class Pattern", () => {
 					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[0].regexp.test( char ).should.be.false();
 					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.equal( !IsDecimalDigit.test( char ) );
+					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
 				} );
 
 			AllSpecials.split( "" )
@@ -129,11 +139,11 @@ describe( "Utility class Pattern", () => {
 				} );
 		} );
 
-		it( "accepts functional character 'x' for case-insensitively matching any latin letter to be formatted lowercase", () => {
-			const compiled = Pattern.compilePattern( "x" );
+		it( "accepts functional character 'a' for case-insensitively matching any latin letter to be formatted lowercase", () => {
+			const compiled = Pattern.compilePattern( "a" );
 
 			compiled.should.be.an.Array();
-			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "x" );
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "a" );
 			compiled[0].should.be.an.Object().which.has.property( "regexp" );
 			compiled[0].should.be.an.Object().which.has.property( "format" );
 			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
@@ -144,10 +154,84 @@ describe( "Utility class Pattern", () => {
 					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[0].regexp.test( char ).should.be.false();
 					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.equal( !IsDecimalDigit.test( char ) );
+					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
+				} );
+
+			AllSpecials.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.false();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+		} );
+
+		it( "accepts functional character 'X' for case-insensitively matching any hexadecimal digit to be formatted uppercase", () => {
+			const compiled = Pattern.compilePattern( "X" );
+
+			compiled.should.be.an.Array();
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "X" );
+			compiled[0].should.be.an.Object().which.has.property( "regexp" );
+			compiled[0].should.be.an.Object().which.has.property( "format" );
+			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
+
+			AllLetters.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.equal( IsHexLetter.test( char ) );
+					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
+				} );
+
+			AllDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
+				} );
+
+			AllSpecials.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.false();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+		} );
+
+		it( "accepts functional character 'x' for case-insensitively matching any hexadecimal digit to be formatted lowercase", () => {
+			const compiled = Pattern.compilePattern( "x" );
+
+			compiled.should.be.an.Array();
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "x" );
+			compiled[0].should.be.an.Object().which.has.property( "regexp" );
+			compiled[0].should.be.an.Object().which.has.property( "format" );
+			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
+
+			AllLetters.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.equal( IsHexLetter.test( char ) );
+					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
+				} );
+
+			AllDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
 				} );
 
 			AllSpecials.split( "" )
@@ -172,10 +256,16 @@ describe( "Utility class Pattern", () => {
 					compiled[0].format( char ).should.be.equal( "0" );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[0].regexp.test( char ).should.be.true();
 					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.equal( IsDecimalDigit.test( char ) );
+					compiled[0].format( char ).should.be.equal( IsDecimalDigit.test( char ) ? char : "0" );
 				} );
 
 			AllSpecials.split( "" )
@@ -190,13 +280,13 @@ describe( "Utility class Pattern", () => {
 			( () => Pattern.compilePattern( "??" ) ).should.throw();
 			( () => Pattern.compilePattern( "???" ) ).should.throw();
 
-			( () => Pattern.compilePattern( "X?" ) ).should.not.throw();
-			( () => Pattern.compilePattern( "X??" ) ).should.not.throw();
-			( () => Pattern.compilePattern( "X???" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "A?" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "A??" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "A???" ) ).should.not.throw();
 
-			( () => Pattern.compilePattern( "x?" ) ).should.not.throw();
-			( () => Pattern.compilePattern( "x??" ) ).should.not.throw();
-			( () => Pattern.compilePattern( "x???" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "a?" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "a??" ) ).should.not.throw();
+			( () => Pattern.compilePattern( "a???" ) ).should.not.throw();
 
 			( () => Pattern.compilePattern( "#?" ) ).should.not.throw();
 			( () => Pattern.compilePattern( "#??" ) ).should.not.throw();
@@ -207,22 +297,22 @@ describe( "Utility class Pattern", () => {
 			( () => Pattern.compilePattern( "-?" ) ).should.throw();
 			( () => Pattern.compilePattern( "-??" ) ).should.throw();
 			( () => Pattern.compilePattern( "-???" ) ).should.throw();
-			( () => Pattern.compilePattern( "X-?" ) ).should.throw();
-			( () => Pattern.compilePattern( "X-??" ) ).should.throw();
-			( () => Pattern.compilePattern( "X-???" ) ).should.throw();
-			( () => Pattern.compilePattern( "x-?" ) ).should.throw();
-			( () => Pattern.compilePattern( "x-??" ) ).should.throw();
-			( () => Pattern.compilePattern( "x-???" ) ).should.throw();
+			( () => Pattern.compilePattern( "A-?" ) ).should.throw();
+			( () => Pattern.compilePattern( "A-??" ) ).should.throw();
+			( () => Pattern.compilePattern( "A-???" ) ).should.throw();
+			( () => Pattern.compilePattern( "a-?" ) ).should.throw();
+			( () => Pattern.compilePattern( "a-??" ) ).should.throw();
+			( () => Pattern.compilePattern( "a-???" ) ).should.throw();
 			( () => Pattern.compilePattern( "#-?" ) ).should.throw();
 			( () => Pattern.compilePattern( "#-??" ) ).should.throw();
 			( () => Pattern.compilePattern( "#-???" ) ).should.throw();
 		} );
 
-		it( "accepts functional character '?' after functional character 'X' adopting the latter one's behaviour but marking it optional", () => {
-			const compiled = Pattern.compilePattern( "X???" );
+		it( "accepts functional character '?' after functional character 'A' adopting the latter one's behaviour but marking it optional", () => {
+			const compiled = Pattern.compilePattern( "A???" );
 
 			compiled.should.be.an.Array();
-			compiled[3].should.be.an.Object().which.has.property( "code" ).which.is.equal( "X" );
+			compiled[3].should.be.an.Object().which.has.property( "code" ).which.is.equal( "A" );
 			compiled[3].should.be.an.Object().which.has.property( "regexp" );
 			compiled[3].should.be.an.Object().which.has.property( "format" );
 			compiled[3].should.be.an.Object().which.has.property( "optional" ).which.is.true();
@@ -233,7 +323,7 @@ describe( "Utility class Pattern", () => {
 					compiled[3].format( char ).should.be.equal( char.toUpperCase() );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[3].regexp.test( char ).should.be.false();
 					compiled[3].format( char ).should.be.equal( char );
@@ -246,11 +336,11 @@ describe( "Utility class Pattern", () => {
 				} );
 		} );
 
-		it( "accepts functional character '?' after functional character 'x' adopting the latter one's behaviour but marking it optional", () => {
-			const compiled = Pattern.compilePattern( "x???" );
+		it( "accepts functional character '?' after functional character 'a' adopting the latter one's behaviour but marking it optional", () => {
+			const compiled = Pattern.compilePattern( "a???" );
 
 			compiled.should.be.an.Array();
-			compiled[3].should.be.an.Object().which.has.property( "code" ).which.is.equal( "x" );
+			compiled[3].should.be.an.Object().which.has.property( "code" ).which.is.equal( "a" );
 			compiled[3].should.be.an.Object().which.has.property( "regexp" );
 			compiled[3].should.be.an.Object().which.has.property( "format" );
 			compiled[3].should.be.an.Object().which.has.property( "optional" ).which.is.true();
@@ -261,7 +351,7 @@ describe( "Utility class Pattern", () => {
 					compiled[3].format( char ).should.be.equal( char.toLowerCase() );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[3].regexp.test( char ).should.be.false();
 					compiled[3].format( char ).should.be.equal( char );
@@ -289,7 +379,7 @@ describe( "Utility class Pattern", () => {
 					compiled[3].format( char ).should.be.equal( "0" );
 				} );
 
-			AllNumbers.split( "" )
+			AllDigits.split( "" )
 				.forEach( char => {
 					compiled[3].regexp.test( char ).should.be.true();
 					compiled[3].format( char ).should.be.equal( char );
@@ -346,8 +436,8 @@ describe( "Utility class Pattern", () => {
 		} );
 
 		it( "handles functional characters provided in lists of optional literal characters as literal characters", () => {
-			Pattern.compilePattern( "[X]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["X"]] );
-			Pattern.compilePattern( "[x]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["x"]] );
+			Pattern.compilePattern( "[A]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["A"]] );
+			Pattern.compilePattern( "[a]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["a"]] );
 			Pattern.compilePattern( "[#]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["#"]] );
 			Pattern.compilePattern( "[?]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["?"]] );
 			Pattern.compilePattern( "[[]", { keepTrailingLiterals: true } ).should.be.an.Array().which.is.deepEqual( [["["]] );
@@ -356,24 +446,24 @@ describe( "Utility class Pattern", () => {
 
 		it( "ignores leading/trailing whitespace in provided pattern", () => {
 			Pattern.compilePattern( "   " ).should.be.an.Array().which.is.empty();
-			Pattern.compilePattern( " \nX\r " ).should.be.an.Array().which.has.length( 1 );
+			Pattern.compilePattern( " \nA\r " ).should.be.an.Array().which.has.length( 1 );
 			Pattern.compilePattern( "\f - \t" ).should.be.an.Array().which.is.empty();
 			Pattern.compilePattern( "\f - \t", { keepTrailingLiterals: true } ).should.be.an.Array().which.has.length( 1 );
 		} );
 
 		it( "reduces inner whitespace characters in a provided pattern", () => {
-			Pattern.compilePattern( "+  X" ).should.be.an.Array().which.has.length( 3 );
-			Pattern.compilePattern( "+ \f \t X" ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "+  A" ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "+ \f \t A" ).should.be.an.Array().which.has.length( 3 );
 
-			Pattern.compilePattern( "X  _", { keepTrailingLiterals: true } ).should.be.an.Array().which.has.length( 3 );
-			Pattern.compilePattern( "X \r\n _", { keepTrailingLiterals: true } ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "A  _", { keepTrailingLiterals: true } ).should.be.an.Array().which.has.length( 3 );
+			Pattern.compilePattern( "A \r\n _", { keepTrailingLiterals: true } ).should.be.an.Array().which.has.length( 3 );
 		} );
 
 		it( "normalizes reduced inner whitespace characters in a provided pattern", () => {
-			Pattern.compilePattern( "+ \f \t X" )[1].should.be.an.Array().which.is.eql( [" "] );
+			Pattern.compilePattern( "+ \f \t A" )[1].should.be.an.Array().which.is.eql( [" "] );
 
-			Pattern.compilePattern( "X  _", { keepTrailingLiterals: true } )[1].should.be.an.Array().which.is.eql( [" "] );
-			Pattern.compilePattern( "X \r\n _", { keepTrailingLiterals: true } )[1].should.be.an.Array().which.is.eql( [" "] );
+			Pattern.compilePattern( "A  _", { keepTrailingLiterals: true } )[1].should.be.an.Array().which.is.eql( [" "] );
+			Pattern.compilePattern( "A \r\n _", { keepTrailingLiterals: true } )[1].should.be.an.Array().which.is.eql( [" "] );
 		} );
 	} );
 
@@ -396,11 +486,11 @@ describe( "Utility class Pattern", () => {
 			} );
 
 			it( "returns empty string on empty input", () => {
-				Pattern.parse( "", "XXXXXX" ).should.be.String().which.is.empty();
+				Pattern.parse( "", "AAAAAA" ).should.be.String().which.is.empty();
 			} );
 
 			it( "returns empty string on empty pattern", () => {
-				Pattern.parse( "XXXXXX", "" ).should.be.String().which.is.empty();
+				Pattern.parse( "AAAAAA", "" ).should.be.String().which.is.empty();
 			} );
 
 			it( "returns empty string on input and/or pattern consisting of whitespace, only", () => {
@@ -419,14 +509,14 @@ describe( "Utility class Pattern", () => {
 		describe( "extracts mandatory sequence of letters that", () => {
 			it( "is matching size of pattern", () => {
 				[
-					[ "A", "X", "A" ],
-					[ "a", "X", "A" ],
-					[ "ABCD", "XXXX", "ABCD" ],
-					[ "abcd", "XXXX", "ABCD" ],
-					[ "A", "x", "a" ],
-					[ "a", "x", "a" ],
-					[ "ABCD", "xxxx", "abcd" ],
-					[ "abcd", "xxxx", "abcd" ],
+					[ "A", "A", "A" ],
+					[ "a", "A", "A" ],
+					[ "ABCD", "AAAA", "ABCD" ],
+					[ "abcd", "AAAA", "ABCD" ],
+					[ "A", "a", "a" ],
+					[ "a", "a", "a" ],
+					[ "ABCD", "aaaa", "abcd" ],
+					[ "abcd", "aaaa", "abcd" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -437,10 +527,10 @@ describe( "Utility class Pattern", () => {
 
 			it( "is shorter than pattern", () => {
 				[
-					[ "AB", "XXXX", "AB" ],
-					[ "ab", "XXXX", "AB" ],
-					[ "AB", "xxxx", "ab" ],
-					[ "ab", "xxxx", "ab" ],
+					[ "AB", "AAAA", "AB" ],
+					[ "ab", "AAAA", "AB" ],
+					[ "AB", "aaaa", "ab" ],
+					[ "ab", "aaaa", "ab" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -452,10 +542,10 @@ describe( "Utility class Pattern", () => {
 
 			it( "is truncated to size of pattern", () => {
 				[
-					[ "ABCD", "XX", "AB" ],
-					[ "abcd", "XX", "AB" ],
-					[ "ABCD", "xx", "ab" ],
-					[ "abcd", "xx", "ab" ],
+					[ "ABCD", "AA", "AB" ],
+					[ "abcd", "AA", "AB" ],
+					[ "ABCD", "aa", "ab" ],
+					[ "abcd", "aa", "ab" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -469,10 +559,10 @@ describe( "Utility class Pattern", () => {
 		describe( "extracts partially optional sequence of letters that", () => {
 			it( "is matching size of pattern", () => {
 				[
-					[ "ABCD", "X???", "ABCD" ],
-					[ "abcd", "X???", "ABCD" ],
-					[ "ABCD", "x???", "abcd" ],
-					[ "abcd", "x???", "abcd" ],
+					[ "ABCD", "A???", "ABCD" ],
+					[ "abcd", "A???", "ABCD" ],
+					[ "ABCD", "a???", "abcd" ],
+					[ "abcd", "a???", "abcd" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -483,10 +573,10 @@ describe( "Utility class Pattern", () => {
 
 			it( "is shorter than pattern", () => {
 				[
-					[ "AB", "X???", "AB" ],
-					[ "ab", "X???", "AB" ],
-					[ "AB", "x???", "ab" ],
-					[ "ab", "x???", "ab" ],
+					[ "AB", "A???", "AB" ],
+					[ "ab", "A???", "AB" ],
+					[ "AB", "a???", "ab" ],
+					[ "ab", "a???", "ab" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -497,10 +587,10 @@ describe( "Utility class Pattern", () => {
 
 			it( "is truncated to size of pattern", () => {
 				[
-					[ "ABCD", "X?", "AB" ],
-					[ "abcd", "X?", "AB" ],
-					[ "ABCD", "x?", "ab" ],
-					[ "abcd", "x?", "ab" ],
+					[ "ABCD", "A?", "AB" ],
+					[ "abcd", "A?", "AB" ],
+					[ "ABCD", "a?", "ab" ],
+					[ "abcd", "a?", "ab" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -515,22 +605,22 @@ describe( "Utility class Pattern", () => {
 			describe( "contains same number of letters and", () => {
 				it( "no literals", () => {
 					[
-						[ "ABCD", "XX XX", "AB CD" ],
-						[ "abcd", "XX XX", "AB CD" ],
-						[ "ABCD", "xx xx", "ab cd" ],
-						[ "abcd", "xx xx", "ab cd" ],
-						[ "ABCD", "XX-XX", "AB-CD" ],
-						[ "abcd", "XX-XX", "AB-CD" ],
-						[ "ABCD", "xx-xx", "ab-cd" ],
-						[ "abcd", "xx-xx", "ab-cd" ],
-						[ "ABCD", "XX[ -]XX", "AB CD" ],
-						[ "abcd", "XX[ -]XX", "AB CD" ],
-						[ "ABCD", "xx[ -]xx", "ab cd" ],
-						[ "abcd", "xx[ -]xx", "ab cd" ],
-						[ "ABCD", "XX[- ]XX", "AB-CD" ],
-						[ "abcd", "XX[- ]XX", "AB-CD" ],
-						[ "ABCD", "xx[- ]xx", "ab-cd" ],
-						[ "abcd", "xx[- ]xx", "ab-cd" ],
+						[ "ABCD", "AA AA", "AB CD" ],
+						[ "abcd", "AA AA", "AB CD" ],
+						[ "ABCD", "aa aa", "ab cd" ],
+						[ "abcd", "aa aa", "ab cd" ],
+						[ "ABCD", "AA-AA", "AB-CD" ],
+						[ "abcd", "AA-AA", "AB-CD" ],
+						[ "ABCD", "aa-aa", "ab-cd" ],
+						[ "abcd", "aa-aa", "ab-cd" ],
+						[ "ABCD", "AA[ -]AA", "AB CD" ],
+						[ "abcd", "AA[ -]AA", "AB CD" ],
+						[ "ABCD", "aa[ -]aa", "ab cd" ],
+						[ "abcd", "aa[ -]aa", "ab cd" ],
+						[ "ABCD", "AA[- ]AA", "AB-CD" ],
+						[ "abcd", "AA[- ]AA", "AB-CD" ],
+						[ "ABCD", "aa[- ]aa", "ab-cd" ],
+						[ "abcd", "aa[- ]aa", "ab-cd" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -541,22 +631,22 @@ describe( "Utility class Pattern", () => {
 
 				it( "expected literals", () => {
 					[
-						[ "AB CD", "XX XX", "AB CD" ],
-						[ "ab cd", "XX XX", "AB CD" ],
-						[ "AB CD", "xx xx", "ab cd" ],
-						[ "ab cd", "xx xx", "ab cd" ],
-						[ "AB-CD", "XX-XX", "AB-CD" ],
-						[ "ab-cd", "XX-XX", "AB-CD" ],
-						[ "AB-CD", "xx-xx", "ab-cd" ],
-						[ "ab-cd", "xx-xx", "ab-cd" ],
-						[ "AB CD", "XX[ -]XX", "AB CD" ],
-						[ "ab cd", "XX[ -]XX", "AB CD" ],
-						[ "AB CD", "xx[ -]xx", "ab cd" ],
-						[ "ab cd", "xx[ -]xx", "ab cd" ],
-						[ "AB-CD", "XX[ -]XX", "AB-CD" ],
-						[ "ab-cd", "XX[ -]XX", "AB-CD" ],
-						[ "AB-CD", "xx[ -]xx", "ab-cd" ],
-						[ "ab-cd", "xx[ -]xx", "ab-cd" ],
+						[ "AB CD", "AA AA", "AB CD" ],
+						[ "ab cd", "AA AA", "AB CD" ],
+						[ "AB CD", "aa aa", "ab cd" ],
+						[ "ab cd", "aa aa", "ab cd" ],
+						[ "AB-CD", "AA-AA", "AB-CD" ],
+						[ "ab-cd", "AA-AA", "AB-CD" ],
+						[ "AB-CD", "aa-aa", "ab-cd" ],
+						[ "ab-cd", "aa-aa", "ab-cd" ],
+						[ "AB CD", "AA[ -]AA", "AB CD" ],
+						[ "ab cd", "AA[ -]AA", "AB CD" ],
+						[ "AB CD", "aa[ -]aa", "ab cd" ],
+						[ "ab cd", "aa[ -]aa", "ab cd" ],
+						[ "AB-CD", "AA[ -]AA", "AB-CD" ],
+						[ "ab-cd", "AA[ -]AA", "AB-CD" ],
+						[ "AB-CD", "aa[ -]aa", "ab-cd" ],
+						[ "ab-cd", "aa[ -]aa", "ab-cd" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -567,26 +657,26 @@ describe( "Utility class Pattern", () => {
 
 				it( "unexpected literals to be ignored and replaced w/ (first) expected one", () => {
 					[
-						[ "AB-CD", "XX XX", "AB CD" ],
-						[ "ab-cd", "XX XX", "AB CD" ],
-						[ "AB-CD", "xx xx", "ab cd" ],
-						[ "ab-cd", "xx xx", "ab cd" ],
-						[ "AB CD", "XX-XX", "AB-CD" ],
-						[ "ab cd", "XX-XX", "AB-CD" ],
-						[ "AB CD", "xx-xx", "ab-cd" ],
-						[ "ab cd", "xx-xx", "ab-cd" ],
-						[ "AB_CD", "XX-XX", "AB-CD" ],
-						[ "ab.cd", "XX-XX", "AB-CD" ],
-						[ "AB/CD", "xx-xx", "ab-cd" ],
-						[ "ab!cd", "xx-xx", "ab-cd" ],
-						[ "AB_CD", "XX[- ]XX", "AB-CD" ],
-						[ "ab.cd", "XX[- ]XX", "AB-CD" ],
-						[ "AB/CD", "xx[- ]xx", "ab-cd" ],
-						[ "ab!cd", "xx[- ]xx", "ab-cd" ],
-						[ "AB_CD", "XX[ -]XX", "AB CD" ],
-						[ "ab.cd", "XX[ -]XX", "AB CD" ],
-						[ "AB/CD", "xx[ -]xx", "ab cd" ],
-						[ "ab!cd", "xx[ -]xx", "ab cd" ],
+						[ "AB-CD", "AA AA", "AB CD" ],
+						[ "ab-cd", "AA AA", "AB CD" ],
+						[ "AB-CD", "aa aa", "ab cd" ],
+						[ "ab-cd", "aa aa", "ab cd" ],
+						[ "AB CD", "AA-AA", "AB-CD" ],
+						[ "ab cd", "AA-AA", "AB-CD" ],
+						[ "AB CD", "aa-aa", "ab-cd" ],
+						[ "ab cd", "aa-aa", "ab-cd" ],
+						[ "AB_CD", "AA-AA", "AB-CD" ],
+						[ "ab.cd", "AA-AA", "AB-CD" ],
+						[ "AB/CD", "aa-aa", "ab-cd" ],
+						[ "ab!cd", "aa-aa", "ab-cd" ],
+						[ "AB_CD", "AA[- ]AA", "AB-CD" ],
+						[ "ab.cd", "AA[- ]AA", "AB-CD" ],
+						[ "AB/CD", "aa[- ]aa", "ab-cd" ],
+						[ "ab!cd", "aa[- ]aa", "ab-cd" ],
+						[ "AB_CD", "AA[ -]AA", "AB CD" ],
+						[ "ab.cd", "AA[ -]AA", "AB CD" ],
+						[ "AB/CD", "aa[ -]aa", "ab cd" ],
+						[ "ab!cd", "aa[ -]aa", "ab cd" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -599,22 +689,22 @@ describe( "Utility class Pattern", () => {
 			describe( "contains less letters than _required_ by pattern and", () => {
 				it( "no literals", () => {
 					[
-						[ "ABC", "XX XX", "AB C" ],
-						[ "abc", "XX XX", "AB C" ],
-						[ "ABC", "xx xx", "ab c" ],
-						[ "abc", "xx xx", "ab c" ],
-						[ "ABC", "XX-XX", "AB-C" ],
-						[ "abc", "XX-XX", "AB-C" ],
-						[ "ABC", "xx-xx", "ab-c" ],
-						[ "abc", "xx-xx", "ab-c" ],
-						[ "ABC", "XX[ -]XX", "AB C" ],
-						[ "abc", "XX[ -]XX", "AB C" ],
-						[ "ABC", "xx[ -]xx", "ab c" ],
-						[ "abc", "xx[ -]xx", "ab c" ],
-						[ "ABC", "XX[- ]XX", "AB-C" ],
-						[ "abc", "XX[- ]XX", "AB-C" ],
-						[ "ABC", "xx[- ]xx", "ab-c" ],
-						[ "abc", "xx[- ]xx", "ab-c" ],
+						[ "ABC", "AA AA", "AB C" ],
+						[ "abc", "AA AA", "AB C" ],
+						[ "ABC", "aa aa", "ab c" ],
+						[ "abc", "aa aa", "ab c" ],
+						[ "ABC", "AA-AA", "AB-C" ],
+						[ "abc", "AA-AA", "AB-C" ],
+						[ "ABC", "aa-aa", "ab-c" ],
+						[ "abc", "aa-aa", "ab-c" ],
+						[ "ABC", "AA[ -]AA", "AB C" ],
+						[ "abc", "AA[ -]AA", "AB C" ],
+						[ "ABC", "aa[ -]aa", "ab c" ],
+						[ "abc", "aa[ -]aa", "ab c" ],
+						[ "ABC", "AA[- ]AA", "AB-C" ],
+						[ "abc", "AA[- ]AA", "AB-C" ],
+						[ "ABC", "aa[- ]aa", "ab-c" ],
+						[ "abc", "aa[- ]aa", "ab-c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -625,22 +715,22 @@ describe( "Utility class Pattern", () => {
 
 				it( "expected literals", () => {
 					[
-						[ "AB C", "XX XX", "AB C" ],
-						[ "ab c", "XX XX", "AB C" ],
-						[ "AB C", "xx xx", "ab c" ],
-						[ "ab c", "xx xx", "ab c" ],
-						[ "AB-C", "XX-XX", "AB-C" ],
-						[ "ab-c", "XX-XX", "AB-C" ],
-						[ "AB-C", "xx-xx", "ab-c" ],
-						[ "ab-c", "xx-xx", "ab-c" ],
-						[ "AB C", "XX[ -]XX", "AB C" ],
-						[ "ab c", "XX[ -]XX", "AB C" ],
-						[ "AB C", "xx[ -]xx", "ab c" ],
-						[ "ab c", "xx[ -]xx", "ab c" ],
-						[ "AB-C", "XX[ -]XX", "AB-C" ],
-						[ "ab-c", "XX[ -]XX", "AB-C" ],
-						[ "AB-C", "xx[ -]xx", "ab-c" ],
-						[ "ab-c", "xx[ -]xx", "ab-c" ],
+						[ "AB C", "AA AA", "AB C" ],
+						[ "ab c", "AA AA", "AB C" ],
+						[ "AB C", "aa aa", "ab c" ],
+						[ "ab c", "aa aa", "ab c" ],
+						[ "AB-C", "AA-AA", "AB-C" ],
+						[ "ab-c", "AA-AA", "AB-C" ],
+						[ "AB-C", "aa-aa", "ab-c" ],
+						[ "ab-c", "aa-aa", "ab-c" ],
+						[ "AB C", "AA[ -]AA", "AB C" ],
+						[ "ab c", "AA[ -]AA", "AB C" ],
+						[ "AB C", "aa[ -]aa", "ab c" ],
+						[ "ab c", "aa[ -]aa", "ab c" ],
+						[ "AB-C", "AA[ -]AA", "AB-C" ],
+						[ "ab-c", "AA[ -]AA", "AB-C" ],
+						[ "AB-C", "aa[ -]aa", "ab-c" ],
+						[ "ab-c", "aa[ -]aa", "ab-c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -651,26 +741,26 @@ describe( "Utility class Pattern", () => {
 
 				it( "unexpected literals to be ignored and replaced w/ (first) expected one", () => {
 					[
-						[ "AB-C", "XX XX", "AB C" ],
-						[ "ab-c", "XX XX", "AB C" ],
-						[ "AB-C", "xx xx", "ab c" ],
-						[ "ab-c", "xx xx", "ab c" ],
-						[ "AB C", "XX-XX", "AB-C" ],
-						[ "ab c", "XX-XX", "AB-C" ],
-						[ "AB C", "xx-xx", "ab-c" ],
-						[ "ab c", "xx-xx", "ab-c" ],
-						[ "AB_C", "XX-XX", "AB-C" ],
-						[ "ab.c", "XX-XX", "AB-C" ],
-						[ "AB/C", "xx-xx", "ab-c" ],
-						[ "ab!c", "xx-xx", "ab-c" ],
-						[ "AB_C", "XX[- ]XX", "AB-C" ],
-						[ "ab.c", "XX[- ]XX", "AB-C" ],
-						[ "AB/C", "xx[- ]xx", "ab-c" ],
-						[ "ab!c", "xx[- ]xx", "ab-c" ],
-						[ "AB_C", "XX[ -]XX", "AB C" ],
-						[ "ab.c", "XX[ -]XX", "AB C" ],
-						[ "AB/C", "xx[ -]xx", "ab c" ],
-						[ "ab!c", "xx[ -]xx", "ab c" ],
+						[ "AB-C", "AA AA", "AB C" ],
+						[ "ab-c", "AA AA", "AB C" ],
+						[ "AB-C", "aa aa", "ab c" ],
+						[ "ab-c", "aa aa", "ab c" ],
+						[ "AB C", "AA-AA", "AB-C" ],
+						[ "ab c", "AA-AA", "AB-C" ],
+						[ "AB C", "aa-aa", "ab-c" ],
+						[ "ab c", "aa-aa", "ab-c" ],
+						[ "AB_C", "AA-AA", "AB-C" ],
+						[ "ab.c", "AA-AA", "AB-C" ],
+						[ "AB/C", "aa-aa", "ab-c" ],
+						[ "ab!c", "aa-aa", "ab-c" ],
+						[ "AB_C", "AA[- ]AA", "AB-C" ],
+						[ "ab.c", "AA[- ]AA", "AB-C" ],
+						[ "AB/C", "aa[- ]aa", "ab-c" ],
+						[ "ab!c", "aa[- ]aa", "ab-c" ],
+						[ "AB_C", "AA[ -]AA", "AB C" ],
+						[ "ab.c", "AA[ -]AA", "AB C" ],
+						[ "AB/C", "aa[ -]aa", "ab c" ],
+						[ "ab!c", "aa[ -]aa", "ab c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -683,22 +773,22 @@ describe( "Utility class Pattern", () => {
 			describe( "contains less letters than _supported_ by pattern and", () => {
 				it( "no literals", () => {
 					[
-						[ "ABC", "XX X?", "AB C" ],
-						[ "abc", "XX X?", "AB C" ],
-						[ "ABC", "xx x?", "ab c" ],
-						[ "abc", "xx x?", "ab c" ],
-						[ "ABC", "XX-X?", "AB-C" ],
-						[ "abc", "XX-X?", "AB-C" ],
-						[ "ABC", "xx-x?", "ab-c" ],
-						[ "abc", "xx-x?", "ab-c" ],
-						[ "ABC", "XX[ -]X?", "AB C" ],
-						[ "abc", "XX[ -]X?", "AB C" ],
-						[ "ABC", "xx[ -]x?", "ab c" ],
-						[ "abc", "xx[ -]x?", "ab c" ],
-						[ "ABC", "XX[- ]X?", "AB-C" ],
-						[ "abc", "XX[- ]X?", "AB-C" ],
-						[ "ABC", "xx[- ]x?", "ab-c" ],
-						[ "abc", "xx[- ]x?", "ab-c" ],
+						[ "ABC", "AA A?", "AB C" ],
+						[ "abc", "AA A?", "AB C" ],
+						[ "ABC", "aa a?", "ab c" ],
+						[ "abc", "aa a?", "ab c" ],
+						[ "ABC", "AA-A?", "AB-C" ],
+						[ "abc", "AA-A?", "AB-C" ],
+						[ "ABC", "aa-a?", "ab-c" ],
+						[ "abc", "aa-a?", "ab-c" ],
+						[ "ABC", "AA[ -]A?", "AB C" ],
+						[ "abc", "AA[ -]A?", "AB C" ],
+						[ "ABC", "aa[ -]a?", "ab c" ],
+						[ "abc", "aa[ -]a?", "ab c" ],
+						[ "ABC", "AA[- ]A?", "AB-C" ],
+						[ "abc", "AA[- ]A?", "AB-C" ],
+						[ "ABC", "aa[- ]a?", "ab-c" ],
+						[ "abc", "aa[- ]a?", "ab-c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -709,22 +799,22 @@ describe( "Utility class Pattern", () => {
 
 				it( "expected literals", () => {
 					[
-						[ "AB C", "XX X?", "AB C" ],
-						[ "ab c", "XX X?", "AB C" ],
-						[ "AB C", "xx x?", "ab c" ],
-						[ "ab c", "xx x?", "ab c" ],
-						[ "AB-C", "XX-X?", "AB-C" ],
-						[ "ab-c", "XX-X?", "AB-C" ],
-						[ "AB-C", "xx-x?", "ab-c" ],
-						[ "ab-c", "xx-x?", "ab-c" ],
-						[ "AB C", "XX[ -]X?", "AB C" ],
-						[ "ab c", "XX[ -]X?", "AB C" ],
-						[ "AB C", "xx[ -]x?", "ab c" ],
-						[ "ab c", "xx[ -]x?", "ab c" ],
-						[ "AB-C", "XX[- ]X?", "AB-C" ],
-						[ "ab-c", "XX[- ]X?", "AB-C" ],
-						[ "AB-C", "xx[- ]x?", "ab-c" ],
-						[ "ab-c", "xx[- ]x?", "ab-c" ],
+						[ "AB C", "AA A?", "AB C" ],
+						[ "ab c", "AA A?", "AB C" ],
+						[ "AB C", "aa a?", "ab c" ],
+						[ "ab c", "aa a?", "ab c" ],
+						[ "AB-C", "AA-A?", "AB-C" ],
+						[ "ab-c", "AA-A?", "AB-C" ],
+						[ "AB-C", "aa-a?", "ab-c" ],
+						[ "ab-c", "aa-a?", "ab-c" ],
+						[ "AB C", "AA[ -]A?", "AB C" ],
+						[ "ab c", "AA[ -]A?", "AB C" ],
+						[ "AB C", "aa[ -]a?", "ab c" ],
+						[ "ab c", "aa[ -]a?", "ab c" ],
+						[ "AB-C", "AA[- ]A?", "AB-C" ],
+						[ "ab-c", "AA[- ]A?", "AB-C" ],
+						[ "AB-C", "aa[- ]a?", "ab-c" ],
+						[ "ab-c", "aa[- ]a?", "ab-c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -735,26 +825,26 @@ describe( "Utility class Pattern", () => {
 
 				it( "unexpected literals to be ignored and replaced w/ (first) expected one", () => {
 					[
-						[ "AB-C", "XX X?", "AB C" ],
-						[ "ab-c", "XX X?", "AB C" ],
-						[ "AB-C", "xx x?", "ab c" ],
-						[ "ab-c", "xx x?", "ab c" ],
-						[ "AB C", "XX-X?", "AB-C" ],
-						[ "ab c", "XX-X?", "AB-C" ],
-						[ "AB C", "xx-x?", "ab-c" ],
-						[ "ab c", "xx-x?", "ab-c" ],
-						[ "AB_C", "XX-XX", "AB-C" ],
-						[ "ab.c", "XX-XX", "AB-C" ],
-						[ "AB/C", "xx-xx", "ab-c" ],
-						[ "ab!c", "xx-xx", "ab-c" ],
-						[ "AB_C", "XX[- ]XX", "AB-C" ],
-						[ "ab.c", "XX[- ]XX", "AB-C" ],
-						[ "AB/C", "xx[- ]xx", "ab-c" ],
-						[ "ab!c", "xx[- ]xx", "ab-c" ],
-						[ "AB_C", "XX[ -]XX", "AB C" ],
-						[ "ab.c", "XX[ -]XX", "AB C" ],
-						[ "AB/C", "xx[ -]xx", "ab c" ],
-						[ "ab!c", "xx[ -]xx", "ab c" ],
+						[ "AB-C", "AA A?", "AB C" ],
+						[ "ab-c", "AA A?", "AB C" ],
+						[ "AB-C", "aa a?", "ab c" ],
+						[ "ab-c", "aa a?", "ab c" ],
+						[ "AB C", "AA-A?", "AB-C" ],
+						[ "ab c", "AA-A?", "AB-C" ],
+						[ "AB C", "aa-a?", "ab-c" ],
+						[ "ab c", "aa-a?", "ab-c" ],
+						[ "AB_C", "AA-A?", "AB-C" ],
+						[ "ab.c", "AA-A?", "AB-C" ],
+						[ "AB/C", "aa-a?", "ab-c" ],
+						[ "ab!c", "aa-a?", "ab-c" ],
+						[ "AB_C", "AA[- ]A?", "AB-C" ],
+						[ "ab.c", "AA[- ]A?", "AB-C" ],
+						[ "AB/C", "aa[- ]a?", "ab-c" ],
+						[ "ab!c", "aa[- ]a?", "ab-c" ],
+						[ "AB_C", "AA[ -]A?", "AB C" ],
+						[ "ab.c", "AA[ -]A?", "AB C" ],
+						[ "AB/C", "aa[ -]a?", "ab c" ],
+						[ "ab!c", "aa[ -]a?", "ab c" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -766,14 +856,14 @@ describe( "Utility class Pattern", () => {
 
 			it( "prematurely provides _expected_ literal on a pattern _requiring_ additional input preceding that expected literal", () => {
 				[
-					[ "A BC", "XX X", "AB C" ],
-					[ "a bc", "XX X", "AB C" ],
-					[ "A BC", "xx x", "ab c" ],
-					[ "a bc", "xx x", "ab c" ],
-					[ "A-BC", "XX-X", "AB-C" ],
-					[ "a-bc", "XX-X", "AB-C" ],
-					[ "A-BC", "xx-x", "ab-c" ],
-					[ "a-bc", "xx-x", "ab-c" ],
+					[ "A BC", "AA A", "AB C" ],
+					[ "a bc", "AA A", "AB C" ],
+					[ "A BC", "aa a", "ab c" ],
+					[ "a bc", "aa a", "ab c" ],
+					[ "A-BC", "AA-A", "AB-C" ],
+					[ "a-bc", "AA-A", "AB-C" ],
+					[ "A-BC", "aa-a", "ab-c" ],
+					[ "a-bc", "aa-a", "ab-c" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -785,18 +875,18 @@ describe( "Utility class Pattern", () => {
 
 			it( "prematurely provides _unexpected_ literal on a pattern _requiring_ additional input preceding the expected literal", () => {
 				[
-					[ "A-BC", "XX X", "AB C" ],
-					[ "a-bc", "XX X", "AB C" ],
-					[ "A-BC", "xx x", "ab c" ],
-					[ "a-bc", "xx x", "ab c" ],
-					[ "A BC", "XX-X", "AB-C" ],
-					[ "a bc", "XX-X", "AB-C" ],
-					[ "A BC", "xx-x", "ab-c" ],
-					[ "a bc", "xx-x", "ab-c" ],
-					[ "A_BC", "XX-X", "AB-C" ],
-					[ "a.bc", "XX-X", "AB-C" ],
-					[ "A/BC", "xx-x", "ab-c" ],
-					[ "a!bc", "xx-x", "ab-c" ],
+					[ "A-BC", "AA A", "AB C" ],
+					[ "a-bc", "AA A", "AB C" ],
+					[ "A-BC", "aa a", "ab c" ],
+					[ "a-bc", "aa a", "ab c" ],
+					[ "A BC", "AA-A", "AB-C" ],
+					[ "a bc", "AA-A", "AB-C" ],
+					[ "A BC", "aa-a", "ab-c" ],
+					[ "a bc", "aa-a", "ab-c" ],
+					[ "A_BC", "AA-A", "AB-C" ],
+					[ "a.bc", "AA-A", "AB-C" ],
+					[ "A/BC", "aa-a", "ab-c" ],
+					[ "a!bc", "aa-a", "ab-c" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -808,14 +898,14 @@ describe( "Utility class Pattern", () => {
 
 			it( "prematurely provides _expected_ literal on a pattern _supporting_ additional input preceding the expected literal", () => {
 				[
-					[ "A BC", "X? X?", "A BC" ],
-					[ "a bc", "X? X?", "A BC" ],
-					[ "A BC", "x? x?", "a bc" ],
-					[ "a bc", "x? x?", "a bc" ],
-					[ "A-BC", "X?-X?", "A-BC" ],
-					[ "a-bc", "X?-X?", "A-BC" ],
-					[ "A-BC", "x?-x?", "a-bc" ],
-					[ "a-bc", "x?-x?", "a-bc" ],
+					[ "A BC", "A? A?", "A BC" ],
+					[ "a bc", "A? A?", "A BC" ],
+					[ "A BC", "a? a?", "a bc" ],
+					[ "a bc", "a? a?", "a bc" ],
+					[ "A-BC", "A?-A?", "A-BC" ],
+					[ "a-bc", "A?-A?", "A-BC" ],
+					[ "A-BC", "a?-a?", "a-bc" ],
+					[ "a-bc", "a?-a?", "a-bc" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -827,18 +917,18 @@ describe( "Utility class Pattern", () => {
 
 			it( "prematurely provides _unexpected_ literal on a pattern _supporting_ additional input preceding the expected literal", () => {
 				[
-					[ "A-BC", "X? X?", "AB C" ],
-					[ "a-bc", "X? X?", "AB C" ],
-					[ "A-BC", "x? x?", "ab c" ],
-					[ "a-bc", "x? x?", "ab c" ],
-					[ "A BC", "X?-X?", "AB-C" ],
-					[ "a bc", "X?-X?", "AB-C" ],
-					[ "A BC", "x?-x?", "ab-c" ],
-					[ "a bc", "x?-x?", "ab-c" ],
-					[ "A_BC", "X?-X?", "AB-C" ],
-					[ "a.bc", "X?-X?", "AB-C" ],
-					[ "A/BC", "x?-x?", "ab-c" ],
-					[ "a!bc", "x?-x?", "ab-c" ],
+					[ "A-BC", "A? A?", "AB C" ],
+					[ "a-bc", "A? A?", "AB C" ],
+					[ "A-BC", "a? a?", "ab c" ],
+					[ "a-bc", "a? a?", "ab c" ],
+					[ "A BC", "A?-A?", "AB-C" ],
+					[ "a bc", "A?-A?", "AB-C" ],
+					[ "A BC", "a?-a?", "ab-c" ],
+					[ "a bc", "a?-a?", "ab-c" ],
+					[ "A_BC", "A?-A?", "AB-C" ],
+					[ "a.bc", "A?-A?", "AB-C" ],
+					[ "A/BC", "a?-a?", "ab-c" ],
+					[ "a!bc", "a?-a?", "ab-c" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -850,22 +940,22 @@ describe( "Utility class Pattern", () => {
 
 			it( "provides less values than expected by pattern preceding expected literal thus doesn't include literal in resulting output", () => {
 				[
-					[ "AB", "XX XX", "AB" ],
-					[ "ab", "XX XX", "AB" ],
-					[ "AB", "xx xx", "ab" ],
-					[ "ab", "xx xx", "ab" ],
-					[ "AB", "XX-XX", "AB" ],
-					[ "ab", "XX-XX", "AB" ],
-					[ "AB", "xx-xx", "ab" ],
-					[ "ab", "xx-xx", "ab" ],
-					[ "AB", "X? XX", "AB" ],
-					[ "ab", "X? XX", "AB" ],
-					[ "AB", "x? xx", "ab" ],
-					[ "ab", "x? xx", "ab" ],
-					[ "AB", "X?-XX", "AB" ],
-					[ "ab", "X?-XX", "AB" ],
-					[ "AB", "x?-xx", "ab" ],
-					[ "ab", "x?-xx", "ab" ],
+					[ "AB", "AA AA", "AB" ],
+					[ "ab", "AA AA", "AB" ],
+					[ "AB", "aa aa", "ab" ],
+					[ "ab", "aa aa", "ab" ],
+					[ "AB", "AA-AA", "AB" ],
+					[ "ab", "AA-AA", "AB" ],
+					[ "AB", "aa-aa", "ab" ],
+					[ "ab", "aa-aa", "ab" ],
+					[ "AB", "A? AA", "AB" ],
+					[ "ab", "A? AA", "AB" ],
+					[ "AB", "a? aa", "ab" ],
+					[ "ab", "a? aa", "ab" ],
+					[ "AB", "A?-AA", "AB" ],
+					[ "ab", "A?-AA", "AB" ],
+					[ "AB", "a?-aa", "ab" ],
+					[ "ab", "a?-aa", "ab" ],
 				]
 					.forEach( ( [ input, pattern, result ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( result );
@@ -877,22 +967,22 @@ describe( "Utility class Pattern", () => {
 			describe( "provides all values expected by pattern preceding expected literal which is provided, too,", () => {
 				it( "thus includes literal at end of resulting output", () => {
 					[
-						[ "AB ", "XX XX", "AB " ],
-						[ "ab ", "XX XX", "AB " ],
-						[ "AB ", "xx xx", "ab " ],
-						[ "ab ", "xx xx", "ab " ],
-						[ "AB-", "XX-XX", "AB-" ],
-						[ "ab-", "XX-XX", "AB-" ],
-						[ "AB-", "xx-xx", "ab-" ],
-						[ "ab-", "xx-xx", "ab-" ],
-						[ "AB ", "X? XX", "AB " ],
-						[ "ab ", "X? XX", "AB " ],
-						[ "AB ", "x? xx", "ab " ],
-						[ "ab ", "x? xx", "ab " ],
-						[ "AB-", "X?-XX", "AB-" ],
-						[ "ab-", "X?-XX", "AB-" ],
-						[ "AB-", "x?-xx", "ab-" ],
-						[ "ab-", "x?-xx", "ab-" ],
+						[ "AB ", "AA AA", "AB " ],
+						[ "ab ", "AA AA", "AB " ],
+						[ "AB ", "aa aa", "ab " ],
+						[ "ab ", "aa aa", "ab " ],
+						[ "AB-", "AA-AA", "AB-" ],
+						[ "ab-", "AA-AA", "AB-" ],
+						[ "AB-", "aa-aa", "ab-" ],
+						[ "ab-", "aa-aa", "ab-" ],
+						[ "AB ", "A? AA", "AB " ],
+						[ "ab ", "A? AA", "AB " ],
+						[ "AB ", "a? aa", "ab " ],
+						[ "ab ", "a? aa", "ab " ],
+						[ "AB-", "A?-AA", "AB-" ],
+						[ "ab-", "A?-AA", "AB-" ],
+						[ "AB-", "a?-aa", "ab-" ],
+						[ "ab-", "a?-aa", "ab-" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern ).should.be.equal( result );
@@ -903,22 +993,22 @@ describe( "Utility class Pattern", () => {
 
 				it( "excludes the latter on demand from resulting output", () => {
 					[
-						[ "AB ", "XX XX", "AB" ],
-						[ "ab ", "XX XX", "AB" ],
-						[ "AB ", "xx xx", "ab" ],
-						[ "ab ", "xx xx", "ab" ],
-						[ "AB-", "XX-XX", "AB" ],
-						[ "ab-", "XX-XX", "AB" ],
-						[ "AB-", "xx-xx", "ab" ],
-						[ "ab-", "xx-xx", "ab" ],
-						[ "AB ", "X? XX", "AB" ],
-						[ "ab ", "X? XX", "AB" ],
-						[ "AB ", "x? xx", "ab" ],
-						[ "ab ", "x? xx", "ab" ],
-						[ "AB-", "X?-XX", "AB" ],
-						[ "ab-", "X?-XX", "AB" ],
-						[ "AB-", "x?-xx", "ab" ],
-						[ "ab-", "x?-xx", "ab" ],
+						[ "AB ", "AA AA", "AB" ],
+						[ "ab ", "AA AA", "AB" ],
+						[ "AB ", "aa aa", "ab" ],
+						[ "ab ", "aa aa", "ab" ],
+						[ "AB-", "AA-AA", "AB" ],
+						[ "ab-", "AA-AA", "AB" ],
+						[ "AB-", "aa-aa", "ab" ],
+						[ "ab-", "aa-aa", "ab" ],
+						[ "AB ", "A? AA", "AB" ],
+						[ "ab ", "A? AA", "AB" ],
+						[ "AB ", "a? aa", "ab" ],
+						[ "ab ", "a? aa", "ab" ],
+						[ "AB-", "A?-AA", "AB" ],
+						[ "ab-", "A?-AA", "AB" ],
+						[ "AB-", "a?-aa", "ab" ],
+						[ "ab-", "a?-aa", "ab" ],
 					]
 						.forEach( ( [ input, pattern, result ] ) => {
 							Pattern.parse( input, pattern, { keepTrailingLiterals: false } ).should.be.equal( result );
@@ -932,9 +1022,9 @@ describe( "Utility class Pattern", () => {
 		describe( "handles whitespace in provided input by", () => {
 			it( "ignoring any leading whitespace", () => {
 				[
-					[ "    A", "X", "A" ],
-					[ " \r\t A", "X", "A" ],
-					[ "\n  \fA", "X", "A" ],
+					[ "    A", "A", "A" ],
+					[ " \r\t A", "A", "A" ],
+					[ "\n  \fA", "A", "A" ],
 				]
 					.forEach( ( [ input, pattern, output ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( output );
@@ -945,9 +1035,9 @@ describe( "Utility class Pattern", () => {
 
 			it( "ignoring any trailing whitespace", () => {
 				[
-					[ "A    ", "X", "A" ],
-					[ "A \r\t ", "X", "A" ],
-					[ "A\n  \f", "X", "A" ],
+					[ "A    ", "A", "A" ],
+					[ "A \r\t ", "A", "A" ],
+					[ "A\n  \f", "A", "A" ],
 				]
 					.forEach( ( [ input, pattern, output ] ) => {
 						Pattern.parse( input, pattern ).should.be.equal( output );
