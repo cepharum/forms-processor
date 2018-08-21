@@ -88,7 +88,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					on: {
 						input: event => {
 							const options = {
-								removing: event.target.value.length < ( this.value != null ? this.value.length : 0 ) || 0,
+								removing: event.target.value.length < ( ( this.value == null ? 0 : this.value.length ) || 0 ),
 							};
 
 							const value = that.normalizeValue( event.target.value, options );
