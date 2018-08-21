@@ -452,8 +452,9 @@ export default class FormFieldAbstractModel {
 					if ( mutation.type === "writeInput" ) {
 						const { name, value } = mutation.payload;
 						const itsMe = name === qualifiedName;
+						const _dependsOn = dependsOn.indexOf( name ) > -1;
 
-						if ( dependsOn.indexOf( name ) > -1 ) {
+						if ( _dependsOn ) {
 							// current field has term depending on mutated field
 
 							that.updateFieldInformation( reactiveFieldInfo );
@@ -484,7 +485,11 @@ export default class FormFieldAbstractModel {
 							// adjusting value of field's component first
 							// -> adopt update in store on component
 							this.value = value;
+						}
 
+						if ( itsMe || _dependsOn ) {
+							// changing current field or some field current one
+							// depends on might affect validity of current field
 							this.valid = null;
 							const valid = that.valid; // eslint-disable-line no-unused-vars
 						}
