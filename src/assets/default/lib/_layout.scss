@@ -19,18 +19,9 @@ body {
 	display: flex;
 	flex-direction: column;
 
-	.title, .progress, .body, .control {
+	.title, .body, .control {
 		> .inside {
 			@include pageWidth;
-		}
-	}
-
-	.progress {
-		background: $navBarColor;
-		color: $navBarTextColor;
-
-		.form-progress {
-			padding: 1em 0;
 		}
 	}
 

@@ -468,6 +468,7 @@ export default class FormSequenceModel {
 				const formsData = this.forms;
 				const numForms = formsDefinition.length;
 				const steps = new Array( numForms );
+				const currentIndex = this.currentIndex;
 
 				for ( let i = 0; i < numForms; i++ ) {
 					const formDefinition = formsDefinition[i];
@@ -478,7 +479,6 @@ export default class FormSequenceModel {
 					classes.push( formData.pristine ? "pristine" : "touched" );
 					classes.push( formData.valid ? "valid" : "invalid" );
 
-					const currentIndex = this.currentIndex;
 					if ( i === currentIndex ) {
 						classes.push( "active" );
 					} else if ( i < currentIndex ) {
@@ -496,13 +496,45 @@ export default class FormSequenceModel {
 						createElement( "span", {
 							class: "number",
 						}, `${i + 1}` ),
-						` ${formDefinition.label}`,
+						createElement( "label", {
+							class: "label",
+						}, ` ${formDefinition.label}` ),
 					] );
 				}
 
 				return createElement( "nav", {
-					class: "steps",
-				}, steps );
+					class: "progress-bar",
+				}, [
+					createElement( "div", {
+						class: "steps",
+					}, [
+						createElement( "div", {
+							class: "items",
+						}, steps ),
+					] ),
+					createElement( "div", {
+						class: "info",
+					}, [
+						createElement( "div", {
+							class: "counters",
+						}, [
+							createElement( "span", {
+								class: "current",
+							}, String( currentIndex + 1 ) ),
+							createElement( "span", {
+								class: "separator",
+							}, "/" ),
+							createElement( "span", {
+								class: "number",
+							}, String( numForms ) ),
+						] ),
+						createElement( "div", {
+							class: "percent",
+						}, [
+							String( Math.round( currentIndex / numForms * 100 ) + "%" ),
+						] ),
+					] ),
+				] );
 			},
 			data() {
 				return data;

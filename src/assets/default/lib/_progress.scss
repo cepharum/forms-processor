@@ -1,21 +1,62 @@
 .form-progress {
 	.steps {
+		background: $navBarColor;
+		color: $navBarTextColor;
 		display: flex;
-		align-items: center;
+		flex-direction: row;
+		justify-content: center;
+		position: relative;
+
+		.items {
+			@include pageWidth();
+
+			width: 100%;
+			display: flex;
+			align-items: center;
+			margin: 0 auto;
+			line-height: 4rem;
+		}
 	}
 
 	.step {
 		display: flex;
 		align-items: center;
-
-		&:not(:last-child) {
-			margin-right: 1em;
-		}
+		height: 100%;
+		padding: 0 1rem;
+		margin: 0 1rem 0 -1rem;
 
 		.number {
-			font-size: 200%;
+			font-size: 6rem;
 			font-weight: bold;
-			margin-right: 0.2em;
+			opacity: 0.1;
+			position: absolute;
+		}
+
+		.label {
+			white-space: nowrap;
+			position: relative;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		&.active {
+			background: rgba(255,255,255,0.2);
+		}
+	}
+
+	.info {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+
+		.separator {
+			&:before, &:after {
+				content: "\00a0";
+			}
+		}
+
+		.percent {
+			margin-left: 2rem;
 		}
 	}
 }
