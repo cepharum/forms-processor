@@ -1,8 +1,8 @@
 <template>
   <div v-if="available" class="form-control">
-    <button v-if="!isSole" :disabled="!isFirst">{{ labelPrevious }}</button>
-    <button v-if="!isLast">{{ labelNext }}</button>
-    <button v-if="isLast">{{ labelSubmit }}</button>
+    <button v-if="!isSole" @click="rewind()" :disabled="isFirst">{{ labelPrevious }}</button>
+    <button v-if="!isLast" @click="advance()">{{ labelNext }}</button>
+    <button v-if="isLast" @click="submit()">{{ labelSubmit }}</button>
   </div>
 </template>
 
@@ -17,10 +17,12 @@ export default {
 			return this.$store.getters.formSequenceManager.forms.length < 2;
 		},
 		isFirst() {
-			return true;
+			return this.$store.getters.formSequenceManager.currentIndex < 1;
 		},
 		isLast() {
-			return true;
+			const manager = this.$store.getters.formSequenceManager;
+
+			return manager.currentIndex === manager.forms.length - 1;
 		},
 		labelPrevious() {
 			return this.$store.getters.l10n.BUTTONS.PREVIOUS;
@@ -31,6 +33,17 @@ export default {
 		labelSubmit() {
 			return this.$store.getters.l10n.BUTTONS.SUBMIT;
 		},
+	},
+	methods: {
+	    rewind() {
+		    return this.$store.getters.formSequenceManager.rewind();
+	    },
+	    advance() {
+		    return this.$store.getters.formSequenceManager.advance();
+	    },
+	    submit() {
+		    return this.$store.getters.formSequenceManager.submit();
+	    },
 	},
 };
 </script>

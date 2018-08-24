@@ -137,6 +137,7 @@ export default class FormModel {
 
 		reactiveFormInfo.valid = null;
 		reactiveFormInfo.pristine = true;
+		reactiveFormInfo.finished = false;
 
 		Object.defineProperties( this, {
 			/**
@@ -152,7 +153,9 @@ export default class FormModel {
 					let valid = true;
 
 					for ( let i = 0; i < numFields; i++ ) {
-						if ( !this.fields[i].valid ) {
+						const field = this.fields[i];
+
+						if ( !field.valid ) {
 							valid = false;
 							break;
 						}
@@ -160,6 +163,10 @@ export default class FormModel {
 
 					if ( reactiveFormInfo.valid !== valid ) {
 						reactiveFormInfo.valid = valid;
+
+						if ( !valid ) {
+							reactiveFormInfo.finished = false;
+						}
 					}
 
 					return valid;
@@ -167,19 +174,67 @@ export default class FormModel {
 			},
 
 			/**
-			 * Marks if form is pristine and thus haven't been ever validated
-			 * before.
+			 * Marks if form is pristine thus consisting of pristine fields,
+			 * only.
 			 *
 			 * @name FormModel#pristine
 			 * @property {boolean}
+			 * @readonly
 			 */
 			pristine: {
-				get: () => reactiveFormInfo.pristine,
-				set: state => {
-					const newPristine = Boolean( reactiveFormInfo.pristine && state );
+				get: () => {
+					const numFields = this.fields.length;
+					let pristine = true;
 
-					if ( reactiveFormInfo.pristine !== newPristine ) {
-						reactiveFormInfo.pristine = newPristine;
+					for ( let i = 0; i < numFields; i++ ) {
+						const field = this.fields[i];
+
+						if ( !field.pristine ) {
+							pristine = false;
+							break;
+						}
+					}
+
+					if ( reactiveFormInfo.pristine !== pristine ) {
+						reactiveFormInfo.pristine = pristine;
+					}
+
+					return pristine;
+				},
+				set: value => {
+					if ( value ) {
+						throw new TypeError( `invalid request for marking form #${this.index} as pristine` );
+					}
+
+					const numFields = this.fields.length;
+					for ( let i = 0; i < numFields; i++ ) {
+						this.fields[i].pristine = false;
+					}
+				},
+			},
+
+			/**
+			 * Marks if form is finished and thus doesn't need to be edited by
+			 * user anymore.
+			 *
+			 * @name FormModel#finished
+			 * @property {boolean}
+			 */
+			finished: {
+				get: () => reactiveFormInfo.finished,
+				set: value => {
+					if ( value ) {
+						this.pristine = false;
+
+						if ( !this.valid ) {
+							value = false;
+						}
+					}
+
+					value = Boolean( value );
+
+					if ( reactiveFormInfo.finished !== value ) {
+						reactiveFormInfo.finished = value;
 					}
 				},
 			},

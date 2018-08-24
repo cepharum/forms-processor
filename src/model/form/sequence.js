@@ -46,6 +46,7 @@ export default class FormSequenceModel {
 
 		const reactiveInfo = {
 			forms: new Array( sequence.length ),
+			currentIndex: 0,
 		};
 
 		Object.defineProperties( this, {
@@ -98,6 +99,16 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			data: { value: data },
+
+			/**
+			 * Indicates whether all forms should be simultaneously visible or
+			 * not.
+			 *
+			 * @name FormSequenceModel#showAllForms
+			 * @property {boolean}
+			 * @readonly
+			 */
+			showAllForms: { value: Boolean( definition.showAllForms ) },
 		} );
 
 		// defer definition of additional properties requiring public access
@@ -118,7 +129,6 @@ export default class FormSequenceModel {
 		} );
 
 
-		let currentFormIndex = 0;
 		let latestVisited = 0;
 
 		Object.defineProperties( this, {
@@ -129,7 +139,7 @@ export default class FormSequenceModel {
 			 * @property {int}
 			 */
 			currentIndex: {
-				get: () => ( this.isEmpty ? -1 : currentFormIndex ),
+				get: () => ( this.isEmpty ? -1 : reactiveInfo.currentIndex ),
 				set: index => {
 					if ( this.isEmpty ) {
 						return;
@@ -137,26 +147,16 @@ export default class FormSequenceModel {
 
 					const forms = this.forms;
 					const numForms = forms.length;
-					let validIndex = -1;
-
-					if ( index < 0 || index >= numForms || !forms[index] ) {
-						throw new TypeError( `rejecting selection of form by invalid index ${index}` );
-					}
 
 					index = parseInt( index );
 
-					for ( let i = 0; i < numForms; i++ ) {
-						const form = forms[i];
-
-						if ( !form.pristine && !form.valid ) {
-							break;
-						}
-
-						validIndex = i;
+					if ( index < 0 || index >= numForms || !forms[index] ) {
+						throw new TypeError( `invalid request for selecting form with index ${index} out of bounds` );
 					}
 
-					if ( index < validIndex ) {
-						currentFormIndex = index;
+					const maxPermittedIndex = this.firstUnfinishedIndex;
+					if ( index <= maxPermittedIndex && index !== reactiveInfo.currentIndex ) {
+						reactiveInfo.currentIndex = index;
 						latestVisited = Math.max( latestVisited, index );
 					}
 				},
@@ -170,7 +170,7 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			currentForm: {
-				get: () => this.forms[currentFormIndex],
+				get: () => this.forms[reactiveInfo.currentIndex],
 			},
 
 			/**
@@ -180,7 +180,7 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 */
 			currentName: {
-				get: () => this.forms[currentFormIndex].name,
+				get: () => this.forms[reactiveInfo.currentIndex].name,
 				set: name => {
 					const forms = this.forms;
 					const numForms = forms.length;
@@ -228,6 +228,34 @@ export default class FormSequenceModel {
 					return -1;
 				},
 			},
+
+			/**
+			 * Finds index of first unfinished form in sequence of forms.
+			 *
+			 * An unfinished form is either pristine due to having at least one
+			 * pristine field or is invalid due to having at least one invalid
+			 * field. In either case the form needs a review.
+			 *
+			 * @name FormSequenceModel#firstInvalidIndex
+			 * @property {int}
+			 * @readonly
+			 */
+			firstUnfinishedIndex: {
+				get: () => {
+					const forms = this.forms;
+					const numForms = forms.length;
+
+					for ( let i = 0; i < numForms; i++ ) {
+						const form = forms[i];
+
+						if ( !form.finished || !form.valid ) {
+							return i;
+						}
+					}
+
+					return 0;
+				},
+			},
 		} );
 
 		Object.defineProperties( this, {
@@ -238,7 +266,7 @@ export default class FormSequenceModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			formsComponent: { value: this._renderComponent() },
+			formsComponent: { value: this._renderComponent( reactiveInfo ) },
 
 			/**
 			 * Provides component rendering progress bar in sequence of forms.
@@ -247,7 +275,7 @@ export default class FormSequenceModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			progressComponent: { value: this._renderProgressComponent() },
+			progressComponent: { value: this._renderProgressComponent( reactiveInfo ) },
 		} );
 	}
 
@@ -292,20 +320,27 @@ export default class FormSequenceModel {
 	 * @returns {boolean} true if advancing succeeded, false if first invalid form has been selected instead
 	 */
 	advance() {
-		if ( !this.forms[this.currentIndex].valid ) {
+		const currentIndex = this.currentIndex;
+		const form = this.forms[currentIndex];
+
+		form.finished = true;
+
+		if ( !form.valid ) {
 			return false;
 		}
 
-		const index = this.firstInvalidIndex;
+
+		const index = this.firstUnfinishedIndex;
 		if ( index < -1 ) {
-			this.currentIndex++;
+			this.currentIndex = currentIndex + 1;
 
 			return true;
 		}
 
+		const isAdvancing = index === this.currentIndex + 1;
 		this.currentIndex = index;
 
-		return false;
+		return isAdvancing;
 	}
 
 	/**
@@ -374,13 +409,17 @@ export default class FormSequenceModel {
 	}
 
 	/**
-	 * Describes Vue component listing all forms in sequence.
+	 * Describes Vue component listing all forms in sequence or just the current
+	 * form in sequence.
 	 *
+	 * @param {object} data reactive data of sequence
 	 * @returns {{render: function}} description of Vue component
 	 * @protected
 	 */
-	_renderComponent() {
+	_renderComponent( data ) {
+		const that = this;
 		const forms = this.forms;
+		const showAll = this.showAllForms;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
@@ -390,9 +429,14 @@ export default class FormSequenceModel {
 
 		return {
 			render: function( createElement ) {
-				const elements = new Array( numForms );
-				for ( let i = 0; i < numForms; i++ ) {
-					elements[i] = createElement( components[i] );
+				const formElements = showAll ? new Array( numForms ) : [];
+
+				if ( showAll ) {
+					for ( let i = 0; i < numForms; i++ ) {
+						formElements[i] = createElement( components[i] );
+					}
+				} else {
+					formElements.push( createElement( components[that.currentIndex] ) );
 				}
 
 				return createElement( "div", {
@@ -400,8 +444,11 @@ export default class FormSequenceModel {
 				}, [
 					createElement( "div", {
 						class: "forms",
-					}, elements ),
+					}, formElements ),
 				] );
+			},
+			data() {
+				return data;
 			},
 		};
 	}
@@ -409,33 +456,47 @@ export default class FormSequenceModel {
 	/**
 	 * Describes Vue component rendering progress in sequence of forms.
 	 *
+	 * @param {{forms:Array<object>, currentIndex:int}} data reactive data of sequence
 	 * @returns {{render: function}} description of Vue component
 	 * @protected
 	 */
-	_renderProgressComponent() {
-		const numForms = this.forms.length;
-		const formsInfo = this._infos();
+	_renderProgressComponent( data ) {
+		const formsDefinition = this.forms;
 
 		return {
 			render: function( createElement ) {
-				const forms = this.forms;
+				const formsData = this.forms;
+				const numForms = formsDefinition.length;
 				const steps = new Array( numForms );
 
 				for ( let i = 0; i < numForms; i++ ) {
-					const form = forms[i];
+					const formDefinition = formsDefinition[i];
+					const formData = formsData[i];
 
 					const classes = ["step"];
-					classes.push( form.pristine ? "pristine" : "touched" );
-					classes.push( form.valid ? "valid" : "invalid" );
+
+					classes.push( formData.pristine ? "pristine" : "touched" );
+					classes.push( formData.valid ? "valid" : "invalid" );
+
+					const currentIndex = this.currentIndex;
+					if ( i === currentIndex ) {
+						classes.push( "active" );
+					} else if ( i < currentIndex ) {
+						classes.push( "before-active" );
+						classes.push( `distance-${currentIndex - i}` );
+					} else if ( i > currentIndex ) {
+						classes.push( "after-active" );
+						classes.push( `distance-${i - currentIndex}` );
+					}
 
 					steps[i] = createElement( "a", {
 						class: classes.join( " " ),
-						"data-name": form.name,
+						"data-name": formDefinition.name,
 					}, [
 						createElement( "span", {
 							class: "number",
 						}, `${i + 1}` ),
-						` ${form.label}`,
+						` ${formDefinition.label}`,
 					] );
 				}
 
@@ -443,9 +504,9 @@ export default class FormSequenceModel {
 					class: "steps",
 				}, steps );
 			},
-			data: () => ( {
-				forms: formsInfo,
-			} ),
+			data() {
+				return data;
+			},
 		};
 	}
 }
