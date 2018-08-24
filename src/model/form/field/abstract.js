@@ -339,6 +339,29 @@ export default class FormFieldAbstractModel {
 			},
 
 			/**
+			 * Exposes information on current field being pristine or not.
+			 *
+			 * @note This information is basically read-only. It's possible to
+			 *       write falsy value to explicitly mark field _touched_. This
+			 *       is implicitly dropping cached information on field's
+			 *       validity.
+			 *
+			 * @name FormFieldAbstractModel#pristine
+			 * @property {boolean}
+			 */
+			pristine: {
+				get: () => reactiveFieldInfo.pristine,
+				set: value => {
+					if ( value ) {
+						throw new TypeError( `invalid request for marking field ${this.qualifiedName} as pristine` );
+					}
+
+					reactiveFieldInfo.pristine = false;
+					reactiveFieldInfo.valid = null;
+				},
+			},
+
+			/**
 			 * Lists errors encountered during recent-most validation of field.
 			 *
 			 * @name FormFieldAbstractModel#errors
