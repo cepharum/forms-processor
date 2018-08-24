@@ -31,6 +31,7 @@ import L10N from "../../../service/l10n";
 import TermProcessor from "../../term/processor";
 import Property from "../utility/property";
 import Pattern from "../utility/pattern";
+import EventBus from "../../../service/events";
 
 const termCache = new Map();
 
@@ -258,6 +259,16 @@ export default class FormFieldAbstractModel {
 			form: { value: form },
 
 			/**
+			 * Provides index of field in sequence of its containing form's
+			 * fields.
+			 *
+			 * @name FormFieldAbstractModel#index
+			 * @property {int}
+			 * @readonly
+			 */
+			index: { value: parseInt( fieldIndex ) },
+
+			/**
 			 * Provides defined name of field.
 			 *
 			 * @name FormFieldAbstractModel#name
@@ -425,8 +436,8 @@ export default class FormFieldAbstractModel {
 	 */
 	_renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		return {
-			render: function( createElement ) {
-				return createElement( "<!-------->" );
+			render( createElement ) {
+				return createElement( "<!-- abstract field -->" );
 			},
 		};
 	}
@@ -467,8 +478,20 @@ export default class FormFieldAbstractModel {
 	</span>
 </div>
 			`,
-			data() {
-				return reactiveFieldInfo;
+			data: () => reactiveFieldInfo,
+			created() {
+				EventBus.$on( "form:autofocus", () => {
+					if ( that.form.autoFocusField === that ) {
+						this.$nextTick( () => {
+							const firstControl = this.$el.querySelector( "input, select, button" );
+
+							if ( firstControl ) {
+								firstControl.focus();
+								firstControl.select();
+							}
+						} );
+					}
+				} );
 			},
 			beforeMount() {
 				this._unsubscribe = this.$store.subscribe( mutation => {

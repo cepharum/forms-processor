@@ -28,6 +28,7 @@
 
 import Property from "./utility/property";
 import FormModel from "./form";
+import EventBus from "../../service/events";
 
 /**
  * Wraps definition of a sequence of forms.
@@ -326,6 +327,7 @@ export default class FormSequenceModel {
 		form.finished = true;
 
 		if ( !form.valid ) {
+			EventBus.$emit( "form:autofocus" );
 			return false;
 		}
 
@@ -422,6 +424,12 @@ export default class FormSequenceModel {
 				] );
 			},
 			data: () => data,
+			mounted() {
+				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+			},
+			updated() {
+				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+			},
 		};
 	}
 

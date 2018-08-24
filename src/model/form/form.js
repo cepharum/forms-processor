@@ -238,6 +238,33 @@ export default class FormModel {
 					}
 				},
 			},
+
+			/**
+			 * Fetches reference on field of form to be focused automatically.
+			 *
+			 * This is either first invalid field or first field of form, if all
+			 * fields of form are valid.
+			 *
+			 * @name FormModel#autoFocusField
+			 * @property {?FormFieldAbstractModel}
+			 * @readonly
+			 */
+			autoFocusField: {
+				get: () => {
+					const fieldInstances = this.fields;
+					const numFields = fieldInstances.length;
+
+					for ( let i = 0; i < numFields; i++ ) {
+						const field = fieldInstances[i];
+
+						if ( !field.valid ) {
+							return field;
+						}
+					}
+
+					return fieldInstances[0] || null;
+				},
+			},
 		} );
 
 		Object.defineProperties( this, {
