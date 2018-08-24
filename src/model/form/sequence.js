@@ -383,32 +383,6 @@ export default class FormSequenceModel {
 	}
 
 	/**
-	 * Describes all forms in sequence by extracting selected properties per
-	 * form to be available in components managed by sequence.
-	 *
-	 * @returns {Array<object>} lists extracted information per form
-	 * @private
-	 */
-	_infos() {
-		const forms = this.forms;
-		const numForms = forms.length;
-
-		const formsInfo = new Array( numForms );
-		for ( let i = 0; i < numForms; i++ ) {
-			const form = forms[i];
-
-			formsInfo[i] = {
-				name: form.name,
-				label: form.label,
-				pristine: form.pristine,
-				valid: form.valid,
-			};
-		}
-
-		return formsInfo;
-	}
-
-	/**
 	 * Describes Vue component listing all forms in sequence or just the current
 	 * form in sequence.
 	 *
@@ -447,9 +421,7 @@ export default class FormSequenceModel {
 					}, formElements ),
 				] );
 			},
-			data() {
-				return data;
-			},
+			data: () => data,
 		};
 	}
 
@@ -536,9 +508,7 @@ export default class FormSequenceModel {
 					] ),
 				] );
 			},
-			data() {
-				return data;
-			},
+			data: () => data,
 		};
 	}
 }
