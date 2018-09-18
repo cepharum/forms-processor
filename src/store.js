@@ -38,12 +38,19 @@ Vue.use( Vuex );
 
 const debug = process.env.NODE_ENV !== "production";
 
-export default new Vuex.Store( {
-	strict: debug,
-	modules: {
-		application,
-		form,
-		l10n,
-		report,
-	},
-} );
+/**
+ * Creates another store instance.
+ *
+ * @return {Store} created store instance
+ */
+export default function createStore() {
+	return new Vuex.Store( {
+		strict: debug,
+		modules: {
+			application,
+			form,
+			l10n,
+			report,
+		},
+	} );
+}
