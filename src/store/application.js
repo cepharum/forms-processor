@@ -30,15 +30,45 @@
 export default {
 	namespaced: false,
 	state: {
+		view: null,
 	},
 	actions: {
+		switchView( { commit, state, getters }, view ) {
+			let _view = view;
+
+			switch ( _view ) {
+				case "forms" :
+					if ( _view !== "splash" && !getters.prepared ) {
+						_view = "splash";
+					}
+
+					// falls through
+				case "splash" :
+					if ( state.view !== _view ) {
+						commit( "switchView", _view );
+					}
+					break;
+
+				default :
+					console.error( `invalid request for switching to view ${view}` );
+			}
+		},
 	},
 	mutations: {
+		switchView( state, view ) {
+			state.view = view;
+		},
 	},
 	getters: {
 		prepared( state, getters, rootState, rootGetters ) {
 			return rootGetters["l10n/prepared"] &&
 			       rootGetters["form/loaded"];
+		},
+		showSplash( state ) {
+			return state.view !== "forms";
+		},
+		showForms( state ) {
+			return state.view === "forms";
 		},
 		locale( state, getters ) {
 			return getters["l10n/current"];

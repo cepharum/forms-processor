@@ -9,7 +9,6 @@
 </template>
 
 <script>
-import Vue from "vue";
 import L10n from "@/service/l10n";
 import Definition from "@/service/definition";
 
@@ -42,14 +41,9 @@ export default {
 				id: this.$root.$options.form.id,
 				definition,
 			} ) )
-			.then( () => this.$router.replace( {
-				name: "ShowForm",
-				params: {
-					id: Vue.config.formId,
-				},
-			} ) )
+			.then( () => this.$store.dispatch( "switchView", "forms" ) )
 			.catch( error => {
-				this.error = `setting up l10n failed: ${error.message}`;
+				this.error = `setting up forms client failed: ${error.message}`;
 				console.error( this.error ); // eslint-disable-line no-console
 			} );
 	},

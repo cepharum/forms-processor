@@ -1,5 +1,5 @@
 <template>
-	<div class="form" v-if="prepared">
+	<div class="form">
 		<div class="title">
 			<div class="inside">
 				<FormTitle/>
@@ -36,11 +36,6 @@ export default {
 		FormProgress,
 		FormContent,
 		FormControl,
-	},
-	computed: {
-		prepared() {
-			return this.$store.getters["form/loaded"];
-		},
 	},
 };
 </script>
