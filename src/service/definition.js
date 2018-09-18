@@ -26,10 +26,6 @@
  * @author: cepharum
  */
 
-import Vue from "vue";
-
-const loaded = {};
-
 /**
  * Provides support for fetching definition of form to process.
  */
@@ -38,22 +34,29 @@ export default class Definition {
 	 * Fetches description of form selected by its ID from backend unless it has
 	 * been fetched before using cached result in that case.
 	 *
-	 * @param {string} formID unique ID of form to be described
-	 * @param {boolean} forceReload set true to ignore any previously fetched description in cache but get a fresh one from backend
+	 * @param {string} source unique ID of form to be described
 	 * @returns {Promise<object>} promises fetched description
 	 */
-	static load( formID, forceReload = false ) {
-		if ( forceReload || !loaded.hasOwnProperty( formID ) ) {
-			loaded[formID] = fetch( `${Vue.config.backendServer}/form/describe/${formID}` )
-				.then( response => {
-					if ( !response.ok ) {
-						throw new Error( `fetching form description failed: ${response.status} ${response.statusText}` );
-					}
+	static load( source ) {
+		switch ( typeof source ) {
+			case "string" :
+				return fetch( source )
+					.then( response => {
+						if ( !response.ok ) {
+							throw new Error( `fetching form description failed: ${response.status} ${response.statusText}` );
+						}
 
-					return response.json();
-				} );
+						return response.json();
+					} );
+
+			case "object" :
+				if ( source && !Array.isArray( source ) ) {
+					return Promise.resolve( source );
+				}
+
+				// falls through
+			default :
+				return Promise.reject( new TypeError( "invalid source of form's definition" ) );
 		}
-
-		return loaded[formID];
 	}
 }

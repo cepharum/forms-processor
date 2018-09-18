@@ -26,8 +26,9 @@
  * @author: cepharum
  */
 
-import Definition from "../api/Definition";
 import FormSequenceModel from "../model/form/sequence";
+
+let nextId = 1;
 
 export default {
 	namespaced: true,
@@ -38,16 +39,15 @@ export default {
 		input: {},
 	},
 	actions: {
-		select( { commit }, id ) {
-			return Definition.load( id )
-				.then( definition => {
-					commit( "select", {
-						id,
-						definition,
-					} );
+		define( { commit }, { id = null, definition } ) {
+			const _id = id == null ? nextId++ : id;
 
-					commit( "resetInput" );
-				} );
+			commit( "define", {
+				id: _id,
+				definition,
+			} );
+
+			commit( "resetInput" );
 		},
 
 		writeInput( { commit }, { name, value } ) {
@@ -55,7 +55,7 @@ export default {
 		},
 	},
 	mutations: {
-		select( state, { id, definition } ) {
+		define( state, { id, definition } ) {
 			if ( !state.id && id && definition ) {
 				state.id = id;
 				state.definition = definition;

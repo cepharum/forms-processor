@@ -11,6 +11,7 @@
 <script>
 import Vue from "vue";
 import L10n from "@/service/l10n";
+import Definition from "@/service/definition";
 
 export default {
 	name: "Splash",
@@ -36,7 +37,11 @@ export default {
 					} );
 				}
 			} )
-			.then( () => this.$store.dispatch( "form/select", Vue.config.formId ) )
+			.then( () => Definition.load( this.$root.$options.form.definition ) )
+			.then( definition => this.$store.dispatch( "form/define", {
+				id: this.$root.$options.form.id,
+				definition,
+			} ) )
 			.then( () => this.$router.replace( {
 				name: "ShowForm",
 				params: {
