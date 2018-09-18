@@ -26,8 +26,6 @@
  * @author: cepharum
  */
 
-import L10N from "../../../service/l10n";
-
 /**
  * @typedef {object} FormatCheckResult
  * @property {string} [output] textual input passed into format checker, might be adjusted to comply w/ format
@@ -59,7 +57,7 @@ export default class Format {
 
 		if ( /[^0-9.]/.test( fixedInput ) ) {
 			return {
-				errors: [L10N.translations.FORMATS.IP4.INVALID_CHARACTER],
+				errors: ["@FORMATS.IP4.INVALID_CHARACTER"],
 			};
 		}
 
@@ -67,7 +65,7 @@ export default class Format {
 		const numBytes = bytes.length;
 		if ( numBytes > 4 || ( !acceptPartial && numBytes < 4 ) ) {
 			return {
-				errors: [L10N.translations.FORMATS.IP4.INVALID_SIZE],
+				errors: ["@FORMATS.IP4.INVALID_SIZE"],
 			};
 		}
 
@@ -75,7 +73,7 @@ export default class Format {
 			const byte = bytes[i] = parseInt( bytes[i] );
 			if ( isNaN( byte ) || byte > 255 ) {
 				return {
-					errors: [L10N.translations.FORMATS.IP4.INVALID_VALUE],
+					errors: ["@FORMATS.IP4.INVALID_VALUE"],
 				};
 			}
 		}

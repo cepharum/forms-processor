@@ -26,9 +26,9 @@
  * @author: cepharum
  */
 
-import Property from "./utility/property";
 import FormModel from "./form";
-import EventBus from "../../service/events";
+import EventBus from "@/service/events";
+import L10n from "@/service/l10n";
 
 /**
  * Wraps definition of a sequence of forms.
@@ -37,13 +37,10 @@ export default class FormSequenceModel {
 	/**
 	 * @param {object} definition definition of a sequence of forms
 	 * @param {object} data variable space fed form fields
+	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
 	 */
-	constructor( definition, data ) {
+	constructor( definition, data, localeFn ) {
 		const { sequence = [] } = definition;
-
-		const label = Property.localizeValue( definition.label );
-		const title = Property.localizeValue( definition.title );
-		const description = Property.localizeValue( definition.description );
 
 		const reactiveInfo = {
 			forms: new Array( sequence.length ),
@@ -70,7 +67,10 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			label: { value: label || title },
+			label: { get: () => {
+				const locale = localeFn();
+				return L10n.localize( definition.label, locale ) || L10n.localize( definition.title, locale );
+			} },
 
 			/**
 			 * Provides title of sequence.
@@ -81,7 +81,10 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			title: { value: title || label },
+			title: { get: () => {
+				const locale = localeFn();
+				return L10n.localize( definition.title, locale ) || L10n.localize( definition.label, locale );
+			} },
 
 			/**
 			 * Provides description of sequence.
@@ -90,7 +93,7 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			description: { value: description },
+			description: { get: () => L10n.localize( definition.description, localeFn() ) },
 
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
@@ -110,6 +113,15 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			showAllForms: { value: Boolean( definition.showAllForms ) },
+
+			/**
+			 * Provides locale to use with sequence of forms.
+			 *
+			 * @name FormSequenceModel#locale
+			 * @property {string}
+			 * @readonly
+			 */
+			locale: { get: localeFn },
 		} );
 
 		// defer definition of additional properties requiring public access
@@ -364,7 +376,7 @@ export default class FormSequenceModel {
 	/**
 	 * Fetches data record containing initial values of all defined fields.
 	 *
-	 * @returns {object<object<string,string>>} initial values of all fields per form
+	 * @returns {object<object<string,*>>} initial values of all fields per form
 	 */
 	getInitialData() {
 		const data = {};

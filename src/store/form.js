@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import L10n from "@/service/l10n";
 import FormSequenceModel from "../model/form/sequence";
 
 let nextId = 1;
@@ -35,16 +36,17 @@ export default {
 	state: {
 		id: null,
 		definition: {},
-		currentStep: null,
 		input: {},
+		sequence: null,
 	},
 	actions: {
-		define( { commit }, { id = null, definition } ) {
+		define( { commit, rootGetters }, { id = null, definition } ) {
 			const _id = id == null ? nextId++ : id;
 
 			commit( "define", {
 				id: _id,
 				definition,
+				locale: () => rootGetters.locale,
 			} );
 
 			commit( "resetInput" );
@@ -55,24 +57,53 @@ export default {
 		},
 	},
 	mutations: {
-		define( state, { id, definition } ) {
+		define( state, { id, definition, locale } ) {
 			if ( !state.id && id && definition ) {
 				state.id = id;
 				state.definition = definition;
 			}
+
+			if ( !state.sequence && locale ) {
+				state.sequence = new FormSequenceModel( state.definition, state.input, locale );
+			}
 		},
 
 		resetInput( state ) {
-			const initial = new FormSequenceModel( state.definition, state.input ).getInitialData();
+			if ( state.sequence ) {
+				const inputs = state.input;
+				const initials = state.sequence.getInitialData();
+				const segments = Object.keys( initials );
+				const numSeqments = segments.length;
 
-			Object.keys( initial )
-				.forEach( name => {
-					state.input[name] = initial[name] == null ? null : initial[name];
-				} );
+				for ( let i = 0; i < numSeqments; i++ ) {
+					const segment = segments[i];
+					const initial = initials[segment];
+
+					if ( initial == null ) {
+						inputs[segment] = null;
+					} else {
+						const names = Object.keys( initial );
+						const numNames = names.length;
+
+						if ( typeof inputs[segment] !== "object" ) {
+							inputs[segment] = {};
+						}
+
+						const input = inputs[segment];
+
+						for ( let j = 0; j < numNames; j++ ) {
+							const name = names[i];
+							const value = initial[name];
+
+							input[name] = value == null ? null : value;
+						}
+					}
+				}
+			}
 		},
 
 		writeInput( state, { name, value } ) {
-			const segments = name.split( "." );
+			const segments = String( name ).split( /\s*\.\s*/ );
 			let data = state.input;
 
 			for ( let i = 0, numSegments = segments.length - 1; i < numSegments; i++ ) {
@@ -94,28 +125,40 @@ export default {
 	},
 	getters: {
 		loaded( state ) {
-			return state.id != null;
+			return state.sequence != null;
 		},
 		sequenceID( state ) {
 			return state.id;
 		},
-		sequenceLabel( state ) {
-			return state.definition.label || "";
+		sequenceLabel( state, getters, rootState, rootGetters ) {
+			return L10n.localize( state.definition.label || "", rootGetters.locale );
 		},
-		sequenceDescription( state ) {
-			return state.definition.description || "";
+		sequenceDescription( state, getters, rootState, rootGetters ) {
+			return L10n.localize( state.definition.description || "", rootGetters.locale );
 		},
 		sequenceManager( state ) {
-			return new FormSequenceModel( state.definition, state.input );
+			return state.sequence;
 		},
 		sequenceInput( state ) {
 			return state.input;
 		},
-		readInput: state => qualifiedName => {
-			const [ formName, fieldName ] = String( qualifiedName ).split( /\s*\.\s*/ );
+		readInput: state => name => {
+			const segments = String( name ).split( /\s*\.\s*/ );
+			let data = state.input;
 
-			if ( formName && fieldName && state.input.hasOwnProperty( formName ) ) {
-				return state.input[formName][fieldName];
+			for ( let i = 0, numSegments = segments.length - 1; i < numSegments; i++ ) {
+				const segment = segments[i];
+
+				if ( data.hasOwnProperty( segment ) && typeof data[segment] === "object" ) {
+					data = data[segment];
+				} else {
+					return null;
+				}
+			}
+
+			const lastSegment = segments.pop();
+			if ( lastSegment && data.hasOwnProperty( lastSegment ) ) {
+				return data[lastSegment];
 			}
 
 			return null;

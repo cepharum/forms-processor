@@ -27,7 +27,6 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import L10N from "../../../service/l10n";
 import Range from "../utility/range";
 import Pattern from "../utility/pattern";
 import Format from "../utility/format";
@@ -120,16 +119,16 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		const value = this.value.trim();
 
 		if ( this.required && !value.length ) {
-			errors.push( L10N.translations.VALIDATION.MISSING_REQUIRED );
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
 		if ( value.length ) {
 			if ( this.size.isBelowRange( value.length ) ) {
-				errors.push( L10N.translations.VALIDATION.TOO_SHORT );
+				errors.push( "@VALIDATION.TOO_SHORT" );
 			}
 
 			if ( this.size.isAboveRange( value.length ) ) {
-				errors.push( L10N.translations.VALIDATION.TOO_LONG );
+				errors.push( "@VALIDATION.TOO_LONG" );
 			}
 		}
 

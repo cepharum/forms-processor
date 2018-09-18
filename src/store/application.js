@@ -40,6 +40,9 @@ export default {
 			return rootGetters["l10n/prepared"] &&
 			       rootGetters["form/loaded"];
 		},
+		locale( state, getters ) {
+			return getters["l10n/current"];
+		},
 		l10n( state, getters ) {
 			return getters["l10n/map"];
 		},

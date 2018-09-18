@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-import Store from "../store";
 import { normalizeLocale } from "./utility/l10n";
 
 /**
@@ -42,31 +41,6 @@ import { normalizeLocale } from "./utility/l10n";
  * Provides read-only access on current localization support.
  */
 export default class Localization {
-	/**
-	 * Fetches normalized tag of current locale.
-	 *
-	 * @returns {string} locale tag, e.g. "de" or "en"
-	 */
-	static get currentLocale() {
-		return Store.getters["l10n/current"];
-	}
-
-	/**
-	 * Fetches current locale's translation map.
-	 *
-	 * @returns {LocaleTranslationTree} map of translations
-	 */
-	static get translations() {
-		return Store.getters["l10n/map"];
-	}
-
-	/**
-	 * @borrows Localization.translations as Localization.map
-	 */
-	static get map() {
-		return Store.getters["l10n/map"];
-	}
-
 	/**
 	 * Loads a map of translations for selected locale.
 	 *
@@ -87,5 +61,45 @@ export default class Localization {
 		}
 
 		return mapper.then( generator => generator.default() );
+	}
+
+	/**
+	 * Localizes a property's value if it looks like a value providing different
+	 * actual values per locale.
+	 *
+	 * @param {object<string,string>|*} value value to be localized
+	 * @param {string} desiredLocale locale to use
+	 * @returns {string|*} localized or provided value
+	 */
+	static localize( value, desiredLocale ) {
+		if ( typeof value === "object" && value ) {
+			const locales = Object.keys( value );
+			let wildcard = null;
+			let fallback = null;
+
+			for ( let li = 0, numLocales = locales.length; li < numLocales; li++ ) {
+				const locale = locales[li];
+				const normalized = locale.trim().toLowerCase();
+
+				if ( normalized === desiredLocale ) {
+					return value[locale];
+				}
+
+				switch ( normalized ) {
+					case "*" :
+					case "any" :
+						wildcard = value[locale];
+						break;
+
+					case "en" :
+						fallback = value[locale];
+						break;
+				}
+			}
+
+			return wildcard == null ? fallback : wildcard;
+		}
+
+		return value;
 	}
 }

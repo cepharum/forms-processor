@@ -26,12 +26,10 @@
  * @author: cepharum
  */
 
-import L10N from "@/service/l10n";
-
 import TermProcessor from "../../term/processor";
-import Property from "../utility/property";
 import Pattern from "../utility/pattern";
-import EventBus from "../../../service/events";
+import EventBus from "@/service/events";
+import L10n from "@/service/l10n";
 
 const termCache = new Map();
 
@@ -148,7 +146,7 @@ export default class FormFieldAbstractModel {
 						}
 
 						// handle all else definition properties
-						propertyValue = Property.localizeValue( propertyValue );
+						propertyValue = L10n.localize( propertyValue, form.locale );
 						if ( propertyValue == null ) {
 							break;
 						}
@@ -338,7 +336,7 @@ export default class FormFieldAbstractModel {
 							try {
 								reactiveFieldInfo.errors = this._validate();
 							} catch ( e ) {
-								reactiveFieldInfo.errors = [L10N.translations.VALIDATION.UNEXPECTED_ERROR];
+								reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
 							}
 
 							reactiveFieldInfo.valid = reactiveFieldInfo.errors.length === 0;
@@ -473,12 +471,40 @@ export default class FormFieldAbstractModel {
 		<FieldComponent ref="fieldComponent" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 		<span class="errors" v-if="errors.length">
-			<span class="error" v-for="error in errors">{{ error }}</span>
+			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
 	</span>
 </div>
 			`,
 			data: () => reactiveFieldInfo,
+			methods: {
+				localize( lookup ) {
+					if ( typeof lookup === "string" ) {
+						const _lookup = lookup.trim();
+
+						if ( _lookup[0] === "@" ) {
+							let map = this.$store.getters.l10n;
+							const segments = _lookup.slice( 1 ).split( /\s*\.\s*/ );
+							const numSegments = segments.length;
+
+							for ( let i = 0; i < numSegments; i++ ) {
+								const segment = segments[i];
+
+								if ( typeof map === "object" && map && map[segment] ) {
+									map = map[segment];
+								} else {
+									map = null;
+									break;
+								}
+							}
+
+							return map;
+						}
+					}
+
+					return lookup;
+				}
+			},
 			created() {
 				EventBus.$on( "form:autofocus", () => {
 					if ( that.form.autoFocusField === that ) {

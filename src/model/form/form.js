@@ -26,8 +26,8 @@
  * @author: cepharum
  */
 
-import Property from "./utility/property";
 import FieldManagers from "./field";
+import L10n from "@/service/l10n";
 
 /**
  * Manages single form as described in provided definition.
@@ -41,10 +41,6 @@ export default class FormModel {
 	 */
 	constructor( sequence, definition, index, reactiveFormInfo ) {
 		const { name = "", fields = [] } = definition;
-
-		const label = Property.localizeValue( definition.label );
-		const title = Property.localizeValue( definition.title );
-		const description = Property.localizeValue( definition.description );
 
 		const formName = ( name == null ? "" : String( name ) ).trim().toLowerCase();
 
@@ -83,7 +79,10 @@ export default class FormModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			label: { value: label || title },
+			label: { get: () => {
+				const locale = sequence.locale;
+				return L10n.localize( definition.label, locale ) || L10n.localize( definition.title, locale );
+			} },
 
 			/**
 			 * Provides title of form.
@@ -97,7 +96,10 @@ export default class FormModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			title: { value: title || label },
+			title: { get: () => {
+				const locale = sequence.locale;
+				return L10n.localize( definition.title, locale ) || L10n.localize( definition.label, locale );
+			} },
 
 			/**
 			 * Provides description of form.
@@ -106,7 +108,16 @@ export default class FormModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			description: { value: description },
+			description: { get: () => L10n.localize( definition.description, sequence.locale ) },
+
+			/**
+			 * Provides current locale.
+			 *
+			 * @name FormModel#locale
+			 * @property {string}
+			 * @readonly
+			 */
+			locale: { get: () => sequence.locale },
 
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
