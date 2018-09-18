@@ -65,11 +65,3 @@ export default {
 	},
 };
 </script>
-
-<style scoped>
-	.splash {
-		display: grid;
-		grid-template-columns: 100%;
-		grid-template-rows: 100%;
-	}
-</style>

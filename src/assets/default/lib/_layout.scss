@@ -14,7 +14,7 @@ body {
 	font: normal #{$fontSize}/#{$fontLineHeight} #{$fontFamily};
 }
 
-#app {
+.forms-client {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
