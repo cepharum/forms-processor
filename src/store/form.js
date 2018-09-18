@@ -76,27 +76,22 @@ export default {
 				const numSeqments = segments.length;
 
 				for ( let i = 0; i < numSeqments; i++ ) {
-					const segment = segments[i];
-					const initial = initials[segment];
+					const major = segments[i];
+					const initial = initials[major];
+					const names = Object.keys( initial );
+					const numNames = names.length;
 
-					if ( initial == null ) {
-						inputs[segment] = null;
-					} else {
-						const names = Object.keys( initial );
-						const numNames = names.length;
+					if ( typeof inputs[major] !== "object" || !inputs[major] ) {
+						inputs[major] = {};
+					}
 
-						if ( typeof inputs[segment] !== "object" ) {
-							inputs[segment] = {};
-						}
+					const input = inputs[major];
 
-						const input = inputs[segment];
+					for ( let j = 0; j < numNames; j++ ) {
+						const minor = names[j];
+						const value = initial[minor];
 
-						for ( let j = 0; j < numNames; j++ ) {
-							const name = names[i];
-							const value = initial[name];
-
-							input[name] = value == null ? null : value;
-						}
+						input[minor] = value == null ? null : value;
 					}
 				}
 			}
