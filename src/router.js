@@ -26,53 +26,38 @@
  * @author: cepharum
  */
 
-import L10n from "@/service/l10n";
+import Vue from "vue";
+import Router from "vue-router";
 
-/**
- * Provides common methods for normalizing property information.
- */
-export default class Property {
-	/**
-	 * Localizes a property's value if it looks like a value providing different
-	 * actual values per locale.
-	 *
-	 * @param {object<string,string>|*} value value to be localized
-	 * @param {string} useLocale locale to use instead of current one
-	 * @returns {string|*} localized or provided value
-	 */
-	static localizeValue( value, useLocale = null ) {
-		if ( useLocale == null ) {
-			useLocale = L10n.currentLocale; // eslint-disable-line no-param-reassign
-		}
+import Store from "@/store";
 
-		if ( typeof value === "object" && value ) {
-			const locales = Object.keys( value );
-			let wildcard = null;
-			let fallback = null;
+import Splash from "@/components/Splash";
+import Form from "@/components/Form";
 
-			for ( let li = 0, numLocales = locales.length; li < numLocales; li++ ) {
-				const locale = locales[li];
-				const normalized = locale.trim().toLowerCase();
+Vue.use( Router );
 
-				if ( normalized === useLocale ) {
-					return value[locale];
+export default new Router( {
+	routes: [
+		{
+			path: "/:id?",
+			redirect: to => ( { name: "Splash", params: { id: to.params.id || Vue.config.formId } } ),
+		},
+		{
+			path: "/splash/:id?",
+			name: "Splash",
+			component: Splash,
+		},
+		{
+			path: "/form/:id?",
+			name: "ShowForm",
+			component: Form,
+			beforeEnter: ( to, from, next ) => {
+				if ( Store.getters["prepared"] ) {
+					next();
+				} else {
+					next( { name: "Splash", params: { id: to.params.id } } );
 				}
-
-				switch ( normalized ) {
-					case "*" :
-					case "any" :
-						wildcard = value[locale];
-						break;
-
-					case "en" :
-						fallback = value[locale];
-						break;
-				}
-			}
-
-			return wildcard == null ? fallback : wildcard;
-		}
-
-		return value;
-	}
-}
+			},
+		},
+	],
+} );

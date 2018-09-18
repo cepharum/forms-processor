@@ -1,9 +1,0 @@
-image: node:latest
-
-before_script:
-  - npm install
-
-code_quality:
-  script:
-    - npm run test
-    - npm run lint

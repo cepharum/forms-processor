@@ -173,6 +173,7 @@ export default class Pattern {
 	 */
 	static parse( input, pattern, { keepLiterals = true, ignoreInvalid = true, keepTrailingLiterals = true } = {} ) {
 		let extracted = "";
+		let _pattern = pattern;
 
 		const fixedInput = String( input == null ? "" : input ).replace( /\s+/g, " " );
 		const numInput = fixedInput.length;
@@ -186,19 +187,19 @@ export default class Pattern {
 		let nextMatcher = null;
 		let nextMatcherIndex = null;
 
-		if ( typeof pattern === "string" ) {
-			pattern = this.compilePattern( pattern );
-		} else if ( !Array.isArray( pattern ) ) {
+		if ( typeof _pattern === "string" ) {
+			_pattern = this.compilePattern( _pattern );
+		} else if ( !Array.isArray( _pattern ) ) {
 			throw new TypeError( "invalid or missing pattern" );
 		}
 
-		const numPattern = pattern.length;
+		const numPattern = _pattern.length;
 
 		for ( inputIndex = 0, patternIndex = 0; inputIndex < numInput && patternIndex < numPattern; inputIndex++ ) {
 
 			// make sure know next expected literal/functional character
 			for ( let i = patternIndex; i < numPattern && ( nextLiteral == null || nextMatcher == null ); i++ ) {
-				const step = pattern[i];
+				const step = _pattern[i];
 
 				if ( nextLiteral == null ) {
 					if ( Array.isArray( step ) ) {
@@ -233,7 +234,7 @@ export default class Pattern {
 
 					for ( ; nextLiteralIndex < nextMatcherIndex; nextLiteralIndex++ ) {
 						if ( keepLiterals ) {
-							const subStep = pattern[nextLiteralIndex];
+							const subStep = _pattern[nextLiteralIndex];
 							if ( Array.isArray( subStep ) ) {
 								tail += subStep[0];
 							}
@@ -251,7 +252,7 @@ export default class Pattern {
 					let acceptLiteral = true;
 
 					for ( let i = nextMatcherIndex; i < nextLiteralIndex; i++ ) {
-						const stepRef = pattern[i];
+						const stepRef = _pattern[i];
 
 						if ( !Array.isArray( stepRef ) && !stepRef.optional ) {
 							acceptLiteral = false;
@@ -287,7 +288,7 @@ export default class Pattern {
 			}
 
 			for ( ; patternIndex < numPattern; patternIndex++ ) {
-				const subStep = pattern[patternIndex];
+				const subStep = _pattern[patternIndex];
 				if ( !Array.isArray( subStep ) && !subStep.optional ) {
 					throw new TypeError( `expecting additional input matching at least ${subStep.regexp}` );
 				}

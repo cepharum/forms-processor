@@ -27,6 +27,7 @@
  */
 
 import Store from "../store";
+import { normalizeLocale } from "./utility/l10n";
 
 /**
  * @typedef {object<string,string>} LocaleTranslationLeaf
@@ -47,7 +48,7 @@ export default class Localization {
 	 * @returns {string} locale tag, e.g. "de" or "en"
 	 */
 	static get currentLocale() {
-		return Store.getters.locale;
+		return Store.getters["l10n/current"];
 	}
 
 	/**
@@ -56,6 +57,35 @@ export default class Localization {
 	 * @returns {LocaleTranslationTree} map of translations
 	 */
 	static get translations() {
-		return Store.getters.l10n;
+		return Store.getters["l10n/map"];
+	}
+
+	/**
+	 * @borrows Localization.translations as Localization.map
+	 */
+	static get map() {
+		return Store.getters["l10n/map"];
+	}
+
+	/**
+	 * Loads a map of translations for selected locale.
+	 *
+	 * @param {string} locale locale of translations to be loaded
+	 * @return {Promise<object<string,string>>} promises translations of selected locale loaded
+	 */
+	static loadMap( locale ) {
+		const normalized = normalizeLocale( locale );
+		let mapper;
+
+		switch ( normalized ) {
+			case "de" :
+				mapper = import( "@/l10n/de" );
+				break;
+
+			default :
+				mapper = import( "@/l10n/en" );
+		}
+
+		return mapper.then( generator => generator.default() );
 	}
 }

@@ -26,53 +26,38 @@
  * @author: cepharum
  */
 
-import L10n from "@/service/l10n";
+import { normalizeLocale } from "@/service/utility/l10n";
 
-/**
- * Provides common methods for normalizing property information.
- */
-export default class Property {
-	/**
-	 * Localizes a property's value if it looks like a value providing different
-	 * actual values per locale.
-	 *
-	 * @param {object<string,string>|*} value value to be localized
-	 * @param {string} useLocale locale to use instead of current one
-	 * @returns {string|*} localized or provided value
-	 */
-	static localizeValue( value, useLocale = null ) {
-		if ( useLocale == null ) {
-			useLocale = L10n.currentLocale; // eslint-disable-line no-param-reassign
-		}
+export default {
+	namespaced: true,
+	state: {
+		locale: null,
+		translations: {},
+	},
+	actions: {
+		select( { commit }, locale = null ) {
+			commit( "select", locale );
+		},
+		load( { commit }, { locale, translations } ) {
+			commit( "load", { locale, translations } );
+		},
+	},
+	mutations: {
+		select( state, locale ) {
+			state.locale = normalizeLocale( locale );
+		},
+		load( state, { locale, translations } ) {
+			if ( translations && typeof translations === "object" && !Array.isArray( translations ) ) {
+				const _locale = normalizeLocale( locale );
+				const updated = Object.assign( {}, state.translations[_locale] || {}, translations );
 
-		if ( typeof value === "object" && value ) {
-			const locales = Object.keys( value );
-			let wildcard = null;
-			let fallback = null;
-
-			for ( let li = 0, numLocales = locales.length; li < numLocales; li++ ) {
-				const locale = locales[li];
-				const normalized = locale.trim().toLowerCase();
-
-				if ( normalized === useLocale ) {
-					return value[locale];
-				}
-
-				switch ( normalized ) {
-					case "*" :
-					case "any" :
-						wildcard = value[locale];
-						break;
-
-					case "en" :
-						fallback = value[locale];
-						break;
-				}
+				state.translations = Object.assign( {}, state.translations, { [_locale]: updated } );
 			}
-
-			return wildcard == null ? fallback : wildcard;
-		}
-
-		return value;
-	}
-}
+		},
+	},
+	getters: {
+		prepared: state => Boolean( state.locale != null && state.translations[state.locale] ),
+		current: state => state.locale,
+		map: state => ( state.locale && state.translations[state.locale] ) || {},
+	},
+};

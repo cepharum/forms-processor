@@ -149,16 +149,16 @@ export default class FormSequenceModel {
 					const forms = this.forms;
 					const numForms = forms.length;
 
-					index = parseInt( index );
+					const _index = parseInt( index );
 
-					if ( index < 0 || index >= numForms || !forms[index] ) {
-						throw new TypeError( `invalid request for selecting form with index ${index} out of bounds` );
+					if ( _index < 0 || _index >= numForms || !forms[_index] ) {
+						throw new TypeError( `invalid request for selecting form with index ${_index} out of bounds` );
 					}
 
 					const maxPermittedIndex = this.firstUnfinishedIndex;
-					if ( index <= maxPermittedIndex && index !== reactiveInfo.currentIndex ) {
-						reactiveInfo.currentIndex = index;
-						latestVisited = Math.max( latestVisited, index );
+					if ( _index <= maxPermittedIndex && _index !== reactiveInfo.currentIndex ) {
+						reactiveInfo.currentIndex = _index;
+						latestVisited = Math.max( latestVisited, _index );
 					}
 				},
 			},

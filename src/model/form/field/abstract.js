@@ -26,7 +26,7 @@
  * @author: cepharum
  */
 
-import L10N from "../../../service/l10n";
+import L10N from "@/service/l10n";
 
 import TermProcessor from "../../term/processor";
 import Property from "../utility/property";
@@ -404,7 +404,7 @@ export default class FormFieldAbstractModel {
 			 * Provides description of component representing current field.
 			 *
 			 * @name FormFieldAbstractModel#component
-			 * @property {Vue.Component}
+			 * @property {Component}
 			 * @readonly
 			 */
 			component: { value: this._renderComponent( reactiveFieldInfo ) },
@@ -470,7 +470,7 @@ export default class FormFieldAbstractModel {
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
-		<FieldComponent ref="fieldComponent" v-model="value" />
+		<FieldComponent ref="fieldComponent" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 		<span class="errors" v-if="errors.length">
 			<span class="error" v-for="error in errors">{{ error }}</span>
@@ -495,7 +495,7 @@ export default class FormFieldAbstractModel {
 			},
 			beforeMount() {
 				this._unsubscribe = this.$store.subscribe( mutation => {
-					if ( mutation.type === "writeInput" ) {
+					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 						const itsMe = name === qualifiedName;
 						const _dependsOn = dependsOn.indexOf( name ) > -1;
@@ -510,7 +510,7 @@ export default class FormFieldAbstractModel {
 								// -> my initial value might depend on it, so
 								//    re-assign my initial unless field has been
 								//    adjusted before
-								this.$store.dispatch( "writeInput", {
+								this.$store.dispatch( "form/writeInput", {
 									name: qualifiedName,
 									value: that.initial,
 								} );

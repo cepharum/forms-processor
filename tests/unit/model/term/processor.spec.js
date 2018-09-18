@@ -26,53 +26,23 @@
  * @author: cepharum
  */
 
-import L10n from "@/service/l10n";
+import Should from "should";
 
-/**
- * Provides common methods for normalizing property information.
- */
-export default class Property {
-	/**
-	 * Localizes a property's value if it looks like a value providing different
-	 * actual values per locale.
-	 *
-	 * @param {object<string,string>|*} value value to be localized
-	 * @param {string} useLocale locale to use instead of current one
-	 * @returns {string|*} localized or provided value
-	 */
-	static localizeValue( value, useLocale = null ) {
-		if ( useLocale == null ) {
-			useLocale = L10n.currentLocale; // eslint-disable-line no-param-reassign
-		}
+import TermProcessor from "../../../../src/model/term/processor";
 
-		if ( typeof value === "object" && value ) {
-			const locales = Object.keys( value );
-			let wildcard = null;
-			let fallback = null;
+describe( "Term Processor", () => {
+	it( "is available", () => {
+		Should.exist( TermProcessor );
+	} );
 
-			for ( let li = 0, numLocales = locales.length; li < numLocales; li++ ) {
-				const locale = locales[li];
-				const normalized = locale.trim().toLowerCase();
-
-				if ( normalized === useLocale ) {
-					return value[locale];
+	it( "compiles term to invocable function", () => {
+		new TermProcessor( "ROUND( myvar.float, 1 ) == 0.5" )
+			.evaluate( {
+				myvar: {
+					integer: 1,
+					float: 0.53,
 				}
-
-				switch ( normalized ) {
-					case "*" :
-					case "any" :
-						wildcard = value[locale];
-						break;
-
-					case "en" :
-						fallback = value[locale];
-						break;
-				}
-			}
-
-			return wildcard == null ? fallback : wildcard;
-		}
-
-		return value;
-	}
-}
+			} )
+			.should.be.true();
+	} );
+} );

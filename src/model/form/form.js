@@ -223,18 +223,20 @@ export default class FormModel {
 			finished: {
 				get: () => reactiveFormInfo.finished,
 				set: value => {
-					if ( value ) {
+					let _value = value;
+
+					if ( _value ) {
 						this.pristine = false;
 
 						if ( !this.valid ) {
-							value = false;
+							_value = false;
 						}
 					}
 
-					value = Boolean( value );
+					_value = Boolean( _value );
 
-					if ( reactiveFormInfo.finished !== value ) {
-						reactiveFormInfo.finished = value;
+					if ( reactiveFormInfo.finished !== _value ) {
+						reactiveFormInfo.finished = _value;
 					}
 				},
 			},

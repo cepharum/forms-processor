@@ -78,7 +78,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		const { qualifiedName } = that;
 
 		return {
-			props: ["value"],
 			render( createElement ) {
 				return createElement( "input", {
 					domProps: {
@@ -100,7 +99,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							reactiveFieldInfo.pristine = false;
 							that.form.pristine = false;
 
-							this.$store.dispatch( "writeInput", {
+							this.$store.dispatch( "form/writeInput", {
 								name: qualifiedName,
 								value,
 							} );
@@ -110,6 +109,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					},
 				} );
 			},
+			data: () => reactiveFieldInfo,
 		};
 	}
 
