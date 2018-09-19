@@ -36,10 +36,12 @@ import L10n from "@/service/l10n";
 export default class FormSequenceModel {
 	/**
 	 * @param {object} definition definition of a sequence of forms
-	 * @param {object} data variable space fed form fields
+	 * @param {function(string):*} read reads value of a named field
 	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
+	 * @param {function(string,*)} write adjusts value of a named field
+	 * @param {object<string,*>} data refers to storage managed by `read`/`write`
 	 */
-	constructor( definition, data, localeFn ) {
+	constructor( definition, { read, write, data }, localeFn ) {
 		const { sequence = [] } = definition;
 
 		const reactiveInfo = {
@@ -105,6 +107,24 @@ export default class FormSequenceModel {
 			data: { value: data },
 
 			/**
+			 * Reads value of a field selected by its name from storage.
+			 *
+			 * @name FormSequenceModel#readValue
+			 * @property {function(name:string):*}
+			 * @readonly
+			 */
+			readValue: { value: read },
+
+			/**
+			 * Adjusts value in storage containing all field's values.
+			 *
+			 * @name FormSequenceModel#writeValue
+			 * @property {function(name:string, value:*):boolean}
+			 * @readonly
+			 */
+			writeValue: { value: write },
+
+			/**
 			 * Indicates whether all forms should be simultaneously visible or
 			 * not.
 			 *
@@ -124,6 +144,7 @@ export default class FormSequenceModel {
 			locale: { get: localeFn },
 		} );
 
+
 		// defer definition of additional properties requiring public access
 		// on those defined before
 		Object.defineProperties( this, {
@@ -140,6 +161,21 @@ export default class FormSequenceModel {
 				return new FormModel( this, formDefinition, index, reactiveFormInfo );
 			} ) },
 		} );
+
+
+		Object.defineProperties( this, {
+			/**
+			 * Maps qualified names of every field into the controller instance
+			 * managing either field.
+			 *
+			 * @name FormSequenceModel#fields
+			 * @property {object<string,FormFieldAbstractModel>}
+			 * @readonly
+			 */
+			fields: { value: this._createFieldsMap() },
+		} );
+
+		this.distributeListsOfDependents();
 
 
 		let latestVisited = 0;
@@ -293,6 +329,33 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Creates object mapping from any declared field's qualified name into the
+	 * controller managing either field in model.
+	 *
+	 * @returns {object<string,FormFieldAbstractModel>} maps qualified names of every field into either field's controller
+	 * @protected
+	 */
+	_createFieldsMap() {
+		const forms = this.forms;
+		const numForms = forms.length;
+		const map = {};
+
+		for ( let i = 0; i < numForms; i++ ) {
+			const form = forms[i];
+			const fields = form.fields;
+			const numFields = fields.length;
+
+			for ( let j = 0; j < numFields; j++ ) {
+				const field = fields[j];
+
+				map[field.qualifiedName] = field;
+			}
+		}
+
+		return map;
+	}
+
+	/**
 	 * Handles notification on named property of form having changed.
 	 *
 	 * This method is available to forms of sequence to notify sequence manager
@@ -397,6 +460,50 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Creates reverse map of dependencies list fields per field depending on
+	 * the latter and assigns the resulting list to either field with
+	 * dependencies.
+	 *
+	 * @returns {void}
+	 */
+	distributeListsOfDependents() {
+		const fieldsMap = this.fields;
+		const fieldNames = Object.keys( fieldsMap );
+		const numFields = fieldNames.length;
+
+		const dependentsPerField = {};
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
+			const field = fieldsMap[fieldName];
+
+			const dependencies = field.dependsOn;
+			if ( Array.isArray( dependencies ) ) {
+				const numDependencies = dependencies.length;
+
+				for ( let j = 0; j < numDependencies; j++ ) {
+					const dependency = dependencies[j];
+
+					if ( !dependentsPerField.hasOwnProperty( dependency ) ) {
+						dependentsPerField[dependency] = [];
+					}
+
+					dependentsPerField[dependency].push( fieldName );
+				}
+			}
+		}
+
+		const keys = Object.keys( dependentsPerField );
+		const numKeys = keys.length;
+
+		for ( let i = 0; i < numKeys; i++ ) {
+			const key = keys[i];
+
+			fieldsMap[key].dependents = dependentsPerField[key];
+		}
+	}
+
+	/**
 	 * Describes Vue component listing all forms in sequence or just the current
 	 * form in sequence.
 	 *
@@ -406,8 +513,7 @@ export default class FormSequenceModel {
 	 */
 	_renderComponent( data ) {
 		const that = this;
-		const forms = this.forms;
-		const showAll = this.showAllForms;
+		const { forms, showAllForms, fields } = this;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
@@ -417,9 +523,9 @@ export default class FormSequenceModel {
 
 		return {
 			render: function( createElement ) {
-				const formElements = showAll ? new Array( numForms ) : [];
+				const formElements = showAllForms ? new Array( numForms ) : [];
 
-				if ( showAll ) {
+				if ( showAllForms ) {
 					for ( let i = 0; i < numForms; i++ ) {
 						formElements[i] = createElement( components[i] );
 					}
@@ -436,6 +542,33 @@ export default class FormSequenceModel {
 				] );
 			},
 			data: () => data,
+			beforeMount() {
+				this._unsubscribe = this.$store.subscribe( mutation => {
+					if ( mutation.type === "form/writeInput" ) {
+						const { name, value } = mutation.payload;
+
+						const field = fields[name];
+						if ( field ) {
+							field.onUpdateValue( this.$store, value );
+
+							const dependents = field.dependents;
+							const numDependents = dependents.length;
+
+							for ( let i = 0; i < numDependents; i++ ) {
+								const dependent = fields[dependents[i]];
+								if ( dependent ) {
+									dependent.onUpdateValue( this.$store, value, name );
+								}
+							}
+						}
+					}
+				} );
+			},
+			beforeDestroy() {
+				if ( this._unsubscribe ) {
+					this._unsubscribe();
+				}
+			},
 			mounted() {
 				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
 			},

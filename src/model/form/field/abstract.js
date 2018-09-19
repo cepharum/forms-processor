@@ -133,6 +133,10 @@ export default class FormFieldAbstractModel {
 						getters[propertyName] = { value: propertyValue == null ? null : Pattern.compilePattern( propertyValue ) };
 						break;
 
+					case "form" :
+					case "index" :
+					case "dependsOn" :
+					case "dependents" :
 					case "value" :
 					case "pristine" :
 					case "valid" :
@@ -231,6 +235,15 @@ export default class FormFieldAbstractModel {
 		}
 
 
+		const formName = form.name;
+		const qualifiedName = `${formName}.${normalizedName}`;
+		let dependents = null;
+
+
+		const initialValue = this.normalizeValue( this.initial );
+		form.writeValue( qualifiedName, initialValue );
+
+
 		// define some field information required to be reactive
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
@@ -242,8 +255,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.errors = [];
 
 
-		const formName = form.name;
-		const formData = form.data;
+		const hasInputValue = omitProperties.indexOf( "value" ) < 0;
 
 		Object.defineProperties( this, {
 			/**
@@ -282,29 +294,27 @@ export default class FormFieldAbstractModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			qualifiedName: { value: `${formName}.${normalizedName}` },
+			qualifiedName: { value: qualifiedName },
 
 			/**
 			 * Reads current value of field.
 			 *
 			 * @name FormFieldAbstractModel#value
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
+			 */
+			value: hasInputValue ? {
+				get: () => form.readValue( qualifiedName ),
+				set: value => form.writeValue( qualifiedName, value ),
+			} : { value: undefined },
+
+			/**
+			 * Indicates whether this field is providing any input value.
+			 *
+			 * @name FormFieldAbstractModel#providesInput
+			 * @property {Boolean}
 			 * @readonly
 			 */
-			value: {
-				get: () => {
-					if ( formData.hasOwnProperty( formName ) ) {
-						const formSectionData = formData[formName];
-						if ( formSectionData && typeof formSectionData === "object" ) {
-							if ( normalizedName in formSectionData ) {
-								return formSectionData[normalizedName];
-							}
-						}
-					}
-
-					return this.normalizeValue( this.initial );
-				},
-			},
+			providesInput: { value: hasInputValue },
 
 			/**
 			 * Lists paths of variables this field depends on due to terms used
@@ -315,6 +325,24 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			dependsOn: { value: Object.keys( collectedDependencies ) },
+
+			/**
+			 * Lists names of fields depending on current one's value/state.
+			 *
+			 * @name FormFieldAbstractModel#dependents
+			 * @property {string[]}
+			 * @readonly
+			 */
+			dependents: {
+				get: () => ( dependents == null ? [] : dependents ),
+				set: dependingFieldNames => {
+					if ( Array.isArray( dependingFieldNames ) ) {
+						if ( dependents == null ) {
+							dependents = dependingFieldNames;
+						}
+					}
+				},
+			},
 
 			/**
 			 * Indicates if field is considered valid, currently.
@@ -377,6 +405,16 @@ export default class FormFieldAbstractModel {
 			 * @readonly
  			 */
 			errors: { get: () => reactiveFieldInfo.errors },
+
+			/**
+			 * Exposes reactive data of current field as used by any component
+			 * used to present this field.
+			 *
+			 * @name FormFieldAbstractModel#$data
+			 * @property {object<string,*>}
+			 * @readonly
+			 */
+			$data: { value: reactiveFieldInfo },
 		} );
 
 
@@ -406,6 +444,39 @@ export default class FormFieldAbstractModel {
 			 */
 			component: { value: this._renderComponent( reactiveFieldInfo ) },
 		} );
+	}
+
+	/**
+	 * Handles change of a field's value by updating state of model accordingly.
+	 *
+	 * @param {*} store reference on store the adjustments took place in
+	 * @param {*} newValue new value of field
+	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
+	 * @returns {void}
+	 */
+	onUpdateValue( store, newValue, updatedFieldName = null ) {
+		const data = this.$data;
+		const itsMe = updatedFieldName == null;
+
+		this.updateFieldInformation( data );
+
+		if ( !itsMe && data.pristine ) {
+			// some other field has been updated
+			// -> my initial value might depend on it, so
+			//    re-assign my initial unless field has been
+			//    adjusted before
+			store.dispatch( "form/writeInput", {
+				name: this.qualifiedName,
+				value: this.initial,
+			} );
+		}
+
+		// changing current field or some field current one
+		// depends on might affect validity of current field
+		if ( !data.pristine ) {
+			data.valid = null;
+			const valid = this.valid; // eslint-disable-line no-unused-vars
+		}
 	}
 
 	/**
@@ -447,7 +518,7 @@ export default class FormFieldAbstractModel {
 	 */
 	_renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, qualifiedName, dependsOn } = this;
+		const { type, qualifiedName } = this;
 
 		return {
 			components: {
@@ -509,59 +580,16 @@ export default class FormFieldAbstractModel {
 				} );
 			},
 			beforeMount() {
-				this._unsubscribe = this.$store.subscribe( mutation => {
-					if ( mutation.type === "form/writeInput" ) {
-						const { name, value } = mutation.payload;
-						const itsMe = name === qualifiedName;
-						const thisFieldDependsOnChange = dependsOn.indexOf( name ) > -1;
+				if ( that.pristine ) {
+					reactiveFieldInfo.value = that.normalizeValue( that.initial );
+				}
 
-						if ( thisFieldDependsOnChange ) {
-							that.updateFieldInformation( reactiveFieldInfo );
-
-							if ( !itsMe && this.pristine ) {
-								// some other field has been updated
-								// -> my initial value might depend on it, so
-								//    re-assign my initial unless field has been
-								//    adjusted before
-								this.$store.dispatch( "form/writeInput", {
-									name: qualifiedName,
-									value: that.initial,
-									implicit: true,
-								} );
-							}
-
-							// dispatch "update event" to field's actual component
-							const field = this.$refs.fieldComponent;
-							if ( field ) {
-								const fieldUpdater = field.updateOnDataChanged;
-								if ( typeof fieldUpdater === "function" ) {
-									fieldUpdater();
-								}
-							}
-						}
-
-						if ( itsMe ) {
-							// subscribed mutation might have been committed w/o
-							// adjusting value of field's component first
-							// -> adopt update in store on component
-							this.value = value;
-						}
-
-						if ( itsMe || thisFieldDependsOnChange ) {
-							// changing current field or some field current one
-							// depends on might affect validity of current field
-							if ( !this.pristine ) {
-								this.valid = null;
-								const valid = that.valid; // eslint-disable-line no-unused-vars
-							}
-						}
+				this.$on( "input", () => {
+					if ( !this.pristine ) {
+						this.valid = null;
+						const valid = that.valid; // eslint-disable-line no-unused-vars
 					}
 				} );
-			},
-			beforeDestroy() {
-				if ( this._unsubscribe ) {
-					this._unsubscribe();
-				}
 			},
 		};
 	}

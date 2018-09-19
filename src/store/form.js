@@ -27,6 +27,7 @@
  */
 
 import L10n from "@/service/l10n";
+import Storage from "@/service/storage";
 import FormSequenceModel from "../model/form/sequence";
 
 let nextId = 1;
@@ -37,25 +38,32 @@ export default {
 		id: null,
 		definition: {},
 		input: {},
-		sequence: null,
+		model: null,
 	},
 	actions: {
 		/**
 		 * Injects a form's definition and ID to be presented.
 		 *
+		 * @param {object} state refers to current module's state
 		 * @param {function} commit callback for committing changes to state
+		 * @param {function} dispatch callback for dispatching more actions
+		 * @param {object<string,*>} getters set of current module's getters
 		 * @param {object<string,*>} rootGetters set of non-namespaced getters
 		 * @param {string|number} id unique ID of form to use on storing all input eventually
 		 * @param {object} definition description of forms, their fields and additional context information
 		 * @returns {void}
 		 */
-		define( { commit, rootGetters }, { id = null, definition } ) {
+		define( { state, commit, dispatch, getters, rootGetters }, { id = null, definition } ) {
 			const _id = id == null ? nextId++ : id;
 
 			commit( "define", {
 				id: _id,
 				definition,
-				locale: () => rootGetters.locale,
+				model: new FormSequenceModel( definition, {
+					write: ( name, value ) => dispatch( "writeInput", { name, value } ),
+					read: getters.readInput,
+					data: state.input,
+				}, () => rootGetters.locale ),
 			} );
 
 			commit( "resetInput" );
@@ -67,78 +75,55 @@ export default {
 		 * @param {function} commit callback for committing changes to state
 		 * @param {string} name qualified name of field to adjust
 		 * @param {*} value new value of field
-		 * @param {boolean} implicit true if value is changed implicitly due to user actually changing some other field
 		 * @returns {void}
 		 */
-		writeInput( { commit }, { name, value, implicit = false } ) {
-			commit( "writeInput", { name, value, implicit } );
+		writeInput( { commit }, { name, value } ) {
+			const _name = Storage.normalizeName( name );
+			if ( _name != null ) {
+				commit( "writeInput", { name: _name, value } );
+			}
 		},
 	},
 	mutations: {
-		define( state, { id, definition, locale } ) {
-			if ( !state.id && id && definition ) {
-				state.id = id;
-				state.definition = definition;
-			}
-
-			if ( !state.sequence && locale ) {
-				state.sequence = new FormSequenceModel( state.definition, state.input, locale );
-			}
+		define( state, { id, definition, model } ) {
+			state.id = id;
+			state.definition = definition;
+			state.model = model;
 		},
 
 		resetInput( state ) {
-			if ( state.sequence ) {
-				const inputs = state.input;
-				const initials = state.sequence.getInitialData();
-				const segments = Object.keys( initials );
-				const numSeqments = segments.length;
+			if ( state.model ) {
+				let changed = false;
+				const storage = new Storage( state.input );
 
-				for ( let i = 0; i < numSeqments; i++ ) {
-					const major = segments[i];
-					const initial = initials[major];
-					const names = Object.keys( initial );
-					const numNames = names.length;
+				const fields = state.model.fields;
+				const names = Object.keys( fields );
+				const numFields = names.length;
 
-					if ( typeof inputs[major] !== "object" || !inputs[major] ) {
-						inputs[major] = {};
-					}
+				for ( let i = 0; i < numFields; i++ ) {
+					const name = names[i];
+					const field = fields[name];
 
-					const input = inputs[major];
+					changed |= storage.write( name, field.normalizeValue( field.initial ) );
+				}
 
-					for ( let j = 0; j < numNames; j++ ) {
-						const minor = names[j];
-						const value = initial[minor];
-
-						input[minor] = value == null ? null : value;
-					}
+				if ( changed ) {
+					state.input = storage.data;
 				}
 			}
 		},
 
-		writeInput( state, { name, value, implicit } ) { // eslint-disable-line no-unused-vars
-			const segments = String( name ).split( /\s*\.\s*/ );
-			let data = state.input;
+		writeInput( state, { name, value } ) {
+			const storage = new Storage( state.input );
 
-			for ( let i = 0, numSegments = segments.length - 1; i < numSegments; i++ ) {
-				const segment = segments[i];
-
-				if ( data.hasOwnProperty( segment ) && typeof data[segment] === "object" ) {
-					data = data[segment];
-				} else {
-					// don't adjust state as request is addressing unknown section
-					return;
-				}
-			}
-
-			const lastSegment = segments.pop();
-			if ( lastSegment && data.hasOwnProperty( lastSegment ) ) {
-				data[lastSegment] = value;
+			if ( storage.write( name, value ) ) {
+				state.input = storage.data;
 			}
 		},
 	},
 	getters: {
 		loaded( state ) {
-			return state.sequence != null;
+			return state.model != null;
 		},
 		sequenceID( state ) {
 			return state.id;
@@ -150,31 +135,13 @@ export default {
 			return L10n.selectLocalized( state.definition.description || "", rootGetters.locale );
 		},
 		sequenceManager( state ) {
-			return state.sequence;
+			return state.model;
 		},
 		sequenceInput( state ) {
 			return state.input;
 		},
 		readInput: state => name => {
-			const segments = String( name ).split( /\s*\.\s*/ );
-			let data = state.input;
-
-			for ( let i = 0, numSegments = segments.length - 1; i < numSegments; i++ ) {
-				const segment = segments[i];
-
-				if ( data.hasOwnProperty( segment ) && typeof data[segment] === "object" ) {
-					data = data[segment];
-				} else {
-					return null;
-				}
-			}
-
-			const lastSegment = segments.pop();
-			if ( lastSegment && data.hasOwnProperty( lastSegment ) ) {
-				return data[lastSegment];
-			}
-
-			return null;
+			return new Storage( state.input ).read( name );
 		},
 	},
 };

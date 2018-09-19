@@ -127,6 +127,24 @@ export default class FormModel {
 			 * @readonly
 			 */
 			data: { value: sequence.data },
+
+			/**
+			 * Reads value of a field selected by its name from storage.
+			 *
+			 * @name FormModel#readValue
+			 * @property {function(name:string):*}
+			 * @readonly
+			 */
+			readValue: { value: sequence.readValue },
+
+			/**
+			 * Adjusts value in storage containing all field's values.
+			 *
+			 * @name FormModel#writeValue
+			 * @property {function(name:string, value:*):boolean}
+			 * @readonly
+			 */
+			writeValue: { value: sequence.writeValue },
 		} );
 
 		reactiveFormInfo.fields = new Array( fields.length );

@@ -74,14 +74,14 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	_renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { qualifiedName } = that;
+		const { form: { readValue, writeValue }, qualifiedName } = that;
 
 		return {
 			render( createElement ) {
 				return createElement( "input", {
 					domProps: {
 						type: "text",
-						value: this.value,
+						value: readValue( qualifiedName ),
 					},
 					on: {
 						input: event => {
@@ -90,19 +90,22 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							};
 
 							const value = that.normalizeValue( event.target.value, options );
+
+							event.target.value = value;
+
 							if ( value === this.value ) {
 								event.target.value = value;
 								return;
 							}
 
+							this.value = value;
 							reactiveFieldInfo.pristine = false;
 
-							this.$store.dispatch( "form/writeInput", {
-								name: qualifiedName,
-								value,
-							} );
+							writeValue( qualifiedName, value );
+							reactiveFieldInfo.value = value;
 
 							this.$emit( "input", value );
+							this.$parent.$emit( "input", value );
 						},
 					},
 				} );
