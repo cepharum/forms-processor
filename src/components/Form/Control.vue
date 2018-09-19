@@ -1,12 +1,12 @@
 <template>
 	<div class="form-control">
-		<button v-if="!isSole" @click="rewind()" :disabled="isFirst">{{
+		<button v-if="!isSole" @click="rewind()" :disabled="isFirst" class="previous">{{
 			labelPrevious }}
 		</button>
-		<button v-if="!isLast" @click="advance()" :disabled="isInvalid">{{
+		<button v-if="!isLast" @click="advance()" :disabled="isInvalid" class="next">{{
 			labelNext }}
 		</button>
-		<button v-if="isLast" @click="submit()" :disabled="isInvalid">{{
+		<button v-if="isLast" @click="submit()" :disabled="isInvalid" class="submit">{{
 			labelSubmit }}
 		</button>
 	</div>
