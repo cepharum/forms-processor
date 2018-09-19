@@ -477,6 +477,10 @@ export default class FormFieldAbstractModel {
 			data.valid = null;
 			const valid = this.valid; // eslint-disable-line no-unused-vars
 		}
+
+		if ( !itsMe ) {
+			EventBus.$emit( "form:update", this.qualifiedName, updatedFieldName, newValue );
+		}
 	}
 
 	/**
@@ -590,6 +594,23 @@ export default class FormFieldAbstractModel {
 						const valid = that.valid; // eslint-disable-line no-unused-vars
 					}
 				} );
+
+				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
+					if ( emittingQualifiedName === qualifiedName ) {
+						const field = this.$refs.fieldComponent;
+						if ( field ) {
+							const fieldUpdater = field.updateOnDataChanged;
+							if ( typeof fieldUpdater === "function" ) {
+								fieldUpdater();
+							}
+						}
+					}
+				};
+
+				EventBus.$on( "form:update", this.__onGlobalFormUpdateEvent );
+			},
+			beforeDestroy() {
+				EventBus.$off( "form:update", this.__onGlobalFormUpdateEvent );
 			},
 		};
 	}
