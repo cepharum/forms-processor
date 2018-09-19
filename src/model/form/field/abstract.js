@@ -236,7 +236,6 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.valid = null;
-		reactiveFieldInfo.isset = false;
 		reactiveFieldInfo.value = this.normalizeValue( this.initial );
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
@@ -331,16 +330,16 @@ export default class FormFieldAbstractModel {
 				get: () => {
 					if ( reactiveFieldInfo.valid == null ) {
 						if ( reactiveFieldInfo.pristine ) {
-							reactiveFieldInfo.valid = true;
-						} else {
-							try {
-								reactiveFieldInfo.errors = this._validate();
-							} catch ( e ) {
-								reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
-							}
-
-							reactiveFieldInfo.valid = reactiveFieldInfo.errors.length === 0;
+							return true;
 						}
+
+						try {
+							reactiveFieldInfo.errors = this.validate();
+						} catch ( e ) {
+							reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
+						}
+
+						reactiveFieldInfo.valid = reactiveFieldInfo.errors.length === 0;
 					}
 
 					return reactiveFieldInfo.valid;
@@ -460,7 +459,6 @@ export default class FormFieldAbstractModel {
 	'type-${type}', 
 	'name-${qualifiedName}',
 	required ? 'mandatory' : 'optional', 
-	isset || !pristine ? 'set' : 'unset',
 	pristine ? 'pristine' : 'touched',
 	valid ? 'valid' : 'invalid',
 ]">
@@ -515,14 +513,12 @@ export default class FormFieldAbstractModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 						const itsMe = name === qualifiedName;
-						const _dependsOn = dependsOn.indexOf( name ) > -1;
+						const thisFieldDependsOnChange = dependsOn.indexOf( name ) > -1;
 
-						if ( _dependsOn ) {
-							// current field has term depending on mutated field
-
+						if ( thisFieldDependsOnChange ) {
 							that.updateFieldInformation( reactiveFieldInfo );
 
-							if ( !itsMe && this.pristine && !this.isset ) {
+							if ( !itsMe && this.pristine ) {
 								// some other field has been updated
 								// -> my initial value might depend on it, so
 								//    re-assign my initial unless field has been
@@ -530,6 +526,7 @@ export default class FormFieldAbstractModel {
 								this.$store.dispatch( "form/writeInput", {
 									name: qualifiedName,
 									value: that.initial,
+									implicit: true,
 								} );
 							}
 
@@ -550,11 +547,13 @@ export default class FormFieldAbstractModel {
 							this.value = value;
 						}
 
-						if ( itsMe || _dependsOn ) {
+						if ( itsMe || thisFieldDependsOnChange ) {
 							// changing current field or some field current one
 							// depends on might affect validity of current field
-							this.valid = null;
-							const valid = that.valid; // eslint-disable-line no-unused-vars
+							if ( !this.pristine ) {
+								this.valid = null;
+								const valid = that.valid; // eslint-disable-line no-unused-vars
+							}
 						}
 					}
 				} );
@@ -589,7 +588,7 @@ export default class FormFieldAbstractModel {
 	 * @param {boolean} live indicates whether validation occurs live while user is providing input
 	 * @returns {string[]} lists validation error messages, empty list indicates valid field
 	 */
-	_validate( live ) { // eslint-disable-line no-unused-vars
+	validate( live = false ) { // eslint-disable-line no-unused-vars
 		return [];
 	}
 }

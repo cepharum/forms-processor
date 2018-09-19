@@ -40,6 +40,15 @@ export default {
 		sequence: null,
 	},
 	actions: {
+		/**
+		 * Injects a form's definition and ID to be presented.
+		 *
+		 * @param {function} commit callback for committing changes to state
+		 * @param {object<string,*>} rootGetters set of non-namespaced getters
+		 * @param {string|number} id unique ID of form to use on storing all input eventually
+		 * @param {object} definition description of forms, their fields and additional context information
+		 * @returns {void}
+		 */
 		define( { commit, rootGetters }, { id = null, definition } ) {
 			const _id = id == null ? nextId++ : id;
 
@@ -52,8 +61,17 @@ export default {
 			commit( "resetInput" );
 		},
 
-		writeInput( { commit }, { name, value } ) {
-			commit( "writeInput", { name, value } );
+		/**
+		 * Requests to update a field's value in state.
+		 *
+		 * @param {function} commit callback for committing changes to state
+		 * @param {string} name qualified name of field to adjust
+		 * @param {*} value new value of field
+		 * @param {boolean} implicit true if value is changed implicitly due to user actually changing some other field
+		 * @returns {void}
+		 */
+		writeInput( { commit }, { name, value, implicit = false } ) {
+			commit( "writeInput", { name, value, implicit } );
 		},
 	},
 	mutations: {
@@ -97,7 +115,7 @@ export default {
 			}
 		},
 
-		writeInput( state, { name, value } ) {
+		writeInput( state, { name, value, implicit } ) { // eslint-disable-line no-unused-vars
 			const segments = String( name ).split( /\s*\.\s*/ );
 			let data = state.input;
 

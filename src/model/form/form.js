@@ -170,6 +170,17 @@ export default class FormModel {
 							valid = false;
 							break;
 						}
+
+						if ( field.pristine ) {
+							// pristine fields are basically marked "valid" due
+							// to haven't been touched so far
+							// -> but form's validity always depends on those
+							//    fields, too
+							if ( field.validate().length > 0 ) {
+								valid = false;
+								break;
+							}
+						}
 					}
 
 					if ( reactiveFormInfo.valid !== valid ) {

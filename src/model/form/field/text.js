@@ -96,7 +96,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							}
 
 							reactiveFieldInfo.pristine = false;
-							that.form.pristine = false;
 
 							this.$store.dispatch( "form/writeInput", {
 								name: qualifiedName,
@@ -113,10 +112,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	_validate( live ) {
-		const errors = super._validate();
+	validate( live ) {
+		const errors = super.validate();
 
-		const value = this.value.trim();
+		const value = String( this.value == null ? "" : this.value ).trim();
 
 		if ( this.required && !value.length ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );

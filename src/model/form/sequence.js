@@ -233,7 +233,7 @@ export default class FormSequenceModel {
 
 						const form = forms[i];
 
-						if ( !form.pristine && !form.valid ) {
+						if ( form.pristine || !form.valid ) {
 							return i;
 						}
 					}
