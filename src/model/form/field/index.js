@@ -26,10 +26,65 @@
  * @author: cepharum
  */
 
+import FormFieldAbstractModel from "./abstract";
 import FormFieldInfoModel from "./info";
 import FormFieldTextModel from "./text";
 
-export default {
-	info: FormFieldInfoModel,
-	text: FormFieldTextModel,
+let registry = null;
+
+/**
+ * Implements extensible registry of managers implementing specific behaviour
+ * for named types of form fields.
+ */
+export default class FieldManagers {
+	/**
+	 * Fetches manager class implementing behaviour of selected type of form
+	 * field.
+	 *
+	 * @param {string} type type value to be used in fields' definitions
+	 * @returns {?FormFieldAbstractModel} manager class implementing behaviour of selected type of field, null on unknown type
+	 */
+	static findByType( type ) {
+		const _type = type.trim().toLowerCase();
+
+		if ( _type ) {
+			this.setup();
+			if ( registry.hasOwnProperty( _type ) ) {
+				return registry[_type];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Registers new type of field manager to be used with given type value.
+	 *
+	 * @param {string} type type value to be used in fields' definitions
+	 * @param {FormFieldAbstractModel} manager manager class implementing behaviour of new type of fields
+	 * @returns {void}
+	 */
+	static register( type, manager ) {
+		const _type = type.trim().toLowerCase();
+
+		if ( _type && manager instanceof FormFieldAbstractModel ) {
+			this.setup();
+
+			registry[_type] = manager;
+		}
+	}
+
+	/**
+	 * Sets up registry with all field types provided by core implementation.
+	 *
+	 * @returns {void}
+	 */
+	static setup() {
+		if ( registry == null ) {
+			registry = {
+				info: FormFieldInfoModel,
+				text: FormFieldTextModel,
+			};
+		}
+	}
 };

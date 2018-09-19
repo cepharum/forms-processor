@@ -383,10 +383,9 @@ export default class FormModel {
 function createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
 	let { type = "text" } = fieldDefinition;
 
-	type = type.trim().toLowerCase();
-
-	if ( FieldManagers.hasOwnProperty( type ) ) {
-		return new FieldManagers[type]( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
+	const Manager = FieldManagers.findByType( type );
+	if ( Manager ) {
+		return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
 	}
 
 	console.error( `missing manager for handling form fields of type ${type}` ); // eslint-disable-line no-console
