@@ -146,7 +146,7 @@ export default class FormFieldAbstractModel {
 						}
 
 						// handle all else definition properties
-						propertyValue = L10n.localize( propertyValue, form.locale );
+						propertyValue = L10n.selectLocalized( propertyValue, form.locale );
 						if ( propertyValue == null ) {
 							break;
 						}
@@ -479,26 +479,17 @@ export default class FormFieldAbstractModel {
 			data: () => reactiveFieldInfo,
 			methods: {
 				localize( lookup ) {
+					if ( Array.isArray( lookup ) ) {
+						const [ _lookup, args ] = lookup;
+
+						return L10n.translate( this.$store.getters.l10n, _lookup, ...args );
+					}
+
 					if ( typeof lookup === "string" ) {
 						const _lookup = lookup.trim();
 
 						if ( _lookup[0] === "@" ) {
-							let map = this.$store.getters.l10n;
-							const segments = _lookup.slice( 1 ).split( /\s*\.\s*/ );
-							const numSegments = segments.length;
-
-							for ( let i = 0; i < numSegments; i++ ) {
-								const segment = segments[i];
-
-								if ( typeof map === "object" && map && map[segment] ) {
-									map = map[segment];
-								} else {
-									map = null;
-									break;
-								}
-							}
-
-							return map;
+							return L10n.translate( this.$store.getters.l10n, _lookup.slice( 1 ) );
 						}
 					}
 

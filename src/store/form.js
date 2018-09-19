@@ -126,10 +126,10 @@ export default {
 			return state.id;
 		},
 		sequenceLabel( state, getters, rootState, rootGetters ) {
-			return L10n.localize( state.definition.label || "", rootGetters.locale );
+			return L10n.selectLocalized( state.definition.label || "", rootGetters.locale );
 		},
 		sequenceDescription( state, getters, rootState, rootGetters ) {
-			return L10n.localize( state.definition.description || "", rootGetters.locale );
+			return L10n.selectLocalized( state.definition.description || "", rootGetters.locale );
 		},
 		sequenceManager( state ) {
 			return state.sequence;

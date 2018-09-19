@@ -69,7 +69,7 @@ export default class FormSequenceModel {
 			 */
 			label: { get: () => {
 				const locale = localeFn();
-				return L10n.localize( definition.label, locale ) || L10n.localize( definition.title, locale );
+				return L10n.selectLocalized( definition.label, locale ) || L10n.selectLocalized( definition.title, locale );
 			} },
 
 			/**
@@ -83,7 +83,7 @@ export default class FormSequenceModel {
 			 */
 			title: { get: () => {
 				const locale = localeFn();
-				return L10n.localize( definition.title, locale ) || L10n.localize( definition.label, locale );
+				return L10n.selectLocalized( definition.title, locale ) || L10n.selectLocalized( definition.label, locale );
 			} },
 
 			/**
@@ -93,7 +93,7 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			description: { get: () => L10n.localize( definition.description, localeFn() ) },
+			description: { get: () => L10n.selectLocalized( definition.description, localeFn() ) },
 
 			/**
 			 * Provides variable space of all forms in a sequence of forms.

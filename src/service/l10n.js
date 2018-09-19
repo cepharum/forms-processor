@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import { format } from "util";
 import { normalizeLocale } from "./utility/l10n";
 
 /**
@@ -64,6 +65,38 @@ export default class Localization {
 	}
 
 	/**
+	 * Resolves lookup in provided map applying optionally provided arguments to
+	 * fill placeholders in string selected from map eventually.
+	 *
+	 * @param {object} map nested map of strings into strings associating lookup strings with localized translations
+	 * @param {string} lookup period-separated sequence of lookup strings selecting leaf in provided hierarchy of translations
+	 * @param {*} args list of arguments to be applied on selected translation for filling existing placeholders
+	 * @return {?string} translated string or null if missing
+	 */
+	static translate( map, lookup, ...args ) {
+		const segments = lookup.trim().split( /\s*\.\s*/ );
+		const numSegments = segments.length;
+		let _map = map;
+
+		for ( let i = 0; i < numSegments; i++ ) {
+			const segment = segments[i];
+
+			if ( typeof _map === "object" && _map && _map[segment] ) {
+				_map = _map[segment];
+			} else {
+				_map = null;
+				break;
+			}
+		}
+
+		if ( _map && args.length ) {
+			_map = format( _map, ...args );
+		}
+
+		return _map;
+	}
+
+	/**
 	 * Localizes a property's value if it looks like a value providing different
 	 * actual values per locale.
 	 *
@@ -71,7 +104,7 @@ export default class Localization {
 	 * @param {string} desiredLocale locale to use
 	 * @returns {string|*} localized or provided value
 	 */
-	static localize( value, desiredLocale ) {
+	static selectLocalized( value, desiredLocale ) {
 		if ( typeof value === "object" && value ) {
 			const locales = Object.keys( value );
 			let wildcard = null;

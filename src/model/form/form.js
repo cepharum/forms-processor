@@ -81,7 +81,7 @@ export default class FormModel {
 			 */
 			label: { get: () => {
 				const locale = sequence.locale;
-				return L10n.localize( definition.label, locale ) || L10n.localize( definition.title, locale );
+				return L10n.selectLocalized( definition.label, locale ) || L10n.selectLocalized( definition.title, locale );
 			} },
 
 			/**
@@ -98,7 +98,7 @@ export default class FormModel {
 			 */
 			title: { get: () => {
 				const locale = sequence.locale;
-				return L10n.localize( definition.title, locale ) || L10n.localize( definition.label, locale );
+				return L10n.selectLocalized( definition.title, locale ) || L10n.selectLocalized( definition.label, locale );
 			} },
 
 			/**
@@ -108,7 +108,7 @@ export default class FormModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			description: { get: () => L10n.localize( definition.description, sequence.locale ) },
+			description: { get: () => L10n.selectLocalized( definition.description, sequence.locale ) },
 
 			/**
 			 * Provides current locale.
