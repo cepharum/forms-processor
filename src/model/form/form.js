@@ -381,7 +381,7 @@ export default class FormModel {
  * @returns {?FormFieldAbstractModel} manager for handling defined field
  */
 function createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
-	let { type = "text" } = fieldDefinition;
+	const { type = "text" } = fieldDefinition;
 
 	const Manager = FieldManagers.findByType( type );
 	if ( Manager ) {
