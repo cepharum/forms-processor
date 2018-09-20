@@ -1,0 +1,115 @@
+{
+	"label": "Test Formular 2",
+	"description": {
+		"de": "Dieses Formular basiert auf einer Beschreibung in YAML.",
+		"en": "This form relies on a definition in a YAML file."
+	},
+	"mode": {
+		"validation": "live",
+		"navigation": "sequential",
+		"select": "url",
+		"view": {
+			"progress": "off"
+		}
+	},
+	"processing": [
+		{
+			"mail": "info@cepharum.de"
+		},
+		{
+			"store": {
+				"url": "http:\/\/127.0.0.1:8000\/store\/${id}",
+				"key": "fhgslfglsigkjblvkbnlfguhsfgfdbvcbxc"
+			}
+		}
+	],
+	"sequence": [
+		{
+			"name": "personal",
+			"label": {
+				"de": "Pers\u00f6nliche Angaben",
+				"en": "Personal Information"
+			},
+			"description": {
+				"de": "Ihre pers\u00f6nlichen Angaben sind erforderlich, um Ihre Anfrage zu bearbeiten.",
+				"en": "Your personal information is required for processing your order."
+			},
+			"fields": [
+				{
+					"name": "lastName",
+					"label": {
+						"en": "Last Name",
+						"de": "Nachname"
+					},
+					"type": "text",
+					"required": true,
+					"size": "5-63"
+				},
+				{
+					"name": "firstName",
+					"label": {
+						"en": "First Name",
+						"ANY": "Vorname"
+					},
+					"visible": true,
+					"required": "lastName",
+					"size": "5-63"
+				}
+			]
+		},
+		{
+			"name": "delivery",
+			"label": "Lieferanschrift",
+			"title": "Lieferadresse",
+			"description": {
+				"EN": "Please provide your address for delivering your order.",
+				"de": "Geben Sie bitte die Anschrift an, an die ihre Bestellung geliefert werden soll."
+			},
+			"fields": [
+				{
+					"name": "lastName",
+					"label": {
+						"EN": "Last Name",
+						"DE": "Nachname"
+					},
+					"type": "text",
+					"required": true,
+					"size": "5-63",
+					"initial": "=personal.lastName"
+				},
+				{
+					"name": "firstName",
+					"label": "Vorname",
+					"required": true,
+					"size": "5-63",
+					"initial": "Max"
+				},
+				{
+					"name": "fullName",
+					"label": "Vollst\u00e4ndiger Name",
+					"type": "info",
+					"text": "=lastName \u0026\u0026 firstName \u0026\u0026 lastName + \u0022, \u0022 + firstName || \u0022-\u0022"
+				},
+				{
+					"name": "iban",
+					"label": "IBAN",
+					"required": true,
+					"pattern": "AA## #### #### #### #### ##"
+				},
+				{
+					"name": "productKey",
+					"label": "Seriennummer",
+					"required": true,
+					"pattern": "AAAA-AAAA-AAAA-AAAA"
+				},
+				{
+					"name": "ip",
+					"label": "IPv4",
+					"required": true,
+					"pattern": "#??.#??.#??.#??",
+					"format": "IPv4"
+				}
+			]
+		}
+	]
+}
