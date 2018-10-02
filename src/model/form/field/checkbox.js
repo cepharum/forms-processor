@@ -55,6 +55,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		super(form, definition, fieldIndex, reactiveFieldInfo, ["size"]);
 	}
 
+	/** @inheritDoc */
+	static get isInteractive() {
+		return false;
+	}
+
 
 	/** @inheritDoc */
 	normalizeValue(value, options = {}) {

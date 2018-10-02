@@ -56,6 +56,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		super(form, definition, fieldIndex, reactiveFieldInfo, ["size"]);
 	}
 
+	/** @inheritDoc */
+	static get isInteractive() {
+		return false;
+	}
+
 
 	/** @inheritDoc */
 	normalizeValue(value, options = {}) {
@@ -69,44 +74,70 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	_renderFieldComponent(reactiveFieldInfo) {
 		const that = this;
-		const {form: {readValue, writeValue}, qualifiedName, options} = that;
-
-		function renderOptions(createElement) {
-			const numberOfOptions = options.length;
-			const optionFields = [];
-			for (let index = 0; index < numberOfOptions; index++) {
-				const option = options[index];
-				if (option instanceof Object) {
-					const {value, label, name, id} = option;
-					optionFields.push(
-						createElement("input", {
-							domProps: {
-								type: "radio",
-								name: name || label + index,
-								id: id || label + index,
-								value
-							},
-						}, [])
-					);
-				}
-				if (option instanceof String) {
-					optionFields.push(
-						createElement("input", {
-							domProps: {
-								type: "radio",
-								name: option,
-								id: option + index,
-								value: option,
-							},
-						})
-					)
-				}
-			}
-		}
+		const {form: {readValue, writeValue}, qualifiedName} = that;
+		const options = [
+			{label: "Ja", value: true},
+			"Nein",
+			"Definitiv"
+		];
+		const selected = readValue(qualifiedName);
 
 		return {
 			render(createElement) {
-				return createElement("fieldset", {}, Array.concat([], renderOptions(createElement)));
+				return createElement("span", {}, options.map((option, index) => {
+					let domProps = {};
+					let label = "";
+					let value = "";
+					if (option instanceof Object) {
+						const {id} = option;
+						value = option.value;
+						label = option.label || "";
+						domProps = {
+							type: "radio",
+							name: qualifiedName,
+							id: id || `${qualifiedName}.${index}`,
+							value
+						};
+						if (value === selected) {
+							domProps.checked = true
+						}
+					}
+					if (typeof option === "string") {
+						label = option;
+						value = option;
+						domProps = {
+							type: "radio",
+							name: qualifiedName,
+							id: `${qualifiedName}.${index}`,
+							value: option,
+
+						};
+						if (option === selected) {
+							domProps.checked = true
+						}
+					}
+					return createElement("span", {}, [
+						createElement("input", {
+							domProps,
+							on: {
+								click: event => {
+									reactiveFieldInfo.pristine = false;
+
+									writeValue(qualifiedName, value);
+									reactiveFieldInfo.value = value;
+
+									this.$emit("input", value);
+									this.$parent.$emit("input", value);
+								},
+							}
+						}),
+						createElement("label", {
+							attrs: {
+								"for": domProps.id,
+							},
+						}, [label])
+					]);
+				}))
 			},
 			data: () => reactiveFieldInfo,
 		};
