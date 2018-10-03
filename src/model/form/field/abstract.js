@@ -30,6 +30,7 @@ import TermProcessor from "../../term/processor";
 import Pattern from "../utility/pattern";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
+import Normalizer from "@/service/normalizer";
 
 const termCache = new Map();
 
@@ -43,13 +44,6 @@ const DefaultProperties = {
 	visible: "true",
 	type: "text",
 };
-
-/**
- * Matches string values representing boolean value `false`.
- *
- * @type {RegExp}
- */
-const ptnFalsy = /^\s*(?:no?|f(?:alse)|0|off)?\s*$/i;
 
 /**
  * Matches definition of a binding occurring in a property's value.
@@ -653,7 +647,7 @@ function normalizeDefinitionValue( name, value ) {
 		case "visible" :
 			switch ( typeof value ) {
 				case "string" :
-					return !ptnFalsy.test( value );
+					return Normalizer.boolean( value );
 
 				default :
 					return Boolean( value );
