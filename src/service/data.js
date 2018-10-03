@@ -68,4 +68,74 @@ export default class Data {
 
 		return defaultValue == null ? null : Boolean( defaultValue );
 	}
+
+	/**
+	 * Deeply freezes provided value preventing modification of its properties
+	 * (in case of providing an object) or its elements (in case of providing an
+	 * array).
+	 *
+	 * @note Freezing value works on arrays and objects, only.
+	 *
+	 * @param {*} value arbitrary value to be frozen
+	 * @returns {*} frozen value
+	 */
+	static deepFreeze( value ) {
+		if ( value && typeof value === "object" ) {
+			if ( Array.isArray( value ) ) {
+				const numItems = value.length;
+
+				for ( let i = 0; i < numItems; i++ ) {
+					value[i] = this.deepFreeze( value[i] );
+				}
+			} else {
+				const keys = Object.keys( value );
+				const numKeys = keys.length;
+
+				for ( let i = 0; i < numKeys; i++ ) {
+					const key = keys[i];
+
+					value[key] = this.deepFreeze( value[key] );
+				}
+			}
+
+			return Object.freeze( value );
+		}
+
+		return value;
+	}
+
+	/**
+	 * Deeply clones provided value.
+	 *
+	 * @param {*} value arbitrary value to be cloned
+	 * @returns {*} cloned value
+	 */
+	static deepClone( value ) {
+		if ( value && typeof value === "object" ) {
+			if ( Array.isArray( value ) ) {
+				const numItems = value.length;
+				const clone = new Array( numItems );
+
+				for ( let i = 0; i < numItems; i++ ) {
+					clone[i] = this.deepClone( value[i] );
+				}
+
+				return clone;
+			}
+
+			const keys = Object.keys( value );
+			const numKeys = keys.length;
+			const clone = {};
+
+			for ( let i = 0; i < numKeys; i++ ) {
+				const key = keys[i];
+
+				clone[key] = this.deepClone( value[key] );
+			}
+
+			return clone;
+		}
+
+		return value;
+	}
 }
