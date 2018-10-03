@@ -32,6 +32,11 @@ import FormSequenceModel from "../model/form/sequence";
 
 let nextId = 1;
 
+/**
+ * @typedef {object<string,object<string,*>>} FormSequenceInputData
+ */
+
+
 export default {
 	namespaced: true,
 	state: {

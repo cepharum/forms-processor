@@ -27,8 +27,12 @@
  */
 
 import FormModel from "./form";
+import FormProcessorAbstractModel from "./processor/abstract";
+
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
+import Data from "@/service/data";
+
 
 /**
  * Wraps definition of a sequence of forms.
@@ -39,13 +43,14 @@ export default class FormSequenceModel {
 	 * @param {function(string):*} read reads value of a named field
 	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
 	 * @param {function(string,*)} write adjusts value of a named field
-	 * @param {object<string,*>} data refers to storage managed by `read`/`write`
+	 * @param {object<string,*>} data refers to (read-only) storage managed by `read`/`write`
 	 */
 	constructor( definition, { read, write, data }, localeFn ) {
-		const { sequence = [] } = definition;
+		const { mode = {}, sequence = [], processors = {}, registry = {} } = definition;
 
+		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
-			forms: new Array( sequence.length ),
+			forms: new Array( numDefinedForms ),
 			currentIndex: 0,
 		};
 
@@ -57,7 +62,7 @@ export default class FormSequenceModel {
 			 * @property {boolean}
 			 */
 			isEmpty: {
-				value: !sequence.length,
+				value: numDefinedForms < 1,
 			},
 
 			/**
@@ -142,12 +147,44 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			locale: { get: localeFn },
+
+			/**
+			 * Exposes registries of custom types of fields and custom input
+			 * processors to be supported in processing current sequence of forms.
+			 *
+			 * @name FormSequenceModel#registry
+			 * @property {{fields:object<string,FormFieldAbstractModel>, processors:object<string,FormProcessorAbstractModel>}}
+			 * @readonly
+			 */
+			registry: { value: Object.freeze( Object.assign( {}, {
+				fields: Object.freeze( Object.assign( {}, registry.fields ) ),
+				processors: Object.freeze( Object.assign( {}, registry.processors ) ),
+			} ) ) },
+
+			/**
+			 * Exposes definition of modes for processing sequence of forms.
+			 *
+			 * @name FormSequenceModel#mode
+			 * @property {object}
+			 * @readonly
+			 */
+			mode: { value: Data.deepFreeze( Object.assign( {}, mode ) ) },
 		} );
 
 
 		// defer definition of additional properties requiring public access
 		// on those defined before
 		Object.defineProperties( this, {
+			/**
+			 * Exposes sequence of processors all form's input should pass on
+			 * user submitting last form of sequence.
+			 *
+			 * @name FormSequenceModel#processors
+			 * @property {object[]}
+			 * @readonly
+			 */
+			processors: { value: this.createProcessors( processors ) },
+
 			/**
 			 * Lists forms of sequence.
 			 *
@@ -305,6 +342,30 @@ export default class FormSequenceModel {
 					return 0;
 				},
 			},
+
+			/**
+			 * Indicates if all forms of sequence are finished and valid.
+			 *
+			 * @name FormSequenceModel#finished
+			 * @property {boolean}
+			 * @readonly
+			 */
+			finished: {
+				get: () => {
+					const forms = this.forms;
+					const numForms = forms.length;
+
+					for ( let i = 0; i < numForms; i++ ) {
+						const form = forms[i];
+
+						if ( !form.finished || !form.valid ) {
+							return false;
+						}
+					}
+
+					return true;
+				},
+			}
 		} );
 
 		Object.defineProperties( this, {
@@ -393,7 +454,7 @@ export default class FormSequenceModel {
 	 * Switches to next form in sequence of forms unless current form or any
 	 * other previously visited form is invalid.
 	 *
-	 * @returns {boolean} true if advancing succeeded, false if first invalid form has been selected instead
+	 * @returns {boolean} true if advancing succeeded, false on meeting end of sequence or if first invalid form has been selected instead
 	 */
 	advance() {
 		const currentIndex = this.currentIndex;
@@ -411,7 +472,7 @@ export default class FormSequenceModel {
 		if ( index < -1 ) {
 			this.currentIndex = currentIndex + 1;
 
-			return true;
+			return this.currentIndex === currentIndex + 1;
 		}
 
 		const isAdvancing = index === this.currentIndex + 1;
@@ -434,6 +495,42 @@ export default class FormSequenceModel {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Submits form input by passing all defined input processors. Submission is
+	 * rejected unless all forms of sequence are marked _valid_.
+	 *
+	 * @returns {Promise} promises successful submissions of input
+	 */
+	submit() {
+		if ( !this.finished ) {
+			return Promise.reject( new Error( "forms aren't finished, yet" ) );
+		}
+
+		return new Promise( ( resolve, reject ) => {
+			return _process( this.processors, 0, Data.deepClone( this.data ) );
+
+			/**
+			 * Invokes single processor to handle provided input data.
+			 *
+			 * @param {FormProcessorAbstractModel[]} processors sequence of processors
+			 * @param {int} currentIndex index of processor in sequence of processors to be invoked
+			 * @param {object<string,object<string,*>>} data all input data of forms
+			 * @returns {void}
+			 */
+			function _process( processors, currentIndex, data ) {
+				if ( currentIndex >= processors.length ) {
+					resolve( data );
+				}
+
+				processors[currentIndex].process( data )
+					.then( processed => {
+						_process( processors, currentIndex + 1, processed );
+					} )
+					.catch( reject );
+			}
+		} );
 	}
 
 	/**
@@ -663,5 +760,46 @@ export default class FormSequenceModel {
 			},
 			data: () => data,
 		};
+	}
+
+	/**
+	 * Converts list of input processor definitions into list of according
+	 * processor instances.
+	 *
+	 * @param {object[]} definitions list of processor definition
+	 * @returns {FormProcessorAbstractModel[]} instances of defined processors
+	 */
+	createProcessors( definitions ) {
+		if ( !Array.isArray( definitions ) ) {
+			throw new TypeError( "invalid list of processor definitions" );
+		}
+
+		const registry = this.registry.processors;
+		const numDefinitions = definitions.length;
+		const processors = new Array( numDefinitions );
+		let write = 0;
+
+		for ( let i = 0; i < numDefinitions; i++ ) {
+			const definition = definitions[i];
+
+			if ( definition ) {
+				const typeName = String( definition.type || "send" ).trim().toLowerCase();
+				const Implementation = registry[typeName];
+
+				if ( !Implementation ) {
+					throw new TypeError( `definition of unknown input processor "${typeName}"` );
+				}
+
+				processors[write++] = new Implementation( definition );
+			}
+		}
+
+		if ( !write ) {
+			throw new TypeError( "empty list of input processors" );
+		}
+
+		processors.splice( write );
+
+		return processors;
 	}
 }
