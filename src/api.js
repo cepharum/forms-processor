@@ -26,7 +26,15 @@
  * @author: cepharum
  */
 
+import FormProcessorAbstractModel from "./model/form/processor/abstract";
 import FormFieldAbstractModel from "./model/form/field/abstract";
+
+/**
+ * @typedef {object} FormsAPIRegistry
+ * @property {Array<Component>} components lists previously created form sequences
+ * @property {object<string,FormFieldAbstractModel>} fields maps custom field types to be supported
+ * @property {object<string,FormAbstractProcessor>} processors maps custom input processors
+ */
 
 /**
  * Implements API for controlling forms client embedded in a particular
@@ -53,16 +61,61 @@ export default class FormsAPI {
 
 			const manager = self.CepharumForms = new this( generator );
 
-			if ( Array.isArray( existing ) ) {
-				const numDefined = existing.length;
-				for ( let i = 0; i < numDefined; i++ ) {
-					const [ element, options = {} ] = existing[i];
-
-					manager.create( element, options );
+			const { fields = {}, processors = {}, sequences = [] } = ( function( preConfiguration ) {
+				if ( Array.isArray( preConfiguration ) ) {
+					return {
+						sequences: preConfiguration,
+					};
 				}
-			} else {
+
+				if ( preConfiguration && typeof preConfiguration === "object" && Array.isArray( preConfiguration.sequences ) ) {
+					return {
+						processors: preConfiguration.processors || {},
+						fields: preConfiguration.fields || {},
+						sequences: preConfiguration.sequences,
+					};
+				}
+
 				console.error( "ignoring invalid pre-definition of forms" ); // eslint-disable-line no-console
+
+				return {};
+			} )( existing );
+
+
+			const fieldNames = Object.keys( fields );
+			const numFields = fieldNames.length;
+			for ( let i = 0; i < numFields; i++ ) {
+				const fieldName = fieldNames[i];
+				let field = fields[fieldName];
+
+				if ( typeof field === "function" ) {
+					field = field( FormFieldAbstractModel );
+				}
+
+				manager.addField( fieldName, field );
 			}
+
+			const processorNames = Object.keys( processors );
+			const numProcessors = processorNames.length;
+			for ( let i = 0; i < numProcessors; i++ ) {
+				const processorName = processorNames[i];
+				let processor = processors[processorName];
+
+				if ( typeof processor === "function" ) {
+					processor = processor( FormProcessorAbstractModel );
+				}
+
+				manager.addProcessor( processorName, processor );
+			}
+
+
+			const numSequences = sequences.length;
+			for ( let i = 0; i < numSequences; i++ ) {
+				const [ element, options = {} ] = sequences[i];
+
+				manager.create( element, options );
+			}
+
 		} else {
 			self.CepharumForms = new this( generator );
 		}
@@ -85,14 +138,18 @@ export default class FormsAPI {
 			generator: { value: generator },
 
 			/**
-			 * Lists previously created form components.
+			 * Lists previously created form components and extension.
 			 *
 			 * @name FormsAPI#registry
-			 * @property {Array<Component>}
+			 * @property {FormsAPIRegistry}
 			 * @readonly
 			 * @protected
 			 */
-			registry: { value: [] },
+			registry: { value: {
+				components: [],
+				fields: {},
+				processors: {},
+			} },
 		} );
 	}
 
@@ -109,9 +166,16 @@ export default class FormsAPI {
 	create( element, options = {} ) {
 		let component = this.findOnElement( element );
 		if ( !component ) {
-			component = this.generator( element, options );
+			const individualRegistry = ( options && options.registry ) || {};
 
-			this._register( component );
+			component = this.generator( element, Object.assign( {}, options, {
+				registry: {
+					processors: Object.assign( {}, this.registry.processors, individualRegistry.processors ),
+					fields: Object.assign( {}, this.registry.fields, individualRegistry.fields ),
+				},
+			} ) );
+
+			this._registerComponent( component );
 		}
 
 		return component;
@@ -124,8 +188,8 @@ export default class FormsAPI {
 	 * @param {Component} form form component to be enlisted
 	 * @returns {void}
 	 */
-	_register( form ) {
-		const list = this.registry;
+	_registerComponent( form ) {
+		const list = this.registry.components;
 		const numForms = list.length;
 
 		for ( let i = 0; i < numForms; i++ ) {
@@ -146,7 +210,7 @@ export default class FormsAPI {
 	 * @return {?Component} matching form component or null if missing
 	 */
 	findOnElement( element ) {
-		const list = this.registry;
+		const list = this.registry.components;
 
 		if ( Array.isArray( list ) ) {
 			const numForms = list.length;
@@ -163,11 +227,68 @@ export default class FormsAPI {
 	}
 
 	/**
+	 * Adds support for custom type of field.
+	 *
+	 * @param {string} typeName name of type to use in field definition for addressing provided implementation
+	 * @param {FormFieldAbstractModel} fieldImplementation implementation of custom field type
+	 * @returns {FormsAPI} current forms manager for fluent interface
+	 */
+	addField( typeName, fieldImplementation ) {
+		const _name = String( typeName ).trim().toLowerCase();
+		const registry = this.registry.fields;
+
+		if ( registry.hasOwnProperty( _name ) ) {
+			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
+		}
+
+		if ( !( fieldImplementation instanceof FormFieldAbstractModel ) ) {
+			throw new TypeError( `invalid handler for fields of type "${typeName}" rejected` );
+		}
+
+		registry[_name] = fieldImplementation;
+
+		return this;
+	}
+
+	/**
+	 * Adds support for custom input processor.
+	 *
+	 * @param {string} name name of processor to use in a sequence's definition of input processors for including provided processor
+	 * @param {FormProcessorAbstractModel} processorImplementation implementation of custom input processor
+	 * @returns {FormsAPI} current forms manager for fluent interface
+	 */
+	addProcessor( name, processorImplementation ) {
+		const _name = String( name ).trim().toLowerCase();
+		const registry = this.registry.processors;
+
+		if ( registry.hasOwnProperty( _name ) ) {
+			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );
+		}
+
+		if ( !( processorImplementation instanceof FormProcessorAbstractModel ) ) {
+			throw new TypeError( `invalid input processor of type "${name}" rejected` );
+		}
+
+		registry[_name] = processorImplementation;
+
+		return this;
+	}
+
+	/**
 	 * Exposes class any custom type of field must be inherited from.
 	 *
 	 * @returns {FormFieldAbstractModel} base class for custom types of fields
 	 */
 	static AbstractFieldModel() {
 		return FormFieldAbstractModel;
+	}
+
+	/**
+	 * Exposes class any custom input processor must be inherited from.
+	 *
+	 * @returns {FormProcessorAbstractModel} base class for custom input processor
+	 */
+	static AbstractProcessorModel() {
+		return FormProcessorAbstractModel;
 	}
 }
