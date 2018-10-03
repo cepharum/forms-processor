@@ -42,9 +42,9 @@ const ptnFalsy = /^\s*(?:no?|f(?:alse)?|0|off)?\s*$/i;
 
 
 /**
- * Exposes set of methods normalizing data.
+ * Exposes set of methods for processing arbitrary data.
  */
-export default class Normalizer {
+export default class Data {
 	/**
 	 * Converts provided arbitrary value to boolean supporting several string
 	 * values resulting in either `true` or `false`.
@@ -53,7 +53,7 @@ export default class Normalizer {
 	 * @param {true|false|null} defaultValue value to return in case of matching neither list of string literals describing boolean value
 	 * @returns {?boolean} resulting value or null if `value` is representing neither boolean value while omitting default
 	 */
-	static boolean( value, defaultValue = null ) {
+	static normalizeToBoolean( value, defaultValue = null ) {
 		if ( value === true || value === false ) {
 			return value;
 		}

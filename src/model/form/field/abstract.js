@@ -30,7 +30,7 @@ import TermProcessor from "../../term/processor";
 import Pattern from "../utility/pattern";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
-import Normalizer from "@/service/normalizer";
+import Data from "@/service/data";
 
 const termCache = new Map();
 
@@ -647,7 +647,7 @@ function normalizeDefinitionValue( name, value ) {
 		case "visible" :
 			switch ( typeof value ) {
 				case "string" :
-					return Normalizer.boolean( value );
+					return Data.normalizeToBoolean( value );
 
 				default :
 					return Boolean( value );
