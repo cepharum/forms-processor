@@ -26,6 +26,8 @@
  * @author: cepharum
  */
 
+import FormFieldAbstractModel from "./model/form/field/abstract";
+
 /**
  * Implements API for controlling forms client embedded in a particular
  * website/project.
@@ -158,5 +160,14 @@ export default class FormsAPI {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Exposes class any custom type of field must be inherited from.
+	 *
+	 * @returns {FormFieldAbstractModel} base class for custom types of fields
+	 */
+	static AbstractFieldModel() {
+		return FormFieldAbstractModel;
 	}
 }
