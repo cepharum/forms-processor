@@ -45,6 +45,21 @@ const DefaultProperties = {
 };
 
 /**
+ * Matches string values representing boolean value `false`.
+ *
+ * @type {RegExp}
+ */
+const ptnFalsy = /^\s*(?:no?|f(?:alse)|0|off)?\s*$/i;
+
+/**
+ * Matches definition of a binding occurring in a property's value.
+ *
+ * @type {RegExp}
+ */
+const ptnBinding = /({{[^}]+}})/;
+
+
+/**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
  */
@@ -64,7 +79,10 @@ export default class FormFieldAbstractModel {
 	 * @param {object} definition properties and constraints of single form field
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {string[]} omitProperties lists properties of definition to omit
+	 * @param {string[]} omitProperties lists properties of definition this
+	 *        constructor should omit on processing so a derived constructor
+	 *        might take care of it (some essential properties such as a field's
+	 *        `type` and `name` can't be omitted this way)
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, omitProperties = [] ) {
 		const { name } = definition;
@@ -86,43 +104,40 @@ export default class FormFieldAbstractModel {
 		 */
 		const getters = {};
 
-		const ptnBinding = /({{[^}]+}})/;
-
 		const qualifiedDefinition = Object.assign( {}, DefaultProperties, definition );
 
 
-		Object.keys( qualifiedDefinition )
-			.forEach( propertyName => {
-				let propertyValue = qualifiedDefinition[propertyName];
+		const propNames = Object.keys( qualifiedDefinition );
+		const numProps = propNames.length;
 
-				switch ( propertyName ) {
-					case "required" :
-					case "visible" : {
-						// listed definition properties are always considered to hold a term for evaluation
-						const term = new TermProcessor( String( propertyValue ), {}, termCache, qualifyVariable );
-						terms.push( term );
+		for ( let pni = 0; pni < numProps; pni++ ) {
+			const propertyName = propNames[pni];
+			let propertyValue = qualifiedDefinition[propertyName];
 
-						getters[propertyName] = { get: () => {
-							const result = term.evaluate( form.data );
+			switch ( propertyName ) {
+				case "name" :
+					// this property is being processed separately below
+					break;
 
-							reactiveFieldInfo[propertyName] = result;
+				case "qualifiedName" :
+				case "form" :
+				case "index" :
+				case "dependsOn" :
+				case "dependents" :
+				case "value" :
+				case "pristine" :
+				case "valid" :
+				case "errors" :
+					// this property is reserved for internal use and thus isn't obeyed in a field's definition
+					break;
 
-							return result;
-						} };
-						break;
-					}
+				case "type" :
+					// this property does not support computed values at all
+					getters[propertyName] = { value: propertyValue };
+					break;
 
-					case "name" :
-					case "qualifiedName" :
-						// ignore these properties here for being processed explicitly below
-						break;
-
-					case "type" :
-						// listed definition properties are always considered to have static value
-						getters[propertyName] = { value: propertyValue };
-						break;
-
-					case "pattern" :
+				case "pattern" :
+					if ( omitProperties.indexOf( propertyName ) < 0 ) {
 						/**
 						 * Exposes compiled pattern optionally defined on field.
 						 *
@@ -131,24 +146,11 @@ export default class FormFieldAbstractModel {
 						 * @readonly
 						 */
 						getters[propertyName] = { value: propertyValue == null ? null : Pattern.compilePattern( propertyValue ) };
-						break;
+					}
+					break;
 
-					case "form" :
-					case "index" :
-					case "dependsOn" :
-					case "dependents" :
-					case "value" :
-					case "pristine" :
-					case "valid" :
-					case "errors" :
-						// ignore these properties here for being reserved properties for internal use
-						break;
-
-					default :
-						if ( omitProperties.indexOf( propertyName ) > -1 ) {
-							break;
-						}
-
+				default :
+					if ( omitProperties.indexOf( propertyName ) < 0 ) {
 						// handle all else definition properties
 						propertyValue = L10n.selectLocalized( propertyValue, form.locale );
 						if ( propertyValue == null ) {
@@ -160,17 +162,9 @@ export default class FormFieldAbstractModel {
 						if ( propertyValue.charAt( 0 ) === "=" ) {
 							const term = new TermProcessor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
 							terms.push( term );
-							getters[propertyName] = { get: () => {
-								const result = term.evaluate( form.data );
-
-								switch ( propertyName ) {
-									case "label" :
-									case "hint" :
-										reactiveFieldInfo[propertyName] = result;
-								}
-
-								return result;
-							} };
+							getters[propertyName] = {
+								get: () => normalizeDefinitionValue( propertyName, term.evaluate( form.data ) ),
+							};
 						} else {
 							const slices = propertyValue.split( ptnBinding );
 							const numSlices = slices.length;
@@ -202,24 +196,23 @@ export default class FormFieldAbstractModel {
 											}
 										}
 
-										const result = rendered.join( "" );
+										const result = normalizeDefinitionValue( propertyName, rendered.join( "" ) );
 
-										switch ( propertyName ) {
-											case "label" :
-											case "hint" :
-												reactiveFieldInfo[propertyName] = result;
-										}
+										reactiveFieldInfo[propertyName] = result;
 
 										return result;
 									}
 								};
 							} else {
+								propertyValue = normalizeDefinitionValue( propertyName, propertyValue );
+
 								getters[propertyName] = { value: propertyValue };
 								reactiveFieldInfo[propertyName] = propertyValue;
 							}
 						}
-				}
-			} );
+					}
+			}
+		}
 
 		Object.defineProperties( this, getters );
 
@@ -639,5 +632,34 @@ export default class FormFieldAbstractModel {
 	 */
 	validate( live = false ) { // eslint-disable-line no-unused-vars
 		return [];
+	}
+}
+
+/**
+ * Converts provided arbitrary value of a definition to type expected for named
+ * definition property.
+ *
+ * @param {string} name name of definition property provided value is associated with
+ * @param {*} value some arbitrary value
+ * @returns {*} normalized value for use with named definition property
+ */
+function normalizeDefinitionValue( name, value ) {
+	switch ( name ) {
+		case "label" :
+		case "hint" :
+			return String( value );
+
+		case "required" :
+		case "visible" :
+			switch ( typeof value ) {
+				case "string" :
+					return !ptnFalsy.test( value );
+
+				default :
+					return Boolean( value );
+			}
+
+		default :
+			return value;
 	}
 }

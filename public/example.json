@@ -52,7 +52,7 @@
 						"ANY": "Vorname"
 					},
 					"visible": true,
-					"required": "lastName",
+					"required": "=lastName",
 					"size": "5-63"
 				}
 			]
