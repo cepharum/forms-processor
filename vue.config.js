@@ -29,4 +29,5 @@
 module.exports = {
 	runtimeCompiler: true,
 	productionSourceMap: false,
+	baseUrl: "",
 };
