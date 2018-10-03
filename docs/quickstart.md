@@ -22,4 +22,4 @@ var CepharumForms = [ [ "#form-anchor", {
 
 This is the minimum configuration required to start presentation of a form. The code is declaring a global variable. It must be named `CepharumForms` as this is the name looked up by injected code. The variable is expected to contain an array of arrays. Every inner array consists of two values: first there is a string selecting an HTML element of your document or a reference to such an element. Second value is an object with options for customizing the desired instance of forms client. A mandatory option `definition` is a string selecting the source to be fetched for the form's definition. Alternatively this option might be an object considered the required definition itself.
 
-After having processed the array in variable `CepharumForms` this variable is adjusted to contain an [API](docs/api.md) for controlling all defined clients or add further instances to your document.
+After having processed the array in variable `CepharumForms` this variable is adjusted to contain an [API](api.md) for controlling all defined clients or add further instances to your document.
