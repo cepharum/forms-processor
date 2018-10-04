@@ -271,7 +271,7 @@ export default class FormSequenceModel {
 					}
 
 					const maxPermittedIndex = this.firstUnfinishedIndex;
-					if ( _index <= maxPermittedIndex && _index !== reactiveInfo.currentIndex ) {
+					if ( ( maxPermittedIndex < 0 || _index <= maxPermittedIndex ) && _index !== reactiveInfo.currentIndex ) {
 						reactiveInfo.currentIndex = _index;
 						latestVisited = Math.max( latestVisited, _index );
 					}
@@ -369,7 +369,7 @@ export default class FormSequenceModel {
 						}
 					}
 
-					return 0;
+					return -1;
 				},
 			},
 
@@ -504,25 +504,26 @@ export default class FormSequenceModel {
 	 * @returns {boolean} true if advancing succeeded, false on meeting end of sequence or if first invalid form has been selected instead
 	 */
 	advance() {
+		const forms = this.forms;
 		const currentIndex = this.currentIndex;
-		const form = this.forms[currentIndex];
+		const currentForm = forms[currentIndex];
 
-		form.finished = true;
+		currentForm.finished = true;
 
-		if ( !form.valid ) {
+		if ( !currentForm.valid ) {
 			EventBus.$emit( "form:autofocus" );
 			return false;
 		}
 
 
 		const index = this.firstUnfinishedIndex;
-		if ( index < -1 ) {
-			this.currentIndex = Math.max( currentIndex + 1, this.forms.length - 1 );
+		if ( index < 0 ) {
+			this.currentIndex = Math.min( currentIndex + 1, forms.length - 1 );
 
-			return this.currentIndex === currentIndex + 1;
+			return this.currentIndex > currentIndex;
 		}
 
-		const isAdvancing = index >= this.currentIndex + 1;
+		const isAdvancing = index > this.currentIndex;
 		this.currentIndex = index;
 
 		return isAdvancing;
