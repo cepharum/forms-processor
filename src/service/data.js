@@ -108,9 +108,10 @@ export default class Data {
 	 * Deeply clones provided value.
 	 *
 	 * @param {*} value arbitrary value to be cloned
+	 * @param {boolean} andFreeze set true to implicitly freeze any cloned object
 	 * @returns {*} cloned value
 	 */
-	static deepClone( value ) {
+	static deepClone( value, andFreeze = false ) {
 		if ( value && typeof value === "object" ) {
 			if ( Array.isArray( value ) ) {
 				const numItems = value.length;
@@ -120,7 +121,7 @@ export default class Data {
 					clone[i] = this.deepClone( value[i] );
 				}
 
-				return clone;
+				return andFreeze ? Object.freeze( clone ) : clone;
 			}
 
 			const keys = Object.keys( value );
@@ -133,7 +134,7 @@ export default class Data {
 				clone[key] = this.deepClone( value[key] );
 			}
 
-			return clone;
+			return andFreeze ? Object.freeze( clone ) : clone;
 		}
 
 		return value;
