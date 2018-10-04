@@ -229,6 +229,30 @@ export default class FormsAPI {
 	}
 
 	/**
+	 * Searches list of registered form components for the first one with
+	 * selected name in its injection options.
+	 *
+	 * @param {string} name name of form component to select
+	 * @return {?Component} matching form component or null if missing
+	 */
+	findByName( name ) {
+		const list = this.registry.components;
+
+		if ( Array.isArray( list ) ) {
+			const numForms = list.length;
+
+			for ( let i = 0; i < numForms; i++ ) {
+				const form = list[i];
+				if ( form && form.name === name ) {
+					return form;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Adds support for custom type of field.
 	 *
 	 * @param {string} typeName name of type to use in field definition for addressing provided implementation
