@@ -1,11 +1,11 @@
 <template>
-	<div class="form">
+	<div class="form" :id="sequenceName">
 		<div class="title">
 			<div class="inside">
 				<FormTitle/>
 			</div>
 		</div>
-		<div class="progress">
+		<div class="progress" v-if="isVisible.progress !== false">
 			<div class="inside">
 				<FormProgress/>
 			</div>
@@ -36,6 +36,14 @@ export default {
 		FormProgress,
 		FormContent,
 		FormControl,
+	},
+	computed: {
+		isVisible() {
+			return ( this.$store.getters["form/sequenceManager"].mode || {} ).view || {};
+		},
+		sequenceName() {
+			return this.$store.getters["form/sequenceManager"].name || "";
+		},
 	},
 };
 </script>

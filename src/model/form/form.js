@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-import FieldManagers from "./field";
 import L10n from "@/service/l10n";
 
 /**
@@ -160,7 +159,7 @@ export default class FormModel {
 			 */
 			fields: { value: fields.map( ( field, fieldIndex ) => {
 				const reactiveFieldInfo = reactiveFormInfo.fields[fieldIndex] = {};
-				return createField( this, field, fieldIndex, reactiveFieldInfo );
+				return createField( this, sequence, field, fieldIndex, reactiveFieldInfo );
 			} ).filter( i => i ) },
 		} );
 
@@ -375,15 +374,17 @@ export default class FormModel {
  * Creates manager for field associated w/ provided form.
  *
  * @param {FormModel} form refers to form created field is going zo belong to
+ * @param {FormSequenceModel} sequence model controlling sequence of forms
  * @param {object} fieldDefinition definition of field to create
  * @param {int} fieldIndex index of field in set of containing form's fields
  * @param {object} reactiveFieldInfo provided object to contain reactive information of field
  * @returns {?FormFieldAbstractModel} manager for handling defined field
  */
-function createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
+function createField( form, sequence, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
 	const { type = "text" } = fieldDefinition;
 
-	const Manager = FieldManagers.findByType( type );
+	const normalized = String( type ).trim().toLowerCase();
+	const Manager = sequence.registry.fields[normalized];
 	if ( Manager ) {
 		return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
 	}

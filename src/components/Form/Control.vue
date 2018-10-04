@@ -48,7 +48,22 @@ export default {
 			return this.$store.getters.sequence.advance();
 		},
 		submit() {
-			return this.$store.getters.sequence.submit();
+			return this.$store.getters.sequence.submit()
+				.then( status => {
+					this.$store.dispatch( "form/result", {
+						success: true,
+						redirect: status.redirect,
+						text: status.text,
+					} );
+				} )
+				.catch( error => {
+					this.$store.dispatch( "form/result", {
+						success: false,
+						redirect: error.redirect,
+						text: error.text,
+						error: error.message,
+					} );
+				} );
 		},
 	},
 };

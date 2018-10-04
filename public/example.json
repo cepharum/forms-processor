@@ -10,17 +10,13 @@
 		"select": "url",
 		"view": {
 			"progress": "off"
-		}
-	},
-	"processing": [
-		{
-			"mail": "info@cepharum.de"
 		},
+		"onSuccess": "https://www.duckduckgo.com",
+		"onFailure": "https://www.google.de"
+	},
+	"processors": [
 		{
-			"store": {
-				"url": "http:\/\/127.0.0.1:8000\/store\/${id}",
-				"key": "fhgslfglsigkjblvkbnlfguhsfgfdbvcbxc"
-			}
+			"url": "./store/{id}"
 		}
 	],
 	"sequence": [
@@ -93,19 +89,18 @@
 				{
 					"name": "iban",
 					"label": "IBAN",
-					"required": true,
 					"pattern": "AA## #### #### #### #### ##"
 				},
 				{
 					"name": "productKey",
 					"label": "Seriennummer",
-					"required": true,
+					"required": false,
 					"pattern": "AAAA-AAAA-AAAA-AAAA"
 				},
 				{
 					"name": "ip",
 					"label": "IPv4",
-					"required": true,
+					"required": false,
 					"pattern": "#??.#??.#??.#??",
 					"format": "IPv4"
 				}

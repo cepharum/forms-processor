@@ -15,6 +15,8 @@ import Definition from "@/service/definition";
 export default {
 	name: "Splash",
 	created() {
+		const configuration = this.$root.$options.form;
+
 		Promise.resolve( this.$store.dispatch( "l10n/select" ) )
 			.then( () => { // eslint-disable-line consistent-return
 				if ( !this.$store.getters["l10n/prepared"] ) {
@@ -36,10 +38,11 @@ export default {
 					} );
 				}
 			} )
-			.then( () => Definition.load( this.$root.$options.form.definition ) )
+			.then( () => Definition.load( configuration.definition ) )
 			.then( definition => this.$store.dispatch( "form/define", {
 				id: this.$root.$options.form.id,
 				definition,
+				registry: configuration.registry,
 			} ) )
 			.then( () => this.$store.dispatch( "switchView", "forms" ) )
 			.catch( error => {

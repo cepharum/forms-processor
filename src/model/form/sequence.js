@@ -27,11 +27,11 @@
  */
 
 import FormModel from "./form";
-import FormProcessorAbstractModel from "./processor/abstract";
 
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
+import Localization from "../../service/l10n";
 
 
 /**
@@ -39,14 +39,17 @@ import Data from "@/service/data";
  */
 export default class FormSequenceModel {
 	/**
+	 * @param {string} id permanently unique ID of current sequence of forms
 	 * @param {object} definition definition of a sequence of forms
-	 * @param {function(string):*} read reads value of a named field
+	 * @param {FormsAPIExtensionsRegistry} registry registry of available types of fields and input processors
+	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
 	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
+	 * @param {function(string):*} read reads value of a named field
 	 * @param {function(string,*)} write adjusts value of a named field
 	 * @param {object<string,*>} data refers to (read-only) storage managed by `read`/`write`
 	 */
-	constructor( definition, { read, write, data }, localeFn ) {
-		const { mode = {}, sequence = [], processors = {}, registry = {} } = definition;
+	constructor( { id, name }, definition, registry, { read, write, data }, localeFn ) {
+		const { mode = {}, sequence = [], processors = {} } = definition;
 
 		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
@@ -54,7 +57,34 @@ export default class FormSequenceModel {
 			currentIndex: 0,
 		};
 
+		if ( typeof id !== "string" ) {
+			throw new TypeError( "invalid ID of sequence of forms" );
+		}
+
+		if ( typeof name !== "string" ) {
+			throw new TypeError( "invalid name of sequence of forms" );
+		}
+
 		Object.defineProperties( this, {
+			/**
+			 * Provides permanently unique ID of current sequence of forms.
+			 *
+			 * @name FormSequenceModel#id
+			 * @property {string}
+			 * @readonly
+			 */
+			id: { value: id },
+
+			/**
+			 * Provides temporarily unique ID of current sequence of forms in
+			 * context of current HTML document.
+			 *
+			 * @name FormSequenceModel#name
+			 * @property {string}
+			 * @readonly
+			 */
+			name: { value: name },
+
 			/**
 			 * Indicates if sequence is empty
 			 *
@@ -168,7 +198,7 @@ export default class FormSequenceModel {
 			 * @property {object}
 			 * @readonly
 			 */
-			mode: { value: Data.deepFreeze( Object.assign( {}, mode ) ) },
+			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
 		} );
 
 
@@ -267,20 +297,20 @@ export default class FormSequenceModel {
 			 */
 			currentName: {
 				get: () => this.forms[reactiveInfo.currentIndex].name,
-				set: name => {
+				set: newName => {
 					const forms = this.forms;
 					const numForms = forms.length;
 					let nameIndex = -1;
 
 					for ( let i = 0; i < numForms; i++ ) {
-						if ( forms[i].name === name ) {
+						if ( forms[i].name === newName ) {
 							nameIndex = i;
 							break;
 						}
 					}
 
 					if ( nameIndex < 0 ) {
-						throw new TypeError( `rejecting selection of form by unknown name "${name}"` );
+						throw new TypeError( `rejecting selection of form by unknown name "${newName}"` );
 					}
 
 					this.currentIndex = nameIndex;
@@ -417,6 +447,23 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Qualifies section of configuration customizing operation modes of forms
+	 * processor.
+	 *
+	 * @param {object} input user-provided configuration of operation modes
+	 * @returns {object} qualified configuration of operation modes
+	 */
+	static qualifyModeConfiguration( input ) {
+		if ( !input.view ) {
+			input.view = {};
+		}
+
+		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
+
+		return input;
+	}
+
+	/**
 	 * Handles notification on named property of form having changed.
 	 *
 	 * This method is available to forms of sequence to notify sequence manager
@@ -470,12 +517,12 @@ export default class FormSequenceModel {
 
 		const index = this.firstUnfinishedIndex;
 		if ( index < -1 ) {
-			this.currentIndex = currentIndex + 1;
+			this.currentIndex = Math.max( currentIndex + 1, this.forms.length - 1 );
 
 			return this.currentIndex === currentIndex + 1;
 		}
 
-		const isAdvancing = index === this.currentIndex + 1;
+		const isAdvancing = index >= this.currentIndex + 1;
 		this.currentIndex = index;
 
 		return isAdvancing;
@@ -504,13 +551,15 @@ export default class FormSequenceModel {
 	 * @returns {Promise} promises successful submissions of input
 	 */
 	submit() {
+		this.advance();
+
 		if ( !this.finished ) {
 			return Promise.reject( new Error( "forms aren't finished, yet" ) );
 		}
 
-		return new Promise( ( resolve, reject ) => {
-			return _process( this.processors, 0, Data.deepClone( this.data ) );
+		const originalData = Data.deepClone( this.data );
 
+		return new Promise( ( resolve, reject ) => {
 			/**
 			 * Invokes single processor to handle provided input data.
 			 *
@@ -519,18 +568,52 @@ export default class FormSequenceModel {
 			 * @param {object<string,object<string,*>>} data all input data of forms
 			 * @returns {void}
 			 */
-			function _process( processors, currentIndex, data ) {
+			const _process = ( processors, currentIndex, data ) => {
 				if ( currentIndex >= processors.length ) {
 					resolve( data );
+				} else {
+					processors[currentIndex].process( data, this )
+						.then( processed => {
+							_process( processors, currentIndex + 1, processed );
+						} )
+						.catch( reject );
 				}
+			};
 
-				processors[currentIndex].process( data )
-					.then( processed => {
-						_process( processors, currentIndex + 1, processed );
-					} )
-					.catch( reject );
+			return _process( this.processors, 0, originalData );
+		} )
+			.then( () => _prepareResultHandling( { success: true }, this.mode.onSuccess, originalData ) )
+			.catch( error => {
+				console.error( `processing input failed: ${error.message}` );
+
+				throw Object.assign( error, _prepareResultHandling( { success: false }, this.mode.onFailure, error ) );
+			} );
+
+		/**
+		 * Feeds provided status descriptor with information on configured
+		 * behaviour after succeeding/failing final processing of forms' input
+		 * data.
+		 *
+		 * @param {object} status status descriptor controlling behaviour
+		 * @param {*} configuredBehaviour behaviour defined in configuration
+		 * @param {*} args arguments passed on invoking function found in provided behaviour configuration
+		 * @returns {object} provided status descriptor extended by behaviour control
+		 * @private
+		 */
+		function _prepareResultHandling( status, configuredBehaviour, ...args ) {
+			const value = typeof configuredBehaviour === "function" ? configuredBehaviour( this, ...args ) : configuredBehaviour;
+
+			const normalized = Localization.selectLocalized( value );
+			if ( typeof normalized === "string" ) {
+				if ( /^([a-z]+:\/\/[^/]+|\.)?\//.test( normalized ) && !/\s/.test( normalized ) ) {
+					status.redirect = normalized;
+				} else {
+					status.text = normalized;
+				}
 			}
-		} );
+
+			return status;
+		}
 	}
 
 	/**

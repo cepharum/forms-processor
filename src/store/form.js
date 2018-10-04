@@ -44,6 +44,8 @@ export default {
 		definition: {},
 		input: {},
 		model: null,
+		localStore: false,
+		result: {},
 	},
 	actions: {
 		/**
@@ -54,22 +56,30 @@ export default {
 		 * @param {function} dispatch callback for dispatching more actions
 		 * @param {object<string,*>} getters set of current module's getters
 		 * @param {object<string,*>} rootGetters set of non-namespaced getters
-		 * @param {string|number} id unique ID of form to use on storing all input eventually
+		 * @param {string|number} id permanently unique ID of form to use on storing all input eventually
+		 * @param {string|number} name temporarily unique ID of form identifying it in context of current HTML document
 		 * @param {object} definition description of forms, their fields and additional context information
+		 * @param {object} registry registry of custom field types and custom processors
 		 * @returns {void}
 		 */
-		define( { state, commit, dispatch, getters, rootGetters }, { id = null, definition } ) {
-			const _id = id == null ? nextId++ : id;
+		define( { state, commit, dispatch, getters, rootGetters }, { id = null, name = null, definition, registry = {} } ) {
+			const _id = String( id == null ? nextId++ : id ).trim();
+			const _name = name == null ? _id : String( name ).trim();
+
+			const model = new FormSequenceModel( { id: _id, name: _name }, definition, registry, {
+				write: ( key, value ) => dispatch( "writeInput", { name: key, value } ),
+				read: getters.readInput,
+				data: state.input,
+			}, () => rootGetters.locale );
 
 			commit( "define", {
 				id: _id,
+				name: _name,
 				definition,
-				model: new FormSequenceModel( definition, {
-					write: ( name, value ) => dispatch( "writeInput", { name, value } ),
-					read: getters.readInput,
-					data: state.input,
-				}, () => rootGetters.locale ),
+				model,
 			} );
+
+			commit( "storeLocally", model.mode.local === "store" );
 
 			commit( "resetInput" );
 		},
@@ -88,12 +98,22 @@ export default {
 				commit( "writeInput", { name: _name, value } );
 			}
 		},
+
+		result( { commit }, { success, redirect, text, error = null } ) {
+			commit( "result", {
+				success, redirect, text, error
+			} );
+		},
 	},
 	mutations: {
 		define( state, { id, definition, model } ) {
 			state.id = id;
 			state.definition = definition;
 			state.model = model;
+		},
+
+		storeLocally( state, flag ) {
+			state.localStore = Boolean( flag );
 		},
 
 		resetInput( state ) {
@@ -125,6 +145,13 @@ export default {
 				state.input = storage.data;
 			}
 		},
+
+		result( state, { success, redirect, text, error = null } ) {
+			state.result = {
+				type: success ? "success" : "error",
+				redirect, text, error,
+			};
+		},
 	},
 	getters: {
 		loaded( state ) {
@@ -148,5 +175,11 @@ export default {
 		readInput: state => name => {
 			return new Storage( state.input ).read( name );
 		},
+		hasResult: state => state.result.type != null,
+		resultIsSuccess: state => state.result.type === "success",
+		resultIsError: state => state.result.type === "error",
+		resultRedirect: state => state.result.redirect,
+		resultMessage: state => state.result.text,
+		resultError: state => state.result.error,
 	},
 };
