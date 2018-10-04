@@ -26,14 +26,18 @@
  * @author: cepharum
  */
 
-import FormProcessorAbstractModel from "./model/form/processor/abstract";
-import FormFieldAbstractModel from "./model/form/field/abstract";
+import Processors from "./model/form/processor";
+import Fields from "./model/form/field";
 
 /**
- * @typedef {object} FormsAPIRegistry
- * @property {Array<Component>} components lists previously created form sequences
+ * @typedef {object} FormsAPIExtensionsRegistry
  * @property {object<string,FormFieldAbstractModel>} fields maps custom field types to be supported
- * @property {object<string,FormAbstractProcessor>} processors maps custom input processors
+ * @property {object<string,FormProcessorAbstractModel>} processors maps custom input processors
+ */
+
+/**
+ * @typedef {FormsAPIExtensionsRegistry} FormsAPIRegistry
+ * @property {Array<Component>} components lists previously created form sequences
  */
 
 /**
@@ -82,28 +86,27 @@ export default class FormsAPI {
 			} )( existing );
 
 
-			const fieldNames = Object.keys( fields );
+			const abstractField = Fields.abstract;
+			const allFields = Object.assign( {}, Fields.map, fields );
+			const fieldNames = Object.keys( allFields );
 			const numFields = fieldNames.length;
 			for ( let i = 0; i < numFields; i++ ) {
 				const fieldName = fieldNames[i];
-				let field = fields[fieldName];
-
-				if ( typeof field === "function" ) {
-					field = field( FormFieldAbstractModel );
-				}
+				const factory = allFields[fieldName];
+				const field = typeof factory === "function" && !abstractField.isPrototypeOf( factory ) ? factory( abstractField ) : factory;
 
 				manager.addField( fieldName, field );
 			}
 
-			const processorNames = Object.keys( processors );
+
+			const abstractProcessor = Processors.abstract;
+			const allProcessors = Object.assign( {}, Processors.map, processors );
+			const processorNames = Object.keys( allProcessors );
 			const numProcessors = processorNames.length;
 			for ( let i = 0; i < numProcessors; i++ ) {
 				const processorName = processorNames[i];
-				let processor = processors[processorName];
-
-				if ( typeof processor === "function" ) {
-					processor = processor( FormProcessorAbstractModel );
-				}
+				const factory = allProcessors[processorName];
+				const processor = typeof factory === "function" && !abstractProcessor.isPrototypeOf( factory ) ? factory( abstractProcessor ) : factory;
 
 				manager.addProcessor( processorName, processor );
 			}
@@ -115,7 +118,6 @@ export default class FormsAPI {
 
 				manager.create( element, options );
 			}
-
 		} else {
 			self.CepharumForms = new this( generator );
 		}
@@ -241,7 +243,7 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
 		}
 
-		if ( !( fieldImplementation instanceof FormFieldAbstractModel ) ) {
+		if ( !Fields.abstract.isPrototypeOf( fieldImplementation ) ) {
 			throw new TypeError( `invalid handler for fields of type "${typeName}" rejected` );
 		}
 
@@ -265,7 +267,7 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );
 		}
 
-		if ( !( processorImplementation instanceof FormProcessorAbstractModel ) ) {
+		if ( !Processors.abstract.isPrototypeOf( processorImplementation ) ) {
 			throw new TypeError( `invalid input processor of type "${name}" rejected` );
 		}
 
@@ -280,7 +282,7 @@ export default class FormsAPI {
 	 * @returns {FormFieldAbstractModel} base class for custom types of fields
 	 */
 	static AbstractFieldModel() {
-		return FormFieldAbstractModel;
+		return Fields.abstract;
 	}
 
 	/**
@@ -289,6 +291,6 @@ export default class FormsAPI {
 	 * @returns {FormProcessorAbstractModel} base class for custom input processor
 	 */
 	static AbstractProcessorModel() {
-		return FormProcessorAbstractModel;
+		return Processors.abstract;
 	}
 }
