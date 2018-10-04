@@ -26,37 +26,12 @@
  * @author: cepharum
  */
 
-/**
- * Implements abstract processor of forms' input data.
- *
- * @abstract
- */
-export default class FormProcessorAbstractModel {
-	/**
-	 * @param {object} definition definition properties customizing processor's particular behaviour
-	 */
-	constructor( definition ) {
-		Object.defineProperties( this, {
-			/**
-			 * Exposes definition customizing processor's behaviour.
-			 *
-			 * @name FormProcessorAbstractModel#definition
-			 * @property {object}
-			 * @readonly
-			 */
-			definition: { value: definition },
-		} );
-	}
+import FormProcessorAbstractModel from "./abstract";
+import FormProcessorSendModel from "./send";
 
-	/**
-	 * Processes provided input data.
-	 *
-	 * @param {FormSequenceInputData} data all forms' input data
-	 * @param {FormSequenceModel} sequence sequence of forms provided data is related to
-	 * @returns {Promise<FormSequenceInputData>} processed input data
-	 * @abstract
-	 */
-	process( data, sequence ) { // eslint-disable-line no-unused-vars
-		return Promise.resolve( data );
-	}
-}
+export default {
+	abstract: FormProcessorAbstractModel,
+	map: {
+		send: FormProcessorSendModel,
+	},
+};
