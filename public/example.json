@@ -16,6 +16,12 @@
 	},
 	"processors": [
 		{
+			"type": "extract"
+		},
+		{
+			"type": "log"
+		},
+		{
 			"url": "./store/{id}"
 		}
 	],

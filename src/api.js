@@ -93,7 +93,7 @@ export default class FormsAPI {
 			for ( let i = 0; i < numFields; i++ ) {
 				const fieldName = fieldNames[i];
 				const factory = allFields[fieldName];
-				const field = typeof factory === "function" && !abstractField.isPrototypeOf( factory ) ? factory( abstractField ) : factory;
+				const field = typeof factory === "function" && !abstractField.isBaseClassOf( factory ) ? factory( abstractField ) : factory;
 
 				manager.addField( fieldName, field );
 			}
@@ -106,7 +106,7 @@ export default class FormsAPI {
 			for ( let i = 0; i < numProcessors; i++ ) {
 				const processorName = processorNames[i];
 				const factory = allProcessors[processorName];
-				const processor = typeof factory === "function" && !abstractProcessor.isPrototypeOf( factory ) ? factory( abstractProcessor ) : factory;
+				const processor = typeof factory === "function" && !abstractProcessor.isBaseClassOf( factory ) ? factory( abstractProcessor ) : factory;
 
 				manager.addProcessor( processorName, processor );
 			}
@@ -267,7 +267,7 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
 		}
 
-		if ( !Fields.abstract.isPrototypeOf( fieldImplementation ) ) {
+		if ( !Fields.abstract.isBaseClassOf( fieldImplementation ) ) {
 			throw new TypeError( `invalid handler for fields of type "${typeName}" rejected` );
 		}
 
@@ -291,7 +291,7 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );
 		}
 
-		if ( !Processors.abstract.isPrototypeOf( processorImplementation ) ) {
+		if ( !Processors.abstract.isBaseClassOf( processorImplementation ) ) {
 			throw new TypeError( `invalid input processor of type "${name}" rejected` );
 		}
 

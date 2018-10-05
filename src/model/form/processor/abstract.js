@@ -59,4 +59,42 @@ export default class FormProcessorAbstractModel {
 	process( data, sequence ) { // eslint-disable-line no-unused-vars
 		return Promise.resolve( data );
 	}
+
+	/**
+	 * Sets up provided constructor function to represent "sub-class" of current
+	 * one.
+	 *
+	 * @note This method is provided to simplify pre-ES6 inheritance on
+	 *       registering custom processors.
+	 *
+	 * @param {function} subClassConstructor constructor function
+	 * @returns {function} provided constructor function
+	 */
+	static makeInherit( subClassConstructor ) {
+		const subProto = subClassConstructor.prototype = Object.create( this.prototype );
+		subProto.constructor = subClassConstructor;
+		subProto.$super = this;
+
+		return subClassConstructor;
+	}
+
+	/**
+	 * Indicates if current class is a base class of provided one.
+	 *
+	 * @param {function|class} subClass some class to be tested for inheriting from current one
+	 * @returns {boolean} true if current one is base class of provided one
+	 */
+	static isBaseClassOf( subClass ) {
+		let iter = subClass.prototype;
+
+		while ( iter ) {
+			if ( iter.constructor === this ) {
+				return true;
+			}
+
+			iter = Object.getPrototypeOf( iter );
+		}
+
+		return false;
+	}
 }
