@@ -1,5 +1,7 @@
 <template>
-	<div class="form" :id="sequenceName">
+	<div class="form" :id="sequenceName"
+	     v-global-key.advance="advance"
+	     v-global-key.rewind="rewind">
 		<div class="title">
 			<div class="inside">
 				<FormTitle/>
@@ -45,5 +47,13 @@ export default {
 			return this.$store.getters["form/sequenceManager"].name || "";
 		},
 	},
+	methods: {
+		advance() {
+			this.$store.getters["form/sequenceManager"].advance();
+		},
+		rewind() {
+			this.$store.getters["form/sequenceManager"].rewind();
+		},
+	}
 };
 </script>

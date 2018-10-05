@@ -4,6 +4,7 @@ import Vue from "vue";
 import App from "./App";
 import API from "./api";
 import Store from "./store";
+import Directives from "./directives"; // eslint-disable-line no-unused-vars
 
 Vue.config.productionTip = false;
 
