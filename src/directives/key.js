@@ -34,6 +34,7 @@ const ModifierKeys = {
 	rewind: [
 		{
 			key: "ArrowLeft",
+			shift: true,
 			alt: true,
 		}
 	],
@@ -41,6 +42,7 @@ const ModifierKeys = {
 		"Enter",
 		{
 			key: "ArrowRight",
+			shift: true,
 			alt: true,
 		}
 	],
@@ -101,7 +103,7 @@ function findTrack( element, modifiers ) {
  * @param {HTMLElement} element element the directive was declared on
  * @param {string[]} modifiersNames lists modifiers used on directive
  * @param {function} method method to invoke on captured keyboard event is matching directive
- * @returns {void}
+ * @returns {boolean} true unless requesting to cancel further event propagation and default handling
  */
 function onKeyPress( event, element, modifiersNames, method ) {
 	/*
@@ -118,7 +120,7 @@ function onKeyPress( event, element, modifiersNames, method ) {
 
 	if ( !iter ) {
 		// ignore any keyboard events while some other part of document is having focus
-		return;
+		return true;
 	}
 
 
@@ -135,23 +137,28 @@ function onKeyPress( event, element, modifiersNames, method ) {
 
 			if ( event.key === expecting.key ) {
 				if ( ( expecting.alt ? 1 : 0 ) ^ ( event.altKey ? 1 : 0 ) ) {
-					return;
+					return true;
 				}
 
 				if ( ( expecting.ctrl ? 1 : 0 ) ^ ( event.ctrlKey ? 1 : 0 ) ) {
-					return;
+					return true;
 				}
 
 				if ( ( expecting.shift ? 1 : 0 ) ^ ( event.shiftKey ? 1 : 0 ) ) {
-					return;
+					return true;
 				}
 
 				method();
 
-				return;
+				event.preventDefault();
+				event.stopPropagation();
+
+				return false;
 			}
 		}
 	}
+
+	return true;
 }
 
 
@@ -171,7 +178,9 @@ export default Vue.directive( "global-key", {
 			handler: event => onKeyPress( event, element, modifiersNames, value ),
 		};
 
-		window.addEventListener( "keypress", newTrack.handler );
+		window.addEventListener( "keyup", newTrack.handler, {
+			capture: true,
+		} );
 
 		tracks.push( newTrack );
 	},
@@ -183,7 +192,9 @@ export default Vue.directive( "global-key", {
 			return;
 		}
 
-		window.removeEventListener( "keypress", track.handler );
+		window.removeEventListener( "keyup", track.handler, {
+			capture: true,
+		} );
 
 		tracks.splice( index, 1 );
 	},
