@@ -557,7 +557,7 @@ export default class FormFieldAbstractModel {
 				}
 			},
 			created() {
-				EventBus.$on( "form:autofocus", () => {
+				this.__onGlobalFormAutoFocusEvent = () => {
 					if ( that.form.autoFocusField === that ) {
 						this.$nextTick( () => {
 							const firstControl = this.$el.querySelector( "input, select, button" );
@@ -568,7 +568,9 @@ export default class FormFieldAbstractModel {
 							}
 						} );
 					}
-				} );
+				};
+
+				EventBus.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 			beforeMount() {
 				if ( that.pristine ) {
@@ -598,6 +600,7 @@ export default class FormFieldAbstractModel {
 			},
 			beforeDestroy() {
 				EventBus.$off( "form:update", this.__onGlobalFormUpdateEvent );
+				EventBus.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 		};
 	}
