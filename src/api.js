@@ -52,74 +52,62 @@ export default class FormsAPI {
 	 * @note This method isn't changing anything if provided component has been
 	 *       exposed before.
 	 *
-	 * @param {function((string|HTMLElement), object=):Component} generator callback generating another forms component bound to selected element
+	 * @param {object} configuration configuration of forms and probable customizations to run
 	 * @returns {void}
 	 */
-	static expose( generator ) {
-		if ( self.CepharumForms ) {
-			const existing = self.CepharumForms;
-
-			if ( existing instanceof this ) {
-				return;
+	runConfiguration( configuration ) {
+		const { fields = {}, processors = {}, sequences = [] } = ( function( preConfiguration ) {
+			if ( Array.isArray( preConfiguration ) ) {
+				return {
+					sequences: preConfiguration,
+				};
 			}
 
-			const manager = self.CepharumForms = new this( generator );
-
-			const { fields = {}, processors = {}, sequences = [] } = ( function( preConfiguration ) {
-				if ( Array.isArray( preConfiguration ) ) {
-					return {
-						sequences: preConfiguration,
-					};
-				}
-
-				if ( preConfiguration && typeof preConfiguration === "object" && Array.isArray( preConfiguration.sequences ) ) {
-					return {
-						processors: preConfiguration.processors || {},
-						fields: preConfiguration.fields || {},
-						sequences: preConfiguration.sequences,
-					};
-				}
-
-				console.error( "ignoring invalid pre-definition of forms" ); // eslint-disable-line no-console
-
-				return {};
-			} )( existing );
-
-
-			const abstractField = Fields.abstract;
-			const allFields = Object.assign( {}, Fields.map, fields );
-			const fieldNames = Object.keys( allFields );
-			const numFields = fieldNames.length;
-			for ( let i = 0; i < numFields; i++ ) {
-				const fieldName = fieldNames[i];
-				const factory = allFields[fieldName];
-				const field = typeof factory === "function" && !abstractField.isBaseClassOf( factory ) ? factory( abstractField ) : factory;
-
-				manager.addField( fieldName, field );
+			if ( preConfiguration && typeof preConfiguration === "object" && Array.isArray( preConfiguration.sequences ) ) {
+				return {
+					processors: preConfiguration.processors || {},
+					fields: preConfiguration.fields || {},
+					sequences: preConfiguration.sequences,
+				};
 			}
 
+			console.error( "ignoring invalid pre-definition of forms" ); // eslint-disable-line no-console
 
-			const abstractProcessor = Processors.abstract;
-			const allProcessors = Object.assign( {}, Processors.map, processors );
-			const processorNames = Object.keys( allProcessors );
-			const numProcessors = processorNames.length;
-			for ( let i = 0; i < numProcessors; i++ ) {
-				const processorName = processorNames[i];
-				const factory = allProcessors[processorName];
-				const processor = typeof factory === "function" && !abstractProcessor.isBaseClassOf( factory ) ? factory( abstractProcessor ) : factory;
-
-				manager.addProcessor( processorName, processor );
-			}
+			return {};
+		} )( configuration );
 
 
-			const numSequences = sequences.length;
-			for ( let i = 0; i < numSequences; i++ ) {
-				const [ element, options = {} ] = sequences[i];
+		const abstractField = Fields.abstract;
+		const allFields = Object.assign( {}, Fields.map, fields );
+		const fieldNames = Object.keys( allFields );
+		const numFields = fieldNames.length;
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
+			const factory = allFields[fieldName];
+			const field = typeof factory === "function" && !abstractField.isBaseClassOf( factory ) ? factory( abstractField ) : factory;
 
-				manager.create( element, options );
-			}
-		} else {
-			self.CepharumForms = new this( generator );
+			this.addField( fieldName, field );
+		}
+
+
+		const abstractProcessor = Processors.abstract;
+		const allProcessors = Object.assign( {}, Processors.map, processors );
+		const processorNames = Object.keys( allProcessors );
+		const numProcessors = processorNames.length;
+		for ( let i = 0; i < numProcessors; i++ ) {
+			const processorName = processorNames[i];
+			const factory = allProcessors[processorName];
+			const processor = typeof factory === "function" && !abstractProcessor.isBaseClassOf( factory ) ? factory( abstractProcessor ) : factory;
+
+			this.addProcessor( processorName, processor );
+		}
+
+
+		const numSequences = sequences.length;
+		for ( let i = 0; i < numSequences; i++ ) {
+			const [ element, options = {} ] = sequences[i];
+
+			this.create( element, options );
 		}
 	}
 
