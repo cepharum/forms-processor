@@ -23,7 +23,7 @@ Injecting Forms Processor requires to add a few lines of HTML code to a document
 Forms Processor has been implemented with VueJS. It is though distributed without it. Thus you need to inject it yourself prior to injecting Forms Processor by appending this line right before the closing tag of your `<body>` element:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+<script src="https://unpkg.com/vue"></script>
 ```
 
 This will fetch VueJS from a CDN. However, it's totally fine to use a local copy instead.
@@ -33,13 +33,23 @@ This will fetch VueJS from a CDN. However, it's totally fine to use a local copy
 Next you are ready to add the line that's fetching Forms Processor by adding this line after the one you've added before:
 
 ```html
-<script src="path/to/forms-processor.umd.min.js"></script>
+<script src="path/to/forms-processor/FormsProcessor.umd.min.js"></script>
 ```
 
-Injecting this file exposes Forms Processor's API in global variable `FormsProcessor`. Due to supporting ES6 modules that variable is containing an object with a single property `default` actually exposing the API. So, you might access it like this after having injected that file:
+> Any distribution of Forms Processor might consist of multiple files. In the HTML document you are injecting the one file mentioned above, only. All other files will be loaded by that injected script on demand. Thus, they must be available in same folder as the one you've injected explicitly.
+>
+> You might want to improve performance by marking those additional files for pre-fetching using HTML code like this in `<head>` element of your document (e.g. on additional file **FormsProcessor.umd.min.form.js**):
+>
+> ```html
+> <link href="path/to/forms-processor/FormsProcessor.umd.min.form.js" rel="preload" as="script">
+> ```
+> 
+> Injecting this code is optional.
+
+Injecting this file exposes Forms Processor's API in global variable `FormsProcessor`. You may access it like this after having injected that file:
 
 ```javascript
-FormsProcessor.default.addField( ... ); 
+FormsProcessor.addField( ... ); 
 ```
 
 ## Creating A Sequence Of Forms
@@ -48,7 +58,7 @@ At this point you're ready to inject some sequence of forms to be processed:
 
 ```html
 <script type="text/javascript">
-FormsProcessors.default.create( "#slot", {
+FormsProcessors.create( "#hook", {
 	definition: "./example.json",
 } );
 </script>
@@ -63,32 +73,17 @@ You need to require at least one option called `definition`. It is a URL address
 
 As an option you might provide the actual definition as an object instead of its URL in `definition`.
 
-## The Resulting HTML Document
+## Inject Proper Styling
 
-For the sake of clarity here comes the resulting HTML document:
+Any visual component of Forms Processor comes without any particular styling. It's up to you to provide some desired styling yourself using CSS. However, for sake of quick-starting you might use some styling distributed with Forms Processor as an example. Inject this code in `<head>`-element of your HTML document:
 
 ```html
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>FormsProcessor Demonstration</title>
- </head>
- <body>
-  <div id="hook"></div>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
-  <script src="path/to/forms-processor.umd.min.js"></script>
-  <script type="text/javascript">
-    FormsProcessors.default.create( "#slot", {
-      definition: "./example.json",
-    } );
-  </script>
- </body>
-</html>
+<link rel="stylesheet" href="path/to/forms-processor/style.css">
 ```
 
 ## Defining Forms
 
-On opening this document in a browser it will fail unless there is a proper JSON file at URL used in option `definition`. Start with something as little as this:
+Up to this point we've set up HTML document to basically load and run the Forms Processor, however it still doesn't have any input to be processed. That's why opening this document in a browser would fail unless there is a proper JSON file at URL used in option `definition` before. Put this content in a file **example.json** located next to your HTML document:
 
 ```json
 {
@@ -132,7 +127,8 @@ On opening this document in a browser it will fail unless there is a proper JSON
      "name": "fullName",
      "label": "Full Name",
      "type": "info",
-     "text": "=lastName && firstName && lastName + ', ' + firstName || '-'"
+     "text": "=lastName && firstName && lastName + ', ' + firstName || '-'",
+     "visible": "=iban"
     }
    ]
   }
@@ -140,13 +136,42 @@ On opening this document in a browser it will fail unless there is a proper JSON
 }
 ```
 
+This JSON is describing two forms, each consisting of two fields including some conditionals e.g. for hiding the second field of second form until some input was provided on first field of second form.
+
+## The Resulting HTML Document
+
+For the sake of clarity here comes the resulting HTML document:
+
+```html
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>FormsProcessor Demonstration</title>
+  <link rel="stylesheet" href="path/to/forms-processor/style.css">
+  <link href="path/to/forms-processor/FormsProcessor.umd.min.form.js" rel="preload" as="script">
+  <link href="path/to/forms-processor/FormsProcessor.umd.min.l10n-en.js" rel="preload" as="script">
+  <link href="path/to/forms-processor/FormsProcessor.umd.min.l10n-de.js" rel="preload" as="script">
+ </head>
+ <body>
+  <div id="hook"></div>
+  <script src="https://unpkg.com/vue"></script>
+  <script src="path/to/forms-processor/FormsProcessor.umd.min.js"></script>
+  <script type="text/javascript">
+    FormsProcessors.create( "#hook", {
+      definition: "./example.json",
+    } );
+  </script>
+ </body>
+</html>
+```
+
 ## Adding Custom Fields And Processors
 
-Prior to creating a sequence of forms you may use `FormsProcessor.default.addField()` to register a custom type of fields. `FormsProcessor.default.addProcessor()` may be used to register custom types of input processors.
+Prior to creating a sequence of forms you may use `FormsProcessor.addField()` to register a custom type of fields. `FormsProcessor.addProcessor()` may be used to register custom types of input processors.
 
 ## Running A Whole Configuration
 
-By invoking `FormsProcessor.default.runConfiguration()` a single configuration defining fields and processors to register as well as sequences of forms to inject in current HTML document is conveniently customizing injected Forms Processor. The provided configuration is expected to basically comply with one of two structures.
+By invoking `FormsProcessor.runConfiguration()` a single configuration defining fields and processors to register as well as sequences of forms to inject in current HTML document is conveniently customizing injected Forms Processor. The provided configuration is expected to basically comply with one of two structures.
 
 ### Simple Structure
 

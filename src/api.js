@@ -130,12 +130,12 @@ export default class FormsAPI {
 			/**
 			 * Lists previously created form components and extension.
 			 *
-			 * @name FormsAPI#registry
+			 * @name FormsAPI#_registry
 			 * @property {FormsAPIRegistry}
 			 * @readonly
 			 * @protected
 			 */
-			registry: { value: {
+			_registry: { value: {
 				components: [],
 				fields: {},
 				processors: {},
@@ -160,8 +160,8 @@ export default class FormsAPI {
 
 			component = this.generator( element, Object.assign( {}, options, {
 				registry: {
-					processors: Object.assign( {}, this.registry.processors, individualRegistry.processors ),
-					fields: Object.assign( {}, this.registry.fields, individualRegistry.fields ),
+					processors: Object.assign( {}, this._registry.processors, individualRegistry.processors ),
+					fields: Object.assign( {}, this._registry.fields, individualRegistry.fields ),
 				},
 			} ) );
 
@@ -179,7 +179,7 @@ export default class FormsAPI {
 	 * @returns {void}
 	 */
 	_registerComponent( form ) {
-		const list = this.registry.components;
+		const list = this._registry.components;
 		const numForms = list.length;
 
 		for ( let i = 0; i < numForms; i++ ) {
@@ -200,7 +200,7 @@ export default class FormsAPI {
 	 * @return {?Component} matching form component or null if missing
 	 */
 	findOnElement( element ) {
-		const list = this.registry.components;
+		const list = this._registry.components;
 
 		if ( Array.isArray( list ) ) {
 			const numForms = list.length;
@@ -224,7 +224,7 @@ export default class FormsAPI {
 	 * @return {?Component} matching form component or null if missing
 	 */
 	findByName( name ) {
-		const list = this.registry.components;
+		const list = this._registry.components;
 
 		if ( Array.isArray( list ) ) {
 			const numForms = list.length;
@@ -249,7 +249,7 @@ export default class FormsAPI {
 	 */
 	addField( typeName, fieldImplementation ) {
 		const _name = String( typeName ).trim().toLowerCase();
-		const registry = this.registry.fields;
+		const registry = this._registry.fields;
 
 		if ( registry.hasOwnProperty( _name ) ) {
 			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
@@ -273,7 +273,7 @@ export default class FormsAPI {
 	 */
 	addProcessor( name, processorImplementation ) {
 		const _name = String( name ).trim().toLowerCase();
-		const registry = this.registry.processors;
+		const registry = this._registry.processors;
 
 		if ( registry.hasOwnProperty( _name ) ) {
 			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );

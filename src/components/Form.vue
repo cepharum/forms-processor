@@ -26,10 +26,10 @@
 </template>
 
 <script>
-import FormTitle from "./Form/Title";
-import FormProgress from "./Form/Progress";
-import FormContent from "./Form/Content";
-import FormControl from "./Form/Control";
+const FormTitle = () => import( /* webpackChunkName: "form" */ "./Form/Title" );
+const FormProgress = () => import( /* webpackChunkName: "form" */ "./Form/Progress" );
+const FormContent = () => import( /* webpackChunkName: "form" */ "./Form/Content" );
+const FormControl = () => import( /* webpackChunkName: "form" */ "./Form/Control" );
 
 export default {
 	name: "Form",

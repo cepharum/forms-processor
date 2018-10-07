@@ -1,0 +1,13 @@
+build:library:
+  image: node:8
+  before_script:
+    - npm ci
+    - npm run build-library
+  script:
+    - mkdir forms-processor
+    - cp dist/FormsProcessor.css forms-processor/style.css
+    - while read src < <(find dist -name "FormsProcessor.umd.min.*"); cp "$src" "forms-processor/"; done
+  artifacts:
+    name: "forms-processor"
+    paths:
+      - forms-processor/

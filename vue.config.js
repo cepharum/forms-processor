@@ -30,4 +30,9 @@ module.exports = {
 	runtimeCompiler: true,
 	productionSourceMap: false,
 	baseUrl: "",
+	configureWebpack: {
+		output: {
+			libraryExport: "default",
+		},
+	},
 };

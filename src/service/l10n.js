@@ -54,11 +54,11 @@ export default class Localization {
 
 		switch ( normalized ) {
 			case "de" :
-				mapper = import( "@/l10n/de" );
+				mapper = import( /* webpackChunkName: "l10n-de" */ "@/l10n/de" );
 				break;
 
 			default :
-				mapper = import( "@/l10n/en" );
+				mapper = import( /* webpackChunkName: "l10n-en" */ "@/l10n/en" );
 		}
 
 		return mapper.then( generator => generator.default() );
