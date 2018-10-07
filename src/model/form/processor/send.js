@@ -126,7 +126,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 			} )
 			.catch( error => {
 				if ( this.definition.ignoreFailure ) {
-					console.error( error );
+					console.error( error ); // eslint-disable-line no-console
 
 					return data;
 				}
