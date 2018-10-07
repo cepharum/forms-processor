@@ -644,7 +644,7 @@ export default class FormFieldAbstractModel {
 	static makeInherit( subClassConstructor ) {
 		const subProto = subClassConstructor.prototype = Object.create( this.prototype );
 		subProto.constructor = subClassConstructor;
-		subProto.super = this;
+		subProto.$super = this;
 
 		return subClassConstructor;
 	}
