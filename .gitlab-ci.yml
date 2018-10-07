@@ -8,6 +8,6 @@ build:library:
     - cp dist/FormsProcessor.css forms-processor/style.css
     - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
   artifacts:
-    name: "forms-processor"
+    name: "forms-processor-$CI_COMMIT_REF_SLUG"
     paths:
       - forms-processor/
