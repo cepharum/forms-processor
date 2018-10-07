@@ -27,18 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import Pattern from "../utility/pattern";
 
-/**
- * Declares default values of commonly supported field properties.
- *
- * @type {object<string,string>}
- */
-const DefaultProperties = {
-	required: "false",
-	visible: "true",
-	type: "checkBox",
-};
+
 
 /**
  * Implements abstract base class of managers handling certain type of field in
@@ -51,8 +41,8 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
-	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
-		super(form, definition, fieldIndex, reactiveFieldInfo, ["size"]);
+	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
 	}
 
 	/** @inheritDoc */
@@ -62,32 +52,32 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 
 	/** @inheritDoc */
-	normalizeValue(value, options = {}) {
-		if (value instanceof String) {
+	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
+		if ( value instanceof String ) {
 			return value !== "false";
 		}
 
-		return Boolean(value);
+		return Boolean( value );
 	}
 
 	/** @inheritDoc */
-	_renderFieldComponent(reactiveFieldInfo) {
+	_renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const {form: {readValue, writeValue}, qualifiedName} = that;
+		const { form: { readValue, writeValue }, qualifiedName } = that;
 
 		return {
-			render(createElement) {
-				return createElement("input", {
+			render( createElement ) {
+				return createElement( "input", {
 					domProps: {
 						type: "checkbox",
-						checked: readValue(qualifiedName),
+						checked: readValue( qualifiedName ),
 					},
 					on: {
 						click: event => {
-							const value = that.normalizeValue(event.target.checked);
+							const value = that.normalizeValue( event.target.checked );
 							event.target.checked = value;
 
-							if (value === this.value) {
+							if ( value === this.value ) {
 								event.target.checked = value;
 								return;
 							}
@@ -95,14 +85,14 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							this.value = value;
 							reactiveFieldInfo.pristine = false;
 
-							writeValue(qualifiedName, value);
+							writeValue( qualifiedName, value );
 							reactiveFieldInfo.value = value;
 
-							this.$emit("input", value);
-							this.$parent.$emit("input", value);
+							this.$emit( "input", value );
+							this.$parent.$emit( "input", value );
 						},
 					},
-				});
+				} );
 			},
 			data: () => reactiveFieldInfo,
 		};

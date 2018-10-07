@@ -27,19 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import Pattern from "../utility/pattern";
 
-/**
- * Declares default values of commonly supported field properties.
- *
- * @type {object<string,string>}
- */
-const DefaultProperties = {
-	required: "false",
-	visible: "true",
-	type: "radio",
-	options: [],
-};
+
 
 /**
  * Implements abstract base class of managers handling certain type of field in
@@ -52,8 +41,8 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
-	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
-		super(form, definition, fieldIndex, reactiveFieldInfo, ["size"]);
+	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
 	}
 
 	/** @inheritDoc */
@@ -63,33 +52,33 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 
 	/** @inheritDoc */
-	normalizeValue(value, options = {}) {
-		if (value instanceof String) {
+	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
+		if ( value instanceof String ) {
 			return value !== "false";
 		}
 
-		return Boolean(value);
+		return Boolean( value );
 	}
 
 	/** @inheritDoc */
-	_renderFieldComponent(reactiveFieldInfo) {
+	_renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const {form: {readValue, writeValue}, qualifiedName} = that;
+		const { form: { readValue, writeValue }, qualifiedName } = that;
 		const options = [
-			{label: "Ja", value: true},
+			{ label: "Ja", value: true },
 			"Nein",
 			"Definitiv"
 		];
-		const selected = readValue(qualifiedName);
+		const selected = readValue( qualifiedName );
 
 		return {
-			render(createElement) {
-				return createElement("span", {}, options.map((option, index) => {
+			render( createElement ) {
+				return createElement( "span", {}, options.map( ( option, index ) => {
 					let domProps = {};
 					let label = "";
 					let value = "";
-					if (option instanceof Object) {
-						const {id} = option;
+					if ( option instanceof Object ) {
+						const { id } = option;
 						value = option.value;
 						label = option.label || "";
 						domProps = {
@@ -98,11 +87,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							id: id || `${qualifiedName}.${index}`,
 							value
 						};
-						if (value === selected) {
-							domProps.checked = true
+						if ( value === selected ) {
+							domProps.checked = true;
 						}
 					}
-					if (typeof option === "string") {
+					if ( typeof option === "string" ) {
 						label = option;
 						value = option;
 						domProps = {
@@ -112,32 +101,32 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							value: option,
 
 						};
-						if (option === selected) {
-							domProps.checked = true
+						if ( option === selected ) {
+							domProps.checked = true;
 						}
 					}
-					return createElement("span", {}, [
-						createElement("input", {
+					return createElement( "span", {}, [
+						createElement( "input", {
 							domProps,
 							on: {
-								click: event => {
+								click: () => {
 									reactiveFieldInfo.pristine = false;
 
-									writeValue(qualifiedName, value);
+									writeValue( qualifiedName, value );
 									reactiveFieldInfo.value = value;
 
-									this.$emit("input", value);
-									this.$parent.$emit("input", value);
+									this.$emit( "input", value );
+									this.$parent.$emit( "input", value );
 								},
 							}
-						}),
-						createElement("label", {
+						} ),
+						createElement( "label", {
 							attrs: {
-								"for": domProps.id,
+								for: domProps.id,
 							},
-						}, [label])
-					]);
-				}))
+						}, [label] )
+					] );
+				} ) );
 			},
 			data: () => reactiveFieldInfo,
 		};
