@@ -585,7 +585,7 @@ export default class FormSequenceModel {
 		} )
 			.then( () => _prepareResultHandling( { success: true }, this.mode.onSuccess, originalData ) )
 			.catch( error => {
-				console.error( `processing input failed: ${error.message}` );
+				console.error( `processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
 				throw Object.assign( error, _prepareResultHandling( { success: false }, this.mode.onFailure, error ) );
 			} );
