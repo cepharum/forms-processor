@@ -46,6 +46,44 @@ import Fields from "./model/form/field";
  */
 export default class FormsAPI {
 	/**
+	 * @param {function(element: (HTMLElement|string), options: object=):Component} generator callback generating component attached to element
+	 */
+	constructor( generator ) {
+		Object.defineProperties( this, {
+			/**
+			 * Provides generator function for creating instances of form
+			 * component.
+			 *
+			 * @name FormsAPI#generator
+			 * @property {function(element: (HTMLElement|string), options: object=):Component}
+			 * @readonly
+			 * @protected
+			 */
+			generator: { value: generator },
+
+			/**
+			 * Lists previously created form components and extension.
+			 *
+			 * @name FormsAPI#_registry
+			 * @property {FormsAPIRegistry}
+			 * @readonly
+			 * @protected
+			 */
+			_registry: { value: {
+				components: [],
+				fields: {},
+				processors: {},
+			} },
+		} );
+
+		this.runConfiguration( {
+			fields: Fields.map,
+			processors: Processors.map,
+			sequences: [],
+		} );
+	}
+
+	/**
 	 * Adds provided component to a list of components exposed in global context
 	 * of current browser window.
 	 *
@@ -77,25 +115,21 @@ export default class FormsAPI {
 		} )( configuration );
 
 
-		const allFields = Object.assign( {}, Fields.map, fields );
-		const fieldNames = Object.keys( allFields );
+		const fieldNames = Object.keys( fields );
 		const numFields = fieldNames.length;
 		for ( let i = 0; i < numFields; i++ ) {
-			const fieldName = fieldNames[i];
+			const name = fieldNames[i];
 
-			this.addField( fieldName, allFields[fieldName] );
+			this.addField( name, fields[name] );
 		}
 
-
-		const allProcessors = Object.assign( {}, Processors.map, processors );
-		const processorNames = Object.keys( allProcessors );
+		const processorNames = Object.keys( processors );
 		const numProcessors = processorNames.length;
 		for ( let i = 0; i < numProcessors; i++ ) {
-			const processorName = processorNames[i];
+			const name = processorNames[i];
 
-			this.addProcessor( processorName, allProcessors[processorName] );
+			this.addProcessor( name, processors[name] );
 		}
-
 
 		const numSequences = sequences.length;
 		for ( let i = 0; i < numSequences; i++ ) {
@@ -103,38 +137,6 @@ export default class FormsAPI {
 
 			this.create( element, options );
 		}
-	}
-
-	/**
-	 * @param {function(element: (HTMLElement|string), options: object=):Component} generator callback generating component attached to element
-	 */
-	constructor( generator ) {
-		Object.defineProperties( this, {
-			/**
-			 * Provides generator function for creating instances of form
-			 * component.
-			 *
-			 * @name FormsAPI#generator
-			 * @property {function(element: (HTMLElement|string), options: object=):Component}
-			 * @readonly
-			 * @protected
-			 */
-			generator: { value: generator },
-
-			/**
-			 * Lists previously created form components and extension.
-			 *
-			 * @name FormsAPI#_registry
-			 * @property {FormsAPIRegistry}
-			 * @readonly
-			 * @protected
-			 */
-			_registry: { value: {
-				components: [],
-				fields: {},
-				processors: {},
-			} },
-		} );
 	}
 
 	/**
