@@ -656,7 +656,17 @@ export default class FormFieldAbstractModel {
 	 * @returns {boolean} true if current one is base class of provided one
 	 */
 	static isBaseClassOf( subClass ) {
-		return this.isPrototypeOf( subClass ) || this.prototype.isPrototypeOf( subClass );
+		let iter = subClass.prototype;
+
+		while ( iter ) {
+			if ( iter.constructor === this ) {
+				return true;
+			}
+
+			iter = Object.getPrototypeOf( iter );
+		}
+
+		return false;
 	}
 }
 
