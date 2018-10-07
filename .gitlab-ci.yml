@@ -6,7 +6,7 @@ build:library:
   script:
     - mkdir forms-processor
     - cp dist/FormsProcessor.css forms-processor/style.css
-    - while read src < <(find dist -name "FormsProcessor.umd.min.*"); do cp "$src" "forms-processor/"; done
+    - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
   artifacts:
     name: "forms-processor"
     paths:
