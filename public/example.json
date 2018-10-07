@@ -56,6 +56,33 @@
 					"visible": true,
 					"required": "=lastName",
 					"size": "5-63"
+				},
+				{
+					"name": "agreeing",
+					"label": {
+						"en": "Agreeing",
+						"ANY": "Zustimmend"
+					},
+					"type": "checkBox",
+					"visible": true,
+					"required": true,
+					"size": "5-63"
+				},
+				{
+					"name": "do you like this tool",
+					"label": {
+						"en": "Do you like this tool?",
+						"ANY": "Gefällt ihnen dieses Tool?"
+					},
+					"options": [
+						"Ja",
+						"Nein",
+						"Definitiv"
+					],
+					"type": "radio",
+					"visible": true,
+					"required": true,
+					"size": "5-63"
 				}
 			]
 		},

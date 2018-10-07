@@ -29,11 +29,15 @@
 import FormFieldAbstractModel from "./abstract";
 import FormFieldInfoModel from "./info";
 import FormFieldTextModel from "./text";
+import FormFieldCheckBoxModel from "./checkbox";
+import FormFieldRadioModel from "./radio";
 
 export default {
 	abstract: FormFieldAbstractModel,
 	map: {
 		info: FormFieldInfoModel,
 		text: FormFieldTextModel,
+		checkbox: FormFieldCheckBoxModel,
+		radio: FormFieldRadioModel,
 	},
 };
