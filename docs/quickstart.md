@@ -1,32 +1,152 @@
-# Using Forms Client
+# Using Forms Processor - Quick Start
 
-The forms client is capable of being injected into any HTML document to process a form according to some definition describing what fields should be presented and how the input should be processed. This document describes how to do that.
+The Forms Processor may be injected into any HTML document to process one or more sequences of forms according to some definition describing what fields should be presented in either forms included with a sequence of forms and how the input should be processed eventually. This document describes how to achieve that.
 
-## Quick Start
-
-The forms client is distributed in a Javascript file to be injected into your HTML document. Simply paste this line right before the closing `</body>` tag of your document:
+So, let's assume there is an HTML document similar to this one:
 
 ```html
-<script type="text/javascript" src="path/to/forms-client.min.js"></script>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>FormsProcessor Demonstration</title>
+ </head>
+ <body>
+  <div id="hook"></div>
+ </body>
+</html>
 ```
 
-This will load the forms client's code. It won't start presenting any forms, though. You need to define a configuration to be processed by the injected code file. Thus you should inject the following code _before_ the line pasted above:
+Injecting Forms Processor requires to add a few lines of HTML code to a document like this one:
+
+## Inject VueJS
+
+Forms Processor has been implemented with VueJS. It is though distributed without it. Thus you need to inject it yourself prior to injecting Forms Processor by appending this line right before the closing tag of your `<body>` element:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+```
+
+This will fetch VueJS from a CDN. However, it's totally fine to use a local copy instead.
+
+## Inject Forms Processor
+
+Next you are ready to add the line that's fetching Forms Processor by adding this line after the one you've added before:
+
+```html
+<script src="path/to/forms-processor.umd.min.js"></script>
+```
+
+Injecting this file exposes Forms Processor's API in global variable `FormsProcessor`. Due to supporting ES6 modules that variable is containing an object with a single property `default` actually exposing the API. So, you might access it like this after having injected that file:
+
+```javascript
+FormsProcessor.default.addField( ... ); 
+```
+
+## Creating A Sequence Of Forms
+
+At this point you're ready to inject some sequence of forms to be processed:
 
 ```html
 <script type="text/javascript">
-var CepharumForms = [ [ "#form-anchor", {
-	definition: "url/to/definition/file.json",
-} ] ];
-</script> 
+FormsProcessors.default.create( "#slot", {
+	definition: "./example.json",
+} );
+</script>
 ```
 
-This is the minimum configuration required to start presentation of a form. The code is declaring a global variable. It must be named `CepharumForms` as this is the name looked up by injected code. The variable is expected to contain an array of arrays. Every inner array consists of two values: first there is a string selecting an HTML element of your document or a reference to such an element. Second value is an object with options for customizing the desired instance of forms client. A mandatory option `definition` is a string selecting the source to be fetched for the form's definition. Alternatively this option might be an object considered the required definition itself.
+Invoked method `create()` takes two arguments:
 
-After having processed the array in variable `CepharumForms` this variable is adjusted to contain an [API](api.md) for controlling all defined clients or add further instances to your document.
+1. a reference on HTML element forms should be presented at or some CSS selector with first matching element of HTML document used for that
+2. an object with options customizing the injected Forms Processor's behaviour
 
-## Pre-Configuration in Detail
+You need to require at least one option called `definition`. It is a URL addressing some JSON file describing all forms and their fields in presented sequence of forms as well as additional customizations such as a set of steps processing input data after submission of last form in sequence.
 
-The pre-configuration assigned to global variable `CepharumForms` prior to loading the forms processor is expected to basically comply with one of two structures.
+As an option you might provide the actual definition as an object instead of its URL in `definition`.
+
+## The Resulting HTML Document
+
+For the sake of clarity here comes the resulting HTML document:
+
+```html
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>FormsProcessor Demonstration</title>
+ </head>
+ <body>
+  <div id="hook"></div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+  <script src="path/to/forms-processor.umd.min.js"></script>
+  <script type="text/javascript">
+    FormsProcessors.default.create( "#slot", {
+      definition: "./example.json",
+    } );
+  </script>
+ </body>
+</html>
+```
+
+## Defining Forms
+
+On opening this document in a browser it will fail unless there is a proper JSON file at URL used in option `definition`. Start with something as little as this:
+
+```json
+{
+ "label": "Sequence Headline",
+ "description": "Some sequence description ...",
+ "processors": [
+  {
+   "url": "./store/{id}"
+  }
+ ],
+ "sequence": [
+  {
+   "name": "firstForm",
+   "label": "First Form's Headline",
+   "description": "First form's description ...",
+   "fields": [
+    {
+     "name": "lastName",
+     "label": "Last Name",
+     "type": "text"
+    },
+    {
+     "name": "firstName",
+     "label": "First Name",
+     "required": "=lastName"
+    }
+   ]
+  },
+  {
+   "name": "secondForm",
+   "label": "Second Form's Headline",
+   "description": "Second form's description ...",
+   "fields": [
+    {
+     "name": "iban",
+     "label": "IBAN",
+     "required": true,
+     "pattern": "AA## #### #### #### #### ##"
+    },
+    {
+     "name": "fullName",
+     "label": "Full Name",
+     "type": "info",
+     "text": "=lastName && firstName && lastName + ', ' + firstName || '-'"
+    }
+   ]
+  }
+ ]
+}
+```
+
+## Adding Custom Fields And Processors
+
+Prior to creating a sequence of forms you may use `FormsProcessor.default.addField()` to register a custom type of fields. `FormsProcessor.default.addProcessor()` may be used to register custom types of input processors.
+
+## Running A Whole Configuration
+
+By invoking `FormsProcessor.default.runConfiguration()` a single configuration defining fields and processors to register as well as sequences of forms to inject in current HTML document is conveniently customizing injected Forms Processor. The provided configuration is expected to basically comply with one of two structures.
 
 ### Simple Structure
 
@@ -43,7 +163,7 @@ In case you want to register custom input processors or additional types of fiel
 
 #### sequences
 
-This property takes an array of component descriptors to be processed as soon as the forms processor has been loaded. This array is equivalent to the simple structure of pre-configuration described before. 
+This property takes an array of component descriptors to be processed as soon as the forms processor has been loaded. This array is equivalent to the simple structure of configuration described before. 
 
 #### fields
 
