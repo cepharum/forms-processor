@@ -77,29 +77,23 @@ export default class FormsAPI {
 		} )( configuration );
 
 
-		const abstractField = Fields.abstract;
 		const allFields = Object.assign( {}, Fields.map, fields );
 		const fieldNames = Object.keys( allFields );
 		const numFields = fieldNames.length;
 		for ( let i = 0; i < numFields; i++ ) {
 			const fieldName = fieldNames[i];
-			const factory = allFields[fieldName];
-			const field = typeof factory === "function" && !abstractField.isBaseClassOf( factory ) ? factory( abstractField ) : factory;
 
-			this.addField( fieldName, field );
+			this.addField( fieldName, allFields[fieldName] );
 		}
 
 
-		const abstractProcessor = Processors.abstract;
 		const allProcessors = Object.assign( {}, Processors.map, processors );
 		const processorNames = Object.keys( allProcessors );
 		const numProcessors = processorNames.length;
 		for ( let i = 0; i < numProcessors; i++ ) {
 			const processorName = processorNames[i];
-			const factory = allProcessors[processorName];
-			const processor = typeof factory === "function" && !abstractProcessor.isBaseClassOf( factory ) ? factory( abstractProcessor ) : factory;
 
-			this.addProcessor( processorName, processor );
+			this.addProcessor( processorName, allProcessors[processorName] );
 		}
 
 
@@ -244,10 +238,10 @@ export default class FormsAPI {
 	 * Adds support for custom type of field.
 	 *
 	 * @param {string} typeName name of type to use in field definition for addressing provided implementation
-	 * @param {FormFieldAbstractModel} fieldImplementation implementation of custom field type
+	 * @param {class|function(class):class} implementationOrFactory implementation of custom field type or factory callback generating it
 	 * @returns {FormsAPI} current forms manager for fluent interface
 	 */
-	addField( typeName, fieldImplementation ) {
+	addField( typeName, implementationOrFactory ) {
 		const _name = String( typeName ).trim().toLowerCase();
 		const registry = this._registry.fields;
 
@@ -255,11 +249,13 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
 		}
 
-		if ( !Fields.abstract.isBaseClassOf( fieldImplementation ) ) {
+		const field = typeof implementationOrFactory === "function" && !Fields.abstract.isBaseClassOf( implementationOrFactory ) ? implementationOrFactory( Fields.abstract ) : implementationOrFactory;
+
+		if ( !Fields.abstract.isBaseClassOf( field ) ) {
 			throw new TypeError( `invalid handler for fields of type "${typeName}" rejected` );
 		}
 
-		registry[_name] = fieldImplementation;
+		registry[_name] = field;
 
 		return this;
 	}
@@ -268,10 +264,10 @@ export default class FormsAPI {
 	 * Adds support for custom input processor.
 	 *
 	 * @param {string} name name of processor to use in a sequence's definition of input processors for including provided processor
-	 * @param {FormProcessorAbstractModel} processorImplementation implementation of custom input processor
+	 * @param {class|function(class):class} implementationOrFactory implementation of custom field type or factory callback generating it
 	 * @returns {FormsAPI} current forms manager for fluent interface
 	 */
-	addProcessor( name, processorImplementation ) {
+	addProcessor( name, implementationOrFactory ) {
 		const _name = String( name ).trim().toLowerCase();
 		const registry = this._registry.processors;
 
@@ -279,11 +275,13 @@ export default class FormsAPI {
 			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );
 		}
 
-		if ( !Processors.abstract.isBaseClassOf( processorImplementation ) ) {
+		const processor = typeof implementationOrFactory === "function" && !Processors.abstract.isBaseClassOf( implementationOrFactory ) ? implementationOrFactory( Processors.abstract ) : implementationOrFactory;
+
+		if ( !Processors.abstract.isBaseClassOf( processor ) ) {
 			throw new TypeError( `invalid input processor of type "${name}" rejected` );
 		}
 
-		registry[_name] = processorImplementation;
+		registry[_name] = processor;
 
 		return this;
 	}
