@@ -81,7 +81,6 @@
 					],
 					"type": "radio",
 					"visible": true,
-					"required": true,
 					"size": "5-63"
 				}
 			]
