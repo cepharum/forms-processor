@@ -194,12 +194,12 @@ This property takes an array of component descriptors to be processed as soon as
 
 This object maps names a field's type name into a function returning class instantiated for every field of that type used in injected forms' definition. This pattern is required due to any such class must properly inherit from an abstract base class defined by loaded forms processor. Thus you can't preliminary configure custom types of fields without loading the forms processor first but have to postpone definition of a type's class until then. 
 
-The function is invoked with required base class in its first argument. This base class is exposing static method `makeInherit()` taking constructor of the desired sub-class to help with creating an actually inheriting class the original way. 
+The factory callback is invoked with required base class in its first argument. This base class is exposing static method `makeInherit()` taking constructor of the desired sub-class to help with creating an actually inheriting class the original way. 
 
 ```javascript
 function generateNewType( abstract ) {
-	const newType = abstract.makeInherit( function( definition ) {
-		this.$super( definition );
+	const newType = abstract.makeInherit( function( form, definition, fieldIndex, reactiveFieldInfo, omitProperties ) {
+		this.$super( form, definition, fieldIndex, reactiveFieldInfo, omitProperties );
 	} );
 
 	newType.prototype.validate = function() { ... };

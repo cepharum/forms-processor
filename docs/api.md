@@ -52,8 +52,8 @@ This method registers type of field with current instance of Forms Processor. Th
   
   ```javascript
   FormsProcessor.addField( "catalog", function( abstract ) {
-    const catalogType = abstract.makeInherit( function( definition ) {
-      this.$super( definition );
+    const catalogType = abstract.makeInherit( function( form, definition, fieldIndex, reactiveFieldInfo, omitProperties ) {
+      this.$super( form, definition, fieldIndex, reactiveFieldInfo, omitProperties );
     
       // put your constructor code here  
     } );
@@ -61,6 +61,16 @@ This method registers type of field with current instance of Forms Processor. Th
     catalogType.prototype.validate = function() {};
 
     return catalogType;
+  } );
+  ```
+  
+  The same is possible with ES6 (though probably requiring to transpile the code to work in older browsers):
+
+  ```javascript
+  FormsProcessor.addField( "catalog", function( Abstract ) {
+    return class FieldTypeCatalog extends Abstract {
+      validate() {};
+    }
   } );
   ```
 
@@ -120,6 +130,18 @@ This method enables registration of new types of input data processors with curr
     };
 
     return encryptor;
+  } );
+  ```
+  
+  The same is possible with ES6 classes probably requiring to transpile the code for supporting older browsers:
+
+  ```javascript
+  FormsProcessor.addProcessor( "encrypt", function( Abstract ) {
+    return class EncryptProcessor extends Abstract {
+      process( data ) {
+        return Promise.resolve( data );  	
+      }
+    };
   } );
   ```
 
