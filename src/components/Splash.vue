@@ -38,8 +38,11 @@ export default {
 					} );
 				}
 			} )
-			.then( () => Definition.load( configuration.definition ) )
-			.then( definition => this.$store.dispatch( "form/define", {
+			.then( () => Promise.all( [
+				Definition.load( configuration.definition ),
+				configuration.splashDeferral
+			] ) )
+			.then( ( [definition] ) => this.$store.dispatch( "form/define", {
 				id: this.$root.$options.form.id,
 				definition,
 				registry: configuration.registry,
