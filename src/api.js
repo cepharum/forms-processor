@@ -293,7 +293,7 @@ export default class FormsAPI {
 	 *
 	 * @returns {FormFieldAbstractModel} base class for custom types of fields
 	 */
-	static AbstractFieldModel() {
+	static get AbstractFieldModel() {
 		return Fields.abstract;
 	}
 
@@ -302,7 +302,25 @@ export default class FormsAPI {
 	 *
 	 * @returns {FormProcessorAbstractModel} base class for custom input processor
 	 */
-	static AbstractProcessorModel() {
+	static get AbstractProcessorModel() {
+		return Processors.abstract;
+	}
+
+	/**
+	 * Exposes class any custom type of field must be inherited from.
+	 *
+	 * @returns {FormFieldAbstractModel} base class for custom types of fields
+	 */
+	get AbstractFieldModel() {
+		return Fields.abstract;
+	}
+
+	/**
+	 * Exposes class any custom input processor must be inherited from.
+	 *
+	 * @returns {FormProcessorAbstractModel} base class for custom input processor
+	 */
+	get AbstractProcessorModel() {
 		return Processors.abstract;
 	}
 }
