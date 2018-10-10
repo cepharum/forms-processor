@@ -572,7 +572,10 @@ export default class FormFieldAbstractModel {
 
 							if ( firstControl ) {
 								firstControl.focus();
-								firstControl.select();
+
+								if ( typeof firstControl.select === "function" ) {
+									firstControl.select();
+								}
 							}
 						} );
 					}
