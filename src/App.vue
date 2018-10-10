@@ -1,5 +1,5 @@
 <template>
-	<div class="forms-client">
+	<div class="forms-processor">
 		<Splash v-if="showSplash"/>
 		<Forms v-if="showForms"/>
 	</div>

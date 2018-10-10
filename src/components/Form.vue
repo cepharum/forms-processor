@@ -1,5 +1,5 @@
 <template>
-	<div class="form" :id="sequenceName"
+	<div class="form-view" :id="sequenceName"
 	     v-global-key.advance="advance"
 	     v-global-key.rewind="rewind">
 		<div class="title">
