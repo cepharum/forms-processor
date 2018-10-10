@@ -3,10 +3,10 @@
 		<button v-if="!isSole" @click="rewind()" :disabled="isFirst" class="previous">{{
 			labelPrevious }}
 		</button>
-		<button v-if="!isLast" @click="advance()" :disabled="isInvalid" class="next">{{
+		<button v-if="!isLast" @click="advance()" :disabled="isInvalid && disable" :class="{next:true, disabled:isInvalid}">{{
 			labelNext }}
 		</button>
-		<button v-if="isLast" @click="submit()" :disabled="isInvalid" class="submit">{{
+		<button v-if="isLast" @click="submit()" :disabled="isInvalid && disable" :class="{submit:true, disabled:isInvalid}">{{
 			labelSubmit }}
 		</button>
 	</div>
@@ -16,6 +16,9 @@
 export default {
 	name: "FormControl",
 	computed: {
+		disable() {
+			return Boolean( this.$options.form.disableButtons );
+		},
 		isSole() {
 			return this.$store.getters.sequence.forms.length < 2;
 		},
