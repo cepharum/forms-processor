@@ -543,6 +543,7 @@ export default class FormFieldAbstractModel {
 	required ? 'mandatory' : 'optional', 
 	pristine ? 'pristine' : 'touched',
 	valid ? 'valid' : 'invalid',
+	label ? 'with-label' : 'without-label',
 ]">
 	<span class="label">
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
