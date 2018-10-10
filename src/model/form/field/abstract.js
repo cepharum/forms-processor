@@ -442,6 +442,18 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Exposes service handling localization of internationalized values so
+	 * custom field extensions might access is via this provided abstract base
+	 * class.
+	 *
+	 * @param {string|object<string,string>} internationalizedValue non-internationalized string or object mapping locale tag into one of several translation
+	 * @returns {string} localized string
+	 */
+	selectLocalization( internationalizedValue ) {
+		return L10n.selectLocalized( internationalizedValue, this.form.locale );
+	}
+
+	/**
 	 * Handles change of a field's value by updating state of model accordingly.
 	 *
 	 * @param {*} store reference on store the adjustments took place in
