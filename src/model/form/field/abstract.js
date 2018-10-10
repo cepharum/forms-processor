@@ -711,8 +711,10 @@ function normalizeDefinitionValue( name, value ) {
 		case "required" :
 		case "visible" :
 			switch ( typeof value ) {
-				case "string" :
-					return Data.normalizeToBoolean( value );
+				case "string" : {
+					const boolean = Data.normalizeToBoolean( value );
+					return boolean == null ? value.trim().length > 0 : boolean;
+				}
 
 				default :
 					return Boolean( value );
