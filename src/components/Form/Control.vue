@@ -17,7 +17,7 @@ export default {
 	name: "FormControl",
 	computed: {
 		disable() {
-			return Boolean( this.$options.form.disableButtons );
+			return Boolean( this.$root.$options.form.disableButtons );
 		},
 		isSole() {
 			return this.$store.getters.sequence.forms.length < 2;
