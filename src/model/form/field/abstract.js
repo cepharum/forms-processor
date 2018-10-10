@@ -421,6 +421,8 @@ export default class FormFieldAbstractModel {
 		}
 
 
+		let component = null;
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides description of component representing current field.
@@ -429,7 +431,13 @@ export default class FormFieldAbstractModel {
 			 * @property {Component}
 			 * @readonly
 			 */
-			component: { value: this._renderComponent( reactiveFieldInfo ) },
+			component: { get() {
+				if ( component == null ) {
+					component = this._renderComponent( reactiveFieldInfo );
+				}
+
+				return component;
+			} },
 		} );
 	}
 
