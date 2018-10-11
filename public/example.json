@@ -54,7 +54,7 @@
 						"ANY": "Vorname"
 					},
 					"visible": true,
-					"required": "=lastName",
+					"required": "=!empty(lastName)",
 					"size": "5-63"
 				},
 				{
