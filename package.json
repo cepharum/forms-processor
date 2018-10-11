@@ -1,5 +1,6 @@
 {
-  "name": "forms-client",
+  "name": "forms-processor",
+  "description": "processes description of forms in browsers",
   "version": "0.1.0",
   "private": true,
   "scripts": {
