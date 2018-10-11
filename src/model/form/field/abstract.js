@@ -26,7 +26,8 @@
  * @author: cepharum
  */
 
-import TermProcessor from "../../term/processor";
+import { Processor } from "simple-terms";
+
 import Pattern from "../utility/pattern";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
@@ -89,7 +90,7 @@ export default class FormFieldAbstractModel {
 
 
 		/**
-		 * @type {TermProcessor[]}
+		 * @type {Processor[]}
 		 */
 		const terms = [];
 
@@ -154,7 +155,7 @@ export default class FormFieldAbstractModel {
 						propertyValue = String( propertyValue ).trim();
 
 						if ( propertyValue.charAt( 0 ) === "=" ) {
-							const term = new TermProcessor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
+							const term = new Processor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
 							terms.push( term );
 							getters[propertyName] = {
 								get: () => normalizeDefinitionValue( propertyName, term.evaluate( form.data ) ),
@@ -168,7 +169,7 @@ export default class FormFieldAbstractModel {
 								const slice = slices[i];
 								const match = slice.match( ptnBinding );
 								if ( match ) {
-									const term = new TermProcessor( slice.slice( 2, -2 ), {}, termCache, qualifyVariable );
+									const term = new Processor( slice.slice( 2, -2 ), {}, termCache, qualifyVariable );
 									terms.push( term );
 									slices[i] = term;
 									isDynamic = true;
@@ -183,7 +184,7 @@ export default class FormFieldAbstractModel {
 										for ( let i = 0; i < numSlices; i++ ) {
 											const slice = slices[i];
 
-											if ( slice instanceof TermProcessor ) {
+											if ( slice instanceof Processor ) {
 												rendered[i] = slice.evaluate( form.data );
 											} else {
 												rendered[i] = slice;
