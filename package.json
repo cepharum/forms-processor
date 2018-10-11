@@ -11,7 +11,7 @@
     "test:e2e": "vue-cli-service test:e2e"
   },
   "dependencies": {
-    "simple-terms": "0.0.1",
+    "simple-terms": "^0.0.2",
     "vue": "^2.5.17",
     "vuex": "^3.0.1"
   },
