@@ -28,11 +28,14 @@
 
 import Processors from "./model/form/processor";
 import Fields from "./model/form/field";
+import Data from "@/service/data";
+
 
 /**
  * @typedef {object} FormsAPIExtensionsRegistry
  * @property {object<string,FormFieldAbstractModel>} fields maps custom field types to be supported
  * @property {object<string,FormProcessorAbstractModel>} processors maps custom input processors
+ * @property {object<string,object>} translations map of locales into custom translation overlays
  */
 
 /**
@@ -73,6 +76,7 @@ export default class FormsAPI {
 				components: [],
 				fields: {},
 				processors: {},
+				translations: {},
 			} },
 		} );
 
@@ -94,7 +98,7 @@ export default class FormsAPI {
 	 * @returns {void}
 	 */
 	runConfiguration( configuration ) {
-		const { fields = {}, processors = {}, sequences = [] } = ( function( preConfiguration ) {
+		const { fields = {}, processors = {}, translations = {}, sequences = [] } = ( function( preConfiguration ) {
 			if ( Array.isArray( preConfiguration ) ) {
 				return {
 					sequences: preConfiguration,
@@ -105,6 +109,7 @@ export default class FormsAPI {
 				return {
 					processors: preConfiguration.processors || {},
 					fields: preConfiguration.fields || {},
+					translations: preConfiguration.translations || {},
 					sequences: preConfiguration.sequences,
 				};
 			}
@@ -129,6 +134,14 @@ export default class FormsAPI {
 			const name = processorNames[i];
 
 			this.addProcessor( name, processors[name] );
+		}
+
+		const translationNames = Object.keys( translations );
+		const numTranslations = translationNames.length;
+		for ( let i = 0; i < numTranslations; i++ ) {
+			const name = translationNames[i];
+
+			this.addTranslations( name, translations[name] );
 		}
 
 		const numSequences = sequences.length;
@@ -158,6 +171,7 @@ export default class FormsAPI {
 				registry: {
 					processors: Object.assign( {}, this._registry.processors, individualRegistry.processors ),
 					fields: Object.assign( {}, this._registry.fields, individualRegistry.fields ),
+					translations: Data.deepClone( this._registry.translations ),
 				},
 			} ) );
 
@@ -284,6 +298,26 @@ export default class FormsAPI {
 		}
 
 		registry[_name] = processor;
+
+		return this;
+	}
+
+	/**
+	 * Adds provided translations for selected locale for use with forms
+	 * processors created afterwards.
+	 *
+	 * @param {string} locale tag of locale provided translation should be used on
+	 * @param {object} translationsOverlay hierarchical map of strings into strings or into next level of such a map
+	 * @returns {FormsAPI} current forms manager for fluent interface
+	 */
+	addTranslations( locale, translationsOverlay ) {
+		const { translations } = this._registry;
+
+		if ( !translations[locale] ) {
+			translations[locale] = {};
+		}
+
+		Data.deepMerge( translations[locale], translationsOverlay );
 
 		return this;
 	}

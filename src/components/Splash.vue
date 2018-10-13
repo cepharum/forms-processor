@@ -11,6 +11,7 @@
 <script>
 import L10n from "@/service/l10n";
 import Definition from "@/service/definition";
+import Data from "@/service/data";
 
 export default {
 	name: "Splash",
@@ -31,12 +32,15 @@ export default {
 				}
 			} )
 			.then( translations => { // eslint-disable-line consistent-return
-				if ( translations ) {
-					return this.$store.dispatch( "l10n/load", {
-						locale: this.$store.getters["l10n/current"],
-						translations,
-					} );
-				}
+				const locale = this.$store.getters["l10n/current"];
+
+				const overlay = ( configuration.registry.translations || {} )[locale];
+				const _translations = overlay ? Data.deepMerge( translations || {}, overlay ) : translations || {};
+
+				return this.$store.dispatch( "l10n/load", {
+					locale,
+					translations: _translations,
+				} );
 			} )
 			.then( () => Promise.all( [
 				Definition.load( configuration.definition ),

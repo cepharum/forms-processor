@@ -189,6 +189,7 @@ export default class FormSequenceModel {
 			registry: { value: Object.freeze( Object.assign( {}, {
 				fields: Object.freeze( Object.assign( {}, registry.fields ) ),
 				processors: Object.freeze( Object.assign( {}, registry.processors ) ),
+				translations: Object.freeze( Object.assign( {}, registry.translations ) ),
 			} ) ) },
 
 			/**
