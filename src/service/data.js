@@ -139,4 +139,41 @@ export default class Data {
 
 		return value;
 	}
+
+	/**
+	 * Removes duplicate items from provided list of items.
+	 *
+	 * @param {array} items list of items
+	 * @returns {array} provided list of items with duplicate entries removed
+	 */
+	static unique( items ) {
+		if ( !items ) {
+			return [];
+		}
+
+		if ( !Array.isArray( items ) ) {
+			throw new TypeError( "not a list of items" );
+		}
+
+		const map = new Map();
+
+		const numItems = items.length;
+		const filtered = new Array( items );
+		let write = 0;
+
+		for ( let i = 0; i < numItems; i++ ) {
+			const item = items[i];
+
+			if ( map.has( item ) ) {
+				continue;
+			}
+
+			map.set( item, true );
+			filtered[write++] = item;
+		}
+
+		filtered.splice( write );
+
+		return filtered;
+	}
 }

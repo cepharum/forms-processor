@@ -350,7 +350,7 @@ export default class FormFieldAbstractModel {
 						}
 
 						try {
-							reactiveFieldInfo.errors = this.validate();
+							reactiveFieldInfo.errors = Data.unique( this.validate() );
 						} catch ( e ) {
 							reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
 						}
@@ -653,7 +653,14 @@ export default class FormFieldAbstractModel {
 	 * @returns {string[]} lists validation error messages, empty list indicates valid field
 	 */
 	validate( live = false ) { // eslint-disable-line no-unused-vars
-		return [];
+		const errors = [];
+		const { value, required } = this;
+
+		if ( required && ( value == null || value === "" ) ) {
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		}
+
+		return errors;
 	}
 
 	/**
