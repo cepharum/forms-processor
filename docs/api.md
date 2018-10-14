@@ -152,3 +152,17 @@ A custom input data processor must overload this method:
   This method is invoked with all input data provided by user while filling the forms in a sequence (in case of being first selected input data processor) or with data as returned from previous input data processor in a row of such processors.
   
   Every input data processor should return some data. Whenever an input data processor isn't adjusting the provided data it should return the originally provided data, at least. By returning promise for resulting data the method may start asynchronous processes. This will defer invocation of further input data processors.
+
+### addTranslations( locale, translationsOverlay )
+
+FormsProcessor has internationalization support built in. Internal fields use lookup trees providing translations for current locale. This method is provided to add custom overlays to extend or replace existing entries in a translation tree.
+
+> Translations are organized as "trees" by means of mapping some lookup string into a translation or into another object mapping from lookup strings into a translation or yet another object etc.
+
+On rendering hints and errors on a field code might use `@` followed by a translation's name using dot notation syntax instead of some actual string to be used. Abstract field implementation will detect those strings and look up related translations for eventual use. On adding custom fields and processors you may use this syntax in combination with additional translations to utilize this localization support.
+
+Any provided overlay of translations is associated with a particular locale to be selected in first argument. Multiple overlays per locale may be provided in succeeding invocations of this method with each overlay extending or replacing elements of previously applied overlay.
+
+Due to the fact that API works in a global scope probably managing multiple instances of FormsProcessor with each one considering different locale to be current one, there is no possibility using this API to detect current locale and provide translation for that locale, only. Due to controlling all instances of FormsProcessor your code might have an option to decide what translations is required, though.
+
+Applying translations affect FormsProcessor instances created afterwards, only.
