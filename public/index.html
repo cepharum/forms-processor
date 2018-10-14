@@ -20,8 +20,8 @@
 						return class ExtractProcessor extends abstract {
 							process( data ) {
 								return Promise.resolve( {
-									Vorname: data.personal.firstname,
-									Nachname: data.personal.lastname,
+									Vorname: data.personal.firstName,
+									Nachname: data.personal.lastName,
 									IBAN: data.delivery.iban || "keine angegeben",
 								} );
 							}
