@@ -11,6 +11,7 @@
 		"view": {
 			"progress": "off"
 		},
+		"fullResult": false,
 		"onSuccess": "https://www.duckduckgo.com",
 		"onFailure": "https://www.google.de"
 	},
@@ -127,7 +128,8 @@
 					"name": "productKey",
 					"label": "Seriennummer",
 					"required": false,
-					"pattern": "AAAA-AAAA-AAAA-AAAA"
+					"pattern": "AAAA-AAAA-AAAA-AAAA",
+					"noResult": true
 				},
 				{
 					"name": "ip",

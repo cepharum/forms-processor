@@ -41,7 +41,8 @@ export default class FormModel {
 	constructor( sequence, definition, index, reactiveFormInfo ) {
 		const { name = "", fields = [] } = definition;
 
-		const formName = ( name == null ? "" : String( name ) ).trim().toLowerCase();
+		const originalName = ( name == null ? "" : String( name ) ).trim();
+		const formName = originalName.toLowerCase();
 
 		Object.defineProperties( this, {
 			/**
@@ -52,6 +53,20 @@ export default class FormModel {
 			 * @readonly
 			 */
 			index: { value: index },
+
+			/**
+			 * Provides original name of form as provided in definition.
+			 *
+			 * A form's defined name is converted to lower-case characters to
+			 * internally simplify addressing e.g. in terms. The original name
+			 * is used to mark form's elements in HTML as well in the resulting
+			 * set of gathered data provided for processing.
+			 *
+			 * @name FormModel#originalName
+			 * @property {string}
+			 * @readonly
+			 */
+			originalName: { value: originalName },
 
 			/**
 			 * Provides name of form.
@@ -335,7 +350,7 @@ export default class FormModel {
 			components[i] = fields[i].component;
 		}
 
-		const { name, title, description } = this;
+		const { originalName, name, title, description } = this;
 
 		return {
 			data() {
@@ -349,6 +364,8 @@ export default class FormModel {
 
 				const classes = [
 					"form",
+					`form-name-${originalName}`,
+					`form-nname-${name}`,
 					this.pristine ? "pristine" : "touched",
 					this.valid ? "valid" : "invalid",
 				];

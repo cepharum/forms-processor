@@ -86,7 +86,8 @@ export default class FormFieldAbstractModel {
 			throw new TypeError( `missing field name in definition` );
 		}
 
-		const normalizedName = String( name ).trim().toLowerCase();
+		const originalName = String( name ).trim();
+		const normalizedName = originalName.toLowerCase();
 
 
 		/**
@@ -114,6 +115,7 @@ export default class FormFieldAbstractModel {
 					// this property is being processed separately below
 					break;
 
+				case "originalName" :
 				case "qualifiedName" :
 				case "form" :
 				case "index" :
@@ -273,6 +275,21 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			name: { value: normalizedName },
+
+			/**
+			 * Provides original name of field which is the name used in field's
+			 * definition.
+			 *
+			 * Any derived name in properties `name` and `qualifiedName` use all
+			 * lower-case variant of this original name to relax addressing
+			 * issues e.g. in processed terms. This original name is used to
+			 * name HTML components as well as on processing data.
+			 *
+			 * @name FormFieldAbstractModel#originalName
+			 * @property {string}
+			 * @readonly
+			 */
+			originalName: { value: originalName },
 
 			/**
 			 * Provides qualified name of field consisting of its containing
@@ -530,7 +547,7 @@ export default class FormFieldAbstractModel {
 	 */
 	_renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, qualifiedName } = this;
+		const { type, originalName, name, qualifiedName } = this;
 
 		return {
 			components: {
@@ -540,7 +557,9 @@ export default class FormFieldAbstractModel {
 <div v-if="required || visible" :class="[ 
 	'field',
 	'type-${type}', 
-	'name-${qualifiedName}',
+	'name-${originalName}',
+	'nname-${name}',
+	'qname-${qualifiedName.replace( /\./g, "_" )}',
 	required ? 'mandatory' : 'optional', 
 	pristine ? 'pristine' : 'touched',
 	valid ? 'valid' : 'invalid',

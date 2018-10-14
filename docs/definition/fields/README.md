@@ -49,7 +49,9 @@ The field's type affects the field's visual appearance and its behaviour. The ty
 * Computable: no
 * Localizable: no
 
-The name of a field is used to identify it in context of its form. That's why it must be unique. The name isn't visible to the user. It's used to address the resulting input value(s) of a field in a multidimensional set of input values.
+The name of a field is used to identify it in context of its form. That's why it must be unique. While processing the form and its definition a field's name is used case-insensitively. That's why its name provided here should be case-insensitively unique as well.
+
+The name isn't visible to the user. It's used to address the resulting input value(s) of a field in a multidimensional set of input values.
 
 ### label
 
@@ -81,12 +83,24 @@ The label is a short description of a field to be displayed next to it.
 * Computable: yes
 * Localizable: no
 
+### noResult
+
+* Type: `boolean`
+* Default: `false`
+* Computable: yes
+* Localizable: no
+
+By default the value of every _interactive_ field is included with the resulting set of data processed after user has submitted last form in a sequence of forms (unless it's unset and [mode option `fullResult`](../mode.md) isn't set). By setting this option on a field its value is never included with the result no matter it is set or not.
+
+This might be used e.g. on fields used to control flow of forms, only
+
 ## Reserved Keywords
 
 Basically, any new type of fields may introduce new properties to be used on customizing that type of field. However, some property names are reserved keywords and thus must not be used in definition of a field.
 
 * form
 * index
+* originalName
 * qualifiedName
 * dependsOn
 * dependents

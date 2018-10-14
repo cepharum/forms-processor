@@ -559,7 +559,8 @@ export default class FormSequenceModel {
 			return Promise.reject( new Error( "forms aren't finished, yet" ) );
 		}
 
-		const originalData = Data.deepClone( this.data );
+		const originalData = this.deriveOriginallyNamedData( this.data );
+		console.log( originalData );
 
 		return new Promise( ( resolve, reject ) => {
 			/**
@@ -616,6 +617,49 @@ export default class FormSequenceModel {
 
 			return status;
 		}
+	}
+
+	/**
+	 * Extracts all fields' data from provided set of raw data using every
+	 * field's original name as used in forms' definition.
+	 *
+	 * Internally, names get lower-cased to have case-insensitive terms.
+	 * However, from an external point of view resulting data should be provided
+	 * complying with given definition more strictly.
+	 *
+	 * @param {object<string,object<string,*>>} rawData raw input data
+	 * @returns {object<string,object<string,*>>} all fields' data using either field's original name
+	 */
+	deriveOriginallyNamedData( rawData ) {
+		const formsData = {};
+
+		this.forms.forEach( form => {
+			const internalFormName = form.name;
+			const originalFormName = form.originalName;
+
+			if ( !rawData.hasOwnProperty( internalFormName ) ) {
+				return;
+			}
+
+			const target = formsData[originalFormName] = {};
+			const source = rawData[internalFormName];
+
+			form.fields.forEach( field => {
+				if ( field.constructor.isInteractive ) {
+					const internalFieldName = field.name;
+					const originalFieldName = field.originalName;
+
+					if ( !field.noResult ) {
+						const value = source[internalFieldName] || null;
+						if ( this.mode.fullResult || value !== null ) {
+							target[originalFieldName] = value;
+						}
+					}
+				}
+			} );
+		} );
+
+		return formsData;
 	}
 
 	/**

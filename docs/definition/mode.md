@@ -20,4 +20,8 @@ tba.
 
 ### progress
 
-tba.
+This is a boolean option controlling whether the processor's HTML includes a progress bar or not.
+
+### fullResult
+
+By setting this boolean option the resulting set of data includes values of rather than omitting all unset values.
