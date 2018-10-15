@@ -31,7 +31,6 @@ import FormModel from "./form";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
-import Localization from "../../service/l10n";
 
 
 /**
@@ -105,7 +104,7 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			label: { get: () => {
-				const locale = localeFn();
+				const locale = this.locale;
 				return L10n.selectLocalized( definition.label, locale ) || L10n.selectLocalized( definition.title, locale );
 			} },
 
@@ -119,7 +118,7 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			title: { get: () => {
-				const locale = localeFn();
+				const locale = this.locale;
 				return L10n.selectLocalized( definition.title, locale ) || L10n.selectLocalized( definition.label, locale );
 			} },
 
@@ -130,7 +129,7 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			description: { get: () => L10n.selectLocalized( definition.description, localeFn() ) },
+			description: { get: () => L10n.selectLocalized( definition.description, this.locale ) },
 
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
@@ -560,7 +559,6 @@ export default class FormSequenceModel {
 		}
 
 		const originalData = this.deriveOriginallyNamedData( this.data );
-		console.log( originalData );
 
 		return new Promise( ( resolve, reject ) => {
 			/**
@@ -585,11 +583,11 @@ export default class FormSequenceModel {
 
 			return _process( this.processors, 0, originalData );
 		} )
-			.then( () => _prepareResultHandling( { success: true }, this.mode.onSuccess, originalData ) )
+			.then( () => _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData ) )
 			.catch( error => {
 				console.error( `processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
-				throw Object.assign( error, _prepareResultHandling( { success: false }, this.mode.onFailure, error ) );
+				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, this.locale ), error ) );
 			} );
 
 		/**
@@ -606,9 +604,9 @@ export default class FormSequenceModel {
 		function _prepareResultHandling( status, configuredBehaviour, ...args ) {
 			const value = typeof configuredBehaviour === "function" ? configuredBehaviour( this, ...args ) : configuredBehaviour;
 
-			const normalized = Localization.selectLocalized( value );
+			const normalized = L10n.selectLocalized( value );
 			if ( typeof normalized === "string" ) {
-				if ( /^([a-z]+:\/\/[^/]+|\.)?\//.test( normalized ) && !/\s/.test( normalized ) ) {
+				if ( /^(?:[a-z]+:\/\/[^/]+\/?|\.?\/)/.test( normalized ) && !/\s/.test( normalized ) ) {
 					status.redirect = normalized;
 				} else {
 					status.text = normalized;

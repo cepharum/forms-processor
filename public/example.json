@@ -12,7 +12,10 @@
 			"progress": "off"
 		},
 		"fullResult": false,
-		"onSuccess": "https://www.duckduckgo.com",
+		"onSuccess": {
+			"de": "## Glückwunsch!\nSie haben\n  die\nFormulare fertiggestellt.\n\nAls nächstes können Sie\n* Mehr Kram korrigieren.\n\n* [Unser]\n  (http://strangebutworking.com) Falten von Zeilen für\n\n  mehrzeilige Listenelemente ausprobieren.",
+			"en": "## Congratulations!\nYou've completed\n  this\nform.\n\nNext you can\n* Fix more stuff.\n\n* Check out [our]\n  (http://strangebutworking.com) folding of lines for\n\n  multline list items."
+		},
 		"onFailure": "https://www.google.de"
 	},
 	"processors": [
@@ -21,9 +24,6 @@
 		},
 		{
 			"type": "log"
-		},
-		{
-			"url": "./store/{id}"
 		}
 	],
 	"sequence": [

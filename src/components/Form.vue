@@ -1,5 +1,6 @@
 <template>
 	<div class="form-view" :id="sequenceName"
+	     :class="{result:hasResult, success:hasResultOnSuccess, failure:hasResultOnFailure}"
 	     v-global-key.advance="advance"
 	     v-global-key.rewind="rewind">
 		<div class="title">
@@ -7,17 +8,18 @@
 				<FormTitle/>
 			</div>
 		</div>
-		<div class="progress" v-if="isVisible.progress !== false">
+		<div class="progress" v-if="!hasResultOnSuccess && isVisible.progress !== false">
 			<div class="inside">
 				<FormProgress/>
 			</div>
 		</div>
 		<div class="body">
 			<div class="inside">
-				<FormContent/>
+				<FormResult/>
+				<FormContent v-if="!hasResultOnSuccess"/>
 			</div>
 		</div>
-		<div class="control">
+		<div class="control" v-if="!hasResultOnSuccess">
 			<div class="inside">
 				<FormControl/>
 			</div>
@@ -28,6 +30,7 @@
 <script>
 const FormTitle = () => import( /* webpackChunkName: "form" */ "./Form/Title" );
 const FormProgress = () => import( /* webpackChunkName: "form" */ "./Form/Progress" );
+const FormResult = () => import( /* webpackChunkName: "form" */ "./Form/Result" );
 const FormContent = () => import( /* webpackChunkName: "form" */ "./Form/Content" );
 const FormControl = () => import( /* webpackChunkName: "form" */ "./Form/Control" );
 
@@ -36,12 +39,22 @@ export default {
 	components: {
 		FormTitle,
 		FormProgress,
+		FormResult,
 		FormContent,
 		FormControl,
 	},
 	computed: {
 		isVisible() {
 			return ( this.$store.getters["form/sequenceManager"].mode || {} ).view || {};
+		},
+		hasResult() {
+			return this.$store.getters["form/hasResult"];
+		},
+		hasResultOnSuccess() {
+			return this.$store.getters["form/resultIsSuccess"];
+		},
+		hasResultOnFailure() {
+			return this.$store.getters["form/resultIsError"];
 		},
 		sequenceName() {
 			return this.$store.getters["form/sequenceManager"].name || "";
