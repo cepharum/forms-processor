@@ -69,6 +69,22 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		});
 	}
 
+	/** @inheritDoc */
+	validate(live) {
+		const {value, required} = this;
+		const errors = [];
+		if (required) {
+			if (value instanceof Array) {
+				if (!value.length) {
+					errors.push("@VALIDATION.MISSING_REQUIRED")
+				}
+			} else if (!Boolean(value)) {
+				errors.push("@VALIDATION.MISSING_REQUIRED");
+			}
+		}
+		return errors;
+	}
+
 	static createOptions(definition) {
 		if (!definition) {
 			return undefined;

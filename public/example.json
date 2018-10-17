@@ -1,189 +1,192 @@
 {
-	"label": "Test Formular 2",
-	"description": {
-		"de": "Dieses Formular basiert auf einer Beschreibung in YAML.",
-		"en": "This form relies on a definition in a YAML file."
-	},
-	"mode": {
-		"validation": "live",
-		"navigation": "sequential",
-		"select": "url",
-		"view": {
-			"progress": "off"
-		},
-		"fullResult": false,
-		"onSuccess": {
-			"de": "## Glückwunsch!\nSie haben\n  die\nFormulare fertiggestellt.\n\nAls nächstes können Sie\n* Mehr Kram korrigieren.\n\n* [Unser]\n  (http://strangebutworking.com) Falten von Zeilen für\n\n  mehrzeilige Listenelemente ausprobieren.",
-			"en": "## Congratulations!\nYou've completed\n  this\nform.\n\nNext you can\n* Fix more stuff.\n\n* Check out [our]\n  (http://strangebutworking.com) folding of lines for\n\n  multline list items."
-		},
-		"onFailure": "https://www.google.de"
-	},
-	"processors": [
-		{
-			"type": "extract"
-		},
-		{
-			"type": "log"
-		}
-	],
-	"sequence": [
-		{
-			"name": "personal",
-			"label": {
-				"de": "Pers\u00f6nliche Angaben",
-				"en": "Personal Information"
-			},
-			"description": {
-				"de": "Ihre pers\u00f6nlichen Angaben sind erforderlich, um Ihre Anfrage zu bearbeiten.",
-				"en": "Your personal information is required for processing your order."
-			},
-			"fields": [
-				{
-					"name": "lastName",
-					"label": {
-						"en": "Last Name",
-						"de": "Nachname"
-					},
-					"type": "text",
-					"required": true,
-					"size": "5-63"
-				},
-				{
-					"name": "firstName",
-					"label": {
-						"en": "First Name",
-						"ANY": "Vorname"
-					},
-					"visible": true,
-					"required": "=!empty(lastName)",
-					"size": "5-63"
-				},
-				{
-					"name": "noLabel",
-					"label": {
-						"en": "no options",
-						"ANY": "Keine Optionen"
-					},
-					"type": "checkBox",
-					"visible": true,
-					"required": true
-				},
-				{
-					"name": "label",
-					"label": {
-						"en": "labeled",
-						"ANY": "mit label"
-					},
-					"options": [
-						{
-							"label": "agreeing", "value": "stimmt zu"
-						}
-					],
-					"type": "checkBox",
-					"visible": true,
-					"required": true
-				},
-				{
-					"name": "multiple",
-					"label": {
-						"en": "multiple choice",
-						"ANY": "Mehrfachauswahl"
-					},
-					"options": [
-						"erste",
-						"zweite",
-						"dritte"
-					],
-					"type": "checkbox",
-					"multiple": "true",
-					"visible": true,
-					"size": "5-63"
-				},
-				{
-					"name": "not multiple",
-					"label": {
-						"en": "not multiple choice",
-						"ANY": "keine Mehrfachauswahl"
-					},
-					"options": [
-						"erste",
-						"zweite",
-						"dritte"
-					],
-					"type": "checkbox",
-					"visible": true,
-					"size": "5-63"
-				},
-				{
-					"name": "radio",
-					"label": {
-						"en": "type radio",
-						"ANY": "Typ Radio"
-					},
-					"options": [
-						"erste",
-						"zweite",
-						"dritte"
-					],
-					"type": "radio",
-					"visible": true,
-					"size": "5-63"
-				}
-			]
-		},
-		{
-			"name": "delivery",
-			"label": "Lieferanschrift",
-			"title": "Lieferadresse",
-			"description": {
-				"EN": "Please provide your address for delivering your order.",
-				"de": "Geben Sie bitte die Anschrift an, an die ihre Bestellung geliefert werden soll."
-			},
-			"fields": [
-				{
-					"name": "lastName",
-					"label": {
-						"EN": "Last Name",
-						"DE": "Nachname"
-					},
-					"type": "text",
-					"required": true,
-					"size": "5-63",
-					"initial": "=personal.lastName"
-				},
-				{
-					"name": "firstName",
-					"label": "Vorname",
-					"required": true,
-					"size": "5-63",
-					"initial": "Max"
-				},
-				{
-					"name": "fullName",
-					"label": "Vollst\u00e4ndiger Name",
-					"type": "info",
-					"text": "=lastName \u0026\u0026 firstName \u0026\u0026 lastName + \u0022, \u0022 + firstName || \u0022-\u0022"
-				},
-				{
-					"name": "iban",
-					"label": "IBAN",
-					"pattern": "AA## #### #### #### #### ##"
-				},
-				{
-					"name": "productKey",
-					"label": "Seriennummer",
-					"required": false,
-					"pattern": "AAAA-AAAA-AAAA-AAAA",
-					"noResult": true
-				},
-				{
-					"name": "ip",
-					"label": "IPv4",
-					"required": false,
-					"pattern": "#??.#??.#??.#??",
-					"format": "IPv4"
-				}
-			]
-		}
-	]
+  "label": "Test Formular 2",
+  "description": {
+    "de": "Dieses Formular basiert auf einer Beschreibung in YAML.",
+    "en": "This form relies on a definition in a YAML file."
+  },
+  "mode": {
+    "validation": "live",
+    "navigation": "sequential",
+    "select": "url",
+    "view": {
+      "progress": "off"
+    },
+    "fullResult": false,
+    "onSuccess": {
+      "de": "## Glückwunsch!\nSie haben\n  die\nFormulare fertiggestellt.\n\nAls nächstes können Sie\n* Mehr Kram korrigieren.\n\n* [Unser]\n  (http://strangebutworking.com) Falten von Zeilen für\n\n  mehrzeilige Listenelemente ausprobieren.",
+      "en": "## Congratulations!\nYou've completed\n  this\nform.\n\nNext you can\n* Fix more stuff.\n\n* Check out [our]\n  (http://strangebutworking.com) folding of lines for\n\n  multline list items."
+    },
+    "onFailure": "https://www.google.de"
+  },
+  "processors": [
+    {
+      "type": "extract"
+    },
+    {
+      "type": "log"
+    }
+  ],
+  "sequence": [
+    {
+      "name": "personal",
+      "label": {
+        "de": "Pers\u00f6nliche Angaben",
+        "en": "Personal Information"
+      },
+      "description": {
+        "de": "Ihre pers\u00f6nlichen Angaben sind erforderlich, um Ihre Anfrage zu bearbeiten.",
+        "en": "Your personal information is required for processing your order."
+      },
+      "fields": [
+        {
+          "name": "lastName",
+          "label": {
+            "en": "Last Name",
+            "de": "Nachname"
+          },
+          "type": "text",
+          "required": true,
+          "size": "5-63"
+        },
+        {
+          "name": "firstName",
+          "label": {
+            "en": "First Name",
+            "ANY": "Vorname"
+          },
+          "visible": true,
+          "required": "=!empty(lastName)",
+          "size": "5-63"
+        },
+        {
+          "name": "noLabel",
+          "label": {
+            "en": "no options",
+            "ANY": "Keine Optionen"
+          },
+          "type": "checkBox",
+          "visible": true,
+          "required": true
+        },
+        {
+          "name": "label",
+          "label": {
+            "en": "labeled",
+            "ANY": "mit label"
+          },
+          "options": [
+            {
+              "label": "agreeing",
+              "value": "stimmt zu"
+            }
+          ],
+          "type": "checkBox",
+          "visible": true,
+          "required": true
+        },
+        {
+          "name": "multiple",
+          "label": {
+            "en": "multiple choice",
+            "ANY": "Mehrfachauswahl"
+          },
+          "options": [
+            "erste",
+            "zweite",
+            "dritte"
+          ],
+          "type": "checkbox",
+          "multiple": "true",
+          "required": true,
+          "visible": true,
+          "size": "5-63"
+        },
+        {
+          "name": "not multiple",
+          "label": {
+            "en": "not multiple choice",
+            "ANY": "keine Mehrfachauswahl"
+          },
+          "options": [
+            "erste",
+            "zweite",
+            "dritte"
+          ],
+          "type": "checkbox",
+          "visible": true,
+          "size": "5-63"
+        },
+        {
+          "name": "radio",
+          "label": {
+            "en": "type radio",
+            "ANY": "Typ Radio"
+          },
+          "options": [
+            "erste",
+            "zweite",
+            "dritte"
+          ],
+          "required": true,
+          "type": "radio",
+          "visible": true,
+          "size": "5-63"
+        }
+      ]
+    },
+    {
+      "name": "delivery",
+      "label": "Lieferanschrift",
+      "title": "Lieferadresse",
+      "description": {
+        "EN": "Please provide your address for delivering your order.",
+        "de": "Geben Sie bitte die Anschrift an, an die ihre Bestellung geliefert werden soll."
+      },
+      "fields": [
+        {
+          "name": "lastName",
+          "label": {
+            "EN": "Last Name",
+            "DE": "Nachname"
+          },
+          "type": "text",
+          "required": true,
+          "size": "5-63",
+          "initial": "=personal.lastName"
+        },
+        {
+          "name": "firstName",
+          "label": "Vorname",
+          "required": true,
+          "size": "5-63",
+          "initial": "Max"
+        },
+        {
+          "name": "fullName",
+          "label": "Vollst\u00e4ndiger Name",
+          "type": "info",
+          "text": "=lastName \u0026\u0026 firstName \u0026\u0026 lastName + \u0022, \u0022 + firstName || \u0022-\u0022"
+        },
+        {
+          "name": "iban",
+          "label": "IBAN",
+          "pattern": "AA## #### #### #### #### ##"
+        },
+        {
+          "name": "productKey",
+          "label": "Seriennummer",
+          "required": false,
+          "pattern": "AAAA-AAAA-AAAA-AAAA",
+          "noResult": true
+        },
+        {
+          "name": "ip",
+          "label": "IPv4",
+          "required": false,
+          "pattern": "#??.#??.#??.#??",
+          "format": "IPv4"
+        }
+      ]
+    }
+  ]
 }
