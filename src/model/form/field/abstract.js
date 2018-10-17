@@ -241,7 +241,7 @@ export default class FormFieldAbstractModel {
 
 									if ( typeof descriptor === "function" ) {
 										// descriptor depends on value of qualified definition's property
-										getters[propertyName] = descriptor( propertyValue, propertyName, qualifiedDefinition );
+										getters[propertyName] = descriptor.call( this, propertyValue, propertyName, qualifiedDefinition );
 									} else {
 										getters[propertyName] = descriptor;
 									}
@@ -321,7 +321,7 @@ export default class FormFieldAbstractModel {
 					if ( descriptor && !getters.hasOwnProperty( propertyName ) ) {
 						if ( typeof descriptor === "function" ) {
 							// descriptor depends on value of qualified definition's property
-							getters[propertyName] = descriptor( undefined, propertyName, qualifiedDefinition );
+							getters[propertyName] = descriptor.call( this, undefined, propertyName, qualifiedDefinition );
 						} else {
 							getters[propertyName] = descriptor;
 						}
