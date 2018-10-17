@@ -118,8 +118,7 @@ export default {
 
 		resetInput( state ) {
 			if ( state.model ) {
-				let changed = false;
-				const storage = new Storage( state.input );
+				let added = false;
 
 				const fields = state.model.fields;
 				const names = Object.keys( fields );
@@ -129,20 +128,18 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					changed |= storage.write( name, field.normalizeValue( field.initial ) );
+					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ) );
 				}
 
-				if ( changed ) {
-					state.input = storage.data;
+				if ( added ) {
+					state.input = state.input;
 				}
 			}
 		},
 
 		writeInput( state, { name, value } ) {
-			const storage = new Storage( state.input );
-
-			if ( storage.write( name, value ) ) {
-				state.input = storage.data;
+			if ( Storage.write( state.input, name, value ) ) {
+				state.input = state.input;
 			}
 		},
 
@@ -173,7 +170,7 @@ export default {
 			return state.input;
 		},
 		readInput: state => name => {
-			return new Storage( state.input ).read( name );
+			return Storage.read( state.input, name );
 		},
 		hasResult: state => state.result.type != null,
 		resultIsSuccess: state => state.result.type === "success",
