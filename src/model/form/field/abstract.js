@@ -28,7 +28,6 @@
 
 import { Processor } from "simple-terms";
 
-import Pattern from "../utility/pattern";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
@@ -40,7 +39,7 @@ const termCache = new Map();
  *
  * @type {object<string,string>}
  */
-const DefaultProperties = {
+const defaultProperties = {
 	required: "false",
 	visible: "true",
 	type: "text",
@@ -52,6 +51,28 @@ const DefaultProperties = {
  * @type {RegExp}
  */
 const ptnBinding = /({{[^}]+}})/;
+
+/**
+ * Lists reserved names of properties that mustn't be commonly processed
+ * when used as a property name in field's definition.
+ *
+ * @type {string[]}
+ */
+const reserved = [
+	"form",
+	"index",
+	"name",
+	"originalName",
+	"qualifiedName",
+	"type",
+	"value",
+	"dependsOn",
+	"dependents",
+	"pristine",
+	"valid",
+	"errors",
+];
+
 
 
 /**
@@ -74,178 +95,24 @@ export default class FormFieldAbstractModel {
 	 * @param {object} definition properties and constraints of single form field
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {string[]} omitProperties lists properties of definition this
-	 *        constructor should omit on processing so a derived constructor
-	 *        might take care of it (some essential properties such as a field's
-	 *        `type` and `name` can't be omitted this way)
+	 * @param {PropertyDescriptorMap} properties defines custom properties to be
+	 *        exposed instead of those derived from definition by default
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, omitProperties = [] ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, properties = {} ) {
 		const { name } = definition;
-
 		if ( !name ) {
 			throw new TypeError( `missing field name in definition` );
 		}
 
+
+		/*
+		 * --- expose essential properties of field ---------------------------
+		 */
+
 		const originalName = String( name ).trim();
 		const normalizedName = originalName.toLowerCase();
-
-
-		/**
-		 * @type {Processor[]}
-		 */
-		const terms = [];
-
-		/**
-		 * @type {object<string,({value:*}|{get:function, set:function})>}
-		 */
-		const getters = {};
-
-		const qualifiedDefinition = Object.assign( {}, DefaultProperties, definition );
-
-
-		const propNames = Object.keys( qualifiedDefinition );
-		const numProps = propNames.length;
-
-		for ( let pni = 0; pni < numProps; pni++ ) {
-			const propertyName = propNames[pni];
-			let propertyValue = qualifiedDefinition[propertyName];
-
-			switch ( propertyName ) {
-				case "name" :
-					// this property is being processed separately below
-					break;
-
-				case "originalName" :
-				case "qualifiedName" :
-				case "form" :
-				case "index" :
-				case "dependsOn" :
-				case "dependents" :
-				case "value" :
-				case "pristine" :
-				case "valid" :
-				case "errors" :
-					// this property is reserved for internal use and thus isn't obeyed in a field's definition
-					break;
-
-				case "type" :
-					// this property does not support computed values at all
-					getters[propertyName] = { value: propertyValue };
-					break;
-
-				case "pattern" :
-					if ( omitProperties.indexOf( propertyName ) < 0 ) {
-						/**
-						 * Exposes compiled pattern optionally defined on field.
-						 *
-						 * @name FormFieldAbstractModel#pattern
-						 * @property {?CompiledPattern}
-						 * @readonly
-						 */
-						getters[propertyName] = { value: propertyValue == null ? null : Pattern.compilePattern( propertyValue ) };
-					}
-					break;
-
-				default :
-					if ( omitProperties.indexOf( propertyName ) < 0 ) {
-						// handle all else definition properties
-						propertyValue = L10n.selectLocalized( propertyValue, form.locale );
-						if ( propertyValue == null ) {
-							break;
-						}
-
-						propertyValue = String( propertyValue ).trim();
-
-						if ( propertyValue.charAt( 0 ) === "=" ) {
-							const term = new Processor( propertyValue.slice( 1 ), {}, termCache, qualifyVariable );
-							terms.push( term );
-							getters[propertyName] = {
-								get: () => normalizeDefinitionValue( propertyName, term.evaluate( form.data ) ),
-							};
-						} else {
-							const slices = propertyValue.split( ptnBinding );
-							const numSlices = slices.length;
-							let isDynamic = false;
-
-							for ( let i = 0; i < numSlices; i++ ) {
-								const slice = slices[i];
-								const match = slice.match( ptnBinding );
-								if ( match ) {
-									const term = new Processor( slice.slice( 2, -2 ), {}, termCache, qualifyVariable );
-									terms.push( term );
-									slices[i] = term;
-									isDynamic = true;
-								}
-							}
-
-							if ( isDynamic ) {
-								getters[propertyName] = {
-									get: () => {
-										const rendered = new Array( numSlices );
-
-										for ( let i = 0; i < numSlices; i++ ) {
-											const slice = slices[i];
-
-											if ( slice instanceof Processor ) {
-												rendered[i] = slice.evaluate( form.data );
-											} else {
-												rendered[i] = slice;
-											}
-										}
-
-										const result = normalizeDefinitionValue( propertyName, rendered.join( "" ) );
-
-										reactiveFieldInfo[propertyName] = result;
-
-										return result;
-									}
-								};
-							} else {
-								propertyValue = normalizeDefinitionValue( propertyName, propertyValue );
-
-								getters[propertyName] = { value: propertyValue };
-								reactiveFieldInfo[propertyName] = propertyValue;
-							}
-						}
-					}
-			}
-		}
-
-		Object.defineProperties( this, getters );
-
-
-		// collect combined dependencies of all terms processed before
-		const collectedDependencies = {};
-		for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
-			const dependencies = terms[i].dependsOn;
-
-			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
-				collectedDependencies[dependencies[j].join( "." )] = true;
-			}
-		}
-
-
 		const formName = form.name;
 		const qualifiedName = `${formName}.${normalizedName}`;
-		let dependents = null;
-
-
-		const initialValue = this.normalizeValue( this.initial );
-		form.writeValue( qualifiedName, initialValue );
-
-
-		// define some field information required to be reactive
-		reactiveFieldInfo.required = this.required;
-		reactiveFieldInfo.visible = this.visible;
-		reactiveFieldInfo.pristine = true;
-		reactiveFieldInfo.valid = null;
-		reactiveFieldInfo.value = this.normalizeValue( this.initial );
-		reactiveFieldInfo.label = this.label;
-		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.errors = [];
-
-
-		const hasInputValue = omitProperties.indexOf( "value" ) < 0;
 
 		Object.defineProperties( this, {
 			/**
@@ -307,20 +174,226 @@ export default class FormFieldAbstractModel {
 			 * @name FormFieldAbstractModel#value
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
 			 */
-			value: hasInputValue ? {
+			value: this.constructor.isInteractive ? {
 				get: () => form.readValue( qualifiedName ),
 				set: value => form.writeValue( qualifiedName, value ),
 			} : { value: undefined },
+		} );
 
-			/**
-			 * Indicates whether this field is providing any input value.
-			 *
-			 * @name FormFieldAbstractModel#providesInput
-			 * @property {Boolean}
-			 * @readonly
-			 */
-			providesInput: { value: hasInputValue },
 
+
+		/*
+		 * --- expose dynamic and custom properties of field ------------------
+		 */
+
+		/**
+		 * Collects terms used in context of current field's definition.
+		 *
+		 * @type {Processor[]}
+		 */
+		const terms = [];
+
+		/**
+		 * Collects eventually exposed properties of field.
+		 *
+		 * @type {PropertyDescriptorMap}
+		 */
+		const getters = {};
+
+		/**
+		 * Qualifies caller-provided definition to always include some default
+		 * elements.
+		 *
+		 * @type {object}
+		 */
+		const qualifiedDefinition = Object.assign( {}, defaultProperties, definition );
+
+
+
+		{
+			const propNames = Object.keys( qualifiedDefinition );
+			const numProps = propNames.length;
+
+			for ( let pni = 0; pni < numProps; pni++ ) {
+				const propertyName = propNames[pni];
+				let propertyValue = qualifiedDefinition[propertyName];
+
+				switch ( propertyName ) {
+					case "type" :
+						// this property is essential, can't be computed and
+						// requires certain type of value
+						if ( typeof propertyValue !== "string" || !propertyValue.trim().length ) {
+							throw new TypeError( `invalid type of field ${qualifiedName}` );
+						}
+
+						getters[propertyName] = { value: propertyValue };
+						break;
+
+					default :
+						if ( reserved.indexOf( propertyName ) < 0 ) {
+							// handle non-reserved properties of definition in a common way
+
+							if ( properties.hasOwnProperty( propertyName ) ) {
+								// got some custom descriptor of property to expose
+								const descriptor = properties[propertyName];
+								if ( descriptor ) {
+									properties[propertyName] = null;
+
+									if ( typeof descriptor === "function" ) {
+										// descriptor depends on value of qualified definition's property
+										getters[propertyName] = descriptor( propertyValue, propertyName, qualifiedDefinition );
+									} else {
+										getters[propertyName] = descriptor;
+									}
+								}
+							} else {
+								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+								if ( propertyValue != null ) {
+									propertyValue = String( propertyValue ).trim();
+
+									if ( propertyValue.charAt( 0 ) === "=" ) {
+										const term = new Processor( propertyValue.slice( 1 ), {}, termCache, resolveVariableName );
+										terms.push( term );
+										getters[propertyName] = {
+											get: () => normalizeDefinitionValue( propertyName, term.evaluate( form.data ) ),
+										};
+									} else {
+										const slices = propertyValue.split( ptnBinding );
+										const numSlices = slices.length;
+										let isDynamic = false;
+
+										for ( let i = 0; i < numSlices; i++ ) { // eslint-disable-line max-depth
+											const slice = slices[i];
+											const match = slice.match( ptnBinding );
+											if ( match ) { // eslint-disable-line max-depth
+												const term = new Processor( slice.slice( 2, -2 ), {}, termCache, resolveVariableName );
+												terms.push( term );
+												slices[i] = term;
+												isDynamic = true;
+											}
+										}
+
+										if ( isDynamic ) { // eslint-disable-line max-depth
+											getters[propertyName] = {
+												get: () => {
+													const rendered = new Array( numSlices );
+
+													for ( let i = 0; i < numSlices; i++ ) {
+														const slice = slices[i];
+
+														if ( slice instanceof Processor ) {
+															rendered[i] = slice.evaluate( form.data );
+														} else {
+															rendered[i] = slice;
+														}
+													}
+
+													const result = normalizeDefinitionValue( propertyName, rendered.join( "" ) );
+
+													reactiveFieldInfo[propertyName] = result;
+
+													return result;
+												}
+											};
+										} else {
+											propertyValue = normalizeDefinitionValue( propertyName, propertyValue );
+
+											getters[propertyName] = { value: propertyValue };
+											reactiveFieldInfo[propertyName] = propertyValue;
+										}
+									}
+								}
+							}
+						}
+				}
+			}
+		}
+
+		{ // make sure to transfer "default" behaviour of custom properties due to lacking definition mentioning it
+			const propNames = Object.keys( properties );
+			const numProps = propNames.length;
+
+			for ( let pni = 0; pni < numProps; pni++ ) {
+				const propertyName = propNames[pni];
+				const descriptor = properties[propertyName];
+
+				if ( reserved.indexOf( propertyName ) < 0 ) {
+					if ( descriptor && !getters.hasOwnProperty( propertyName ) ) {
+						if ( typeof descriptor === "function" ) {
+							// descriptor depends on value of qualified definition's property
+							getters[propertyName] = descriptor( undefined, propertyName, qualifiedDefinition );
+						} else {
+							getters[propertyName] = descriptor;
+						}
+					}
+				}
+			}
+		}
+
+		Object.defineProperties( this, getters );
+
+
+
+		/*
+		 * --- expose dependencies and reactive data of field -----------------
+		 */
+
+		// collect combined dependencies of all terms processed before
+		const collectedDependencies = {};
+		for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
+			const dependencies = terms[i].dependsOn;
+
+			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
+				collectedDependencies[dependencies[j].join( "." )] = true;
+			}
+		}
+
+
+		/**
+		 * Lists names of fields depending on current one.
+		 *
+		 * This list is to be fed by fields detecting themselves to depend on
+		 * current one.
+		 *
+		 * @type {null|string[]}
+		 */
+		let dependents = null;
+
+		/**
+		 * Marks if this field's set of reactive properties for use with its
+		 * component instances has been fully initialized or not.
+		 *
+		 * Initialization of some reactive properties is delayed until their
+		 * first use due to relying on local methods requiring constructor to
+		 * finish in turn.
+		 *
+		 * @type {boolean}
+		 */
+		let initializedReactiveInfo = false;
+
+		/**
+		 * Caches reference on component created to render current field.
+		 *
+		 * @type {?Component}
+		 */
+		let component = null;
+
+
+
+		// qualify provided variable space to be reactive data of current field
+		// in context of containing form's reactive data
+		reactiveFieldInfo.required = null;
+		reactiveFieldInfo.visible = null;
+		reactiveFieldInfo.pristine = true;
+		reactiveFieldInfo.valid = null;
+		reactiveFieldInfo.value = null;
+		reactiveFieldInfo.label = null;
+		reactiveFieldInfo.hint = null;
+		reactiveFieldInfo.errors = [];
+
+
+
+		Object.defineProperties( this, {
 			/**
 			 * Lists paths of variables this field depends on due to terms used
 			 * in field's definition.
@@ -419,29 +492,16 @@ export default class FormFieldAbstractModel {
 			 * @property {object<string,*>}
 			 * @readonly
 			 */
-			$data: { value: reactiveFieldInfo },
-		} );
+			$data: { get: () => {
+				if ( !initializedReactiveInfo ) {
+					initializedReactiveInfo = true;
 
+					form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+				}
 
+				return reactiveFieldInfo;
+			} },
 
-		/**
-		 * Qualifies variable names found in terms used in definition.
-		 *
-		 * @param {string[]} originalPath segments of path addressing variable as given in term
-		 * @returns {string[]} optionally qualified list of segments for addressing some variable globally
-		 */
-		function qualifyVariable( originalPath ) {
-			if ( originalPath.length === 1 ) {
-				return [ form.name, originalPath[0] ];
-			}
-
-			return originalPath;
-		}
-
-
-		let component = null;
-
-		Object.defineProperties( this, {
 			/**
 			 * Provides description of component representing current field.
 			 *
@@ -451,12 +511,54 @@ export default class FormFieldAbstractModel {
 			 */
 			component: { get() {
 				if ( component == null ) {
+					if ( !initializedReactiveInfo ) {
+						initializedReactiveInfo = true;
+
+						form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+					}
+
 					component = this._renderComponent( reactiveFieldInfo );
 				}
 
 				return component;
 			} },
 		} );
+
+
+
+		/**
+		 * Resolves variable name found in terms used in definition converting
+		 * local references into global ones using a field's qualified name.
+		 *
+		 * @param {string[]} originalPath segments of path addressing variable as given in term
+		 * @returns {string[]} optionally qualified list of segments for addressing some variable globally
+		 */
+		function resolveVariableName( originalPath ) {
+			if ( originalPath.length === 1 ) {
+				return [ form.name, originalPath[0] ];
+			}
+
+			return originalPath;
+		}
+	}
+
+	/**
+	 * Initializes data in provided set of reactive data of field.
+	 *
+	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
+	 * @returns {*} initial value of field as used on initializing reactive data
+	 * @private
+	 */
+	_initializeReactive( reactiveFieldInfo ) {
+		const initialValue = this.normalizeValue( this.initial );
+
+		reactiveFieldInfo.required = this.required;
+		reactiveFieldInfo.visible = this.visible;
+		reactiveFieldInfo.label = this.label;
+		reactiveFieldInfo.hint = this.hint;
+		reactiveFieldInfo.value = initialValue;
+
+		return initialValue;
 	}
 
 	/**

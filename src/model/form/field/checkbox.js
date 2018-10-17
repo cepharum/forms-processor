@@ -35,16 +35,6 @@ import FormFieldAbstractModel from "./abstract";
  * a form.
  */
 export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
-		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
-	}
-
 	/** @inheritDoc */
 	static get isInteractive() {
 		return false;
