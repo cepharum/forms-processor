@@ -41,15 +41,15 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
 	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
-		super(form, definition, fieldIndex, reactiveFieldInfo, ["options"]);
-
-		Object.defineProperties(this, {
-			/**
-			 * @name options
-			 * @property {Array<{value:string, label:string}>}
-			 * @readonly
-			 */
-			options: {value: this.constructor.createOptions(definition.options)},
+		super(form, definition, fieldIndex, reactiveFieldInfo, {
+			options(v) {
+				/**
+				 * @name options
+				 * @property {Array<{value:string, label:string}>}
+				 * @readonly
+				 */
+				return {value: this.constructor.createOptions(definition.options)}
+			}
 		});
 	}
 
@@ -129,37 +129,30 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				}
 			},
 			computed: {
-				_value() {
-					return readValue(qualifiedName);
-				}
-			},
-			methods: {
-				clickHandler(value) {
-					reactiveFieldInfo.pristine = false;
-
-					if (reactiveFieldInfo.value !== value) {
-						writeValue(qualifiedName, value);
-						reactiveFieldInfo.value = value;
-
-						this.$emit("input", value);
-						this.$parent.$emit("input", value);
-						options = options.slice(0);
-					}
+				_value: {
+					get() {
+						return readValue(qualifiedName);
+					},
+					set(newValue) {
+						writeValue(qualifiedName, newValue);
+						options = options.slice();
+					},
 				}
 			},
 			template: `
 			<span>
-				<span v-for="(entry, index) in options" >
-					<input
-							:key="entry.id || qualifiedName + '.' + index" 
+				<span v-for="(entry, index) in options" :key="entry.id || qualifiedName + '.' + index">
+					<input 
 							type="radio"
 							:name="qualifiedName"
 							:label="entry.label"
 							:id="entry.id || qualifiedName + '.' + index"
-							:checked="entry.value === _value"
-							v-on:click='clickHandler(entry.value)'
+							:value="entry.value"
+							v-model="_value"
 					/>
-					<label v-on:click='clickHandler(entry.value)'>{{entry.label}}</label>
+					<label :for="entry.id || qualifiedName + '.' + index">
+							{{entry.label}}
+					</label>
 				</span>
 			</span>`,
 		};
