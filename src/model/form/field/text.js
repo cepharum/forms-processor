@@ -42,15 +42,28 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
-		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
+		super( form, definition, fieldIndex, reactiveFieldInfo, {
+			size( v ) {
+				/**
+				 * Defines valid range of a value's length.
+				 *
+				 * @name FormFieldTextModel#size
+				 * @property {Range}
+				 * @readonly
+				 */
+				return { value: new Range( v ) };
+			},
 
-		Object.defineProperties( this, {
-			/**
-			 * @name FormFieldTextModel#size
-			 * @property {Range}
-			 * @readonly
-			 */
-			size: { value: new Range( definition.size ) },
+			pattern( v ) {
+				/**
+				 * Exposes compiled pattern optionally defined on field.
+				 *
+				 * @name FormFieldTextModel#pattern
+				 * @property {?CompiledPattern}
+				 * @readonly
+				 */
+				return { value: v == null ? null : Pattern.compilePattern( v ) };
+			},
 		} );
 	}
 

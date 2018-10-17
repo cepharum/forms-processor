@@ -49,7 +49,11 @@ export default {
 function simpleMarkdownRenderer( markdown ) {
 	let lastListType = null;
 
-	return markdown.trim()
+	if ( markdown == null ) {
+		return "";
+	}
+
+	return String( markdown ).trim()
 		.split( /\s*(?:\r?\n){2}\s*/ )
 		.map( paragraph => {
 			const blocks = [];
