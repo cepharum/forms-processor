@@ -37,7 +37,7 @@ import FormFieldAbstractModel from "./abstract";
 export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	static get isInteractive() {
-		return false;
+		return true;
 	}
 
 
