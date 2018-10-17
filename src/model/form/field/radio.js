@@ -126,18 +126,23 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					options,
 					reactiveFieldInfo,
 					qualifiedName,
+					update: true,
 				}
 			},
 			computed: {
 				_value: {
 					get() {
-						return readValue(qualifiedName);
+						if (this.update) {
+							this.update = false;
+							return readValue(qualifiedName);
+						}
 					},
 					set(newValue) {
 						reactiveFieldInfo.pristine = false;
 						if (newValue !== this._value) {
 							writeValue(qualifiedName, newValue);
 							reactiveFieldInfo.value = newValue;
+							this.update = true;
 						}
 					},
 				}

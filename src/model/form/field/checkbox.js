@@ -29,7 +29,6 @@
 import FormFieldAbstractModel from "./abstract";
 
 
-
 /**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
@@ -40,51 +39,155 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		return true;
 	}
 
+	/**
+	 * @param {FormModel} form reference on form this field belongs to
+	 * @param {object} definition definition of field
+	 * @param {int} fieldIndex index of field in set of containing form's fields
+	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 */
+	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
+		super(form, definition, fieldIndex, reactiveFieldInfo, {
+			options(v) {
+				/**
+				 * @name options
+				 * @property {Array<{value:string, label:string}>}
+				 * @readonly
+				 */
+				return {
+					value: this.constructor.createOptions(v),
+				}
+			},
+			multiple(v){
+				let value = Boolean(v);
+				if(v instanceof String){
+					value = (  Boolean(v) && v !== "false");
+				}
+				return {
+					value
+				}
+			}
+		});
+	}
 
-	/** @inheritDoc */
-	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
-		if ( value instanceof String ) {
-			return value !== "false";
+	static createOptions(definition) {
+		if (!definition) {
+			return undefined;
 		}
 
-		return Boolean( value );
+		const options = typeof definition === "string" ? definition.trim().split(/\s*[,;]\s*/) : definition;
+		if (!Array.isArray(options)) {
+			throw new TypeError("not a list of options to offer in a selector");
+		}
+
+		const numOptions = options.length;
+		const normalized = new Array(numOptions);
+		let write = 0;
+
+		for (let i = 0; i < numOptions; i++) {
+			const item = options[i];
+
+			if (!item) {
+				continue;
+			}
+
+			switch (typeof item) {
+				case "string" : {
+					const value = item.trim();
+
+					normalized[write++] = {
+						value,
+						label: value,
+					};
+
+					break;
+				}
+
+				case "object" : {
+					if (!item.value) {
+						throw new TypeError("invalid option to be provided in selector misses value");
+					}
+
+					const value = item.value.trim();
+
+					normalized[write++] = {
+						value,
+						label: item.label == null ? value : String(item.label).trim(),
+					};
+
+					break;
+				}
+			}
+		}
+
+		normalized.splice(write);
+
+		return normalized;
 	}
 
 	/** @inheritDoc */
-	_renderFieldComponent( reactiveFieldInfo ) {
+	_renderFieldComponent(reactiveFieldInfo) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
+		const {form: {readValue, writeValue}, qualifiedName, type, value, options, multiple} = that;
 
 		return {
-			render( createElement ) {
-				return createElement( "input", {
-					domProps: {
-						type: "checkbox",
-						checked: readValue( qualifiedName ),
-					},
-					on: {
-						click: event => {
-							const value = that.normalizeValue( event.target.checked );
-							event.target.checked = value;
-
-							if ( value === this.value ) {
-								event.target.checked = value;
-								return;
-							}
-
-							this.value = value;
-							reactiveFieldInfo.pristine = false;
-
-							writeValue( qualifiedName, value );
-							reactiveFieldInfo.value = value;
-
-							this.$emit( "input", value );
-							this.$parent.$emit( "input", value );
-						},
-					},
-				} );
+			data: () => {
+				return {
+					reactiveFieldInfo,
+					qualifiedName,
+					options,
+					type,
+					value,
+					multiple,
+					update: true,
+				}
 			},
-			data: () => reactiveFieldInfo,
+			computed: {
+				_value: {
+					get() {
+						if (this.update) {
+							this.update = false;
+							if(multiple){
+								return readValue(qualifiedName) || [];
+							}
+							return readValue(qualifiedName);
+						}
+					},
+					set(newValue) {
+						reactiveFieldInfo.pristine = false;
+						if (!newValue) {
+							newValue = undefined;
+						}
+						if (newValue !== this._value) {
+							writeValue(qualifiedName, newValue);
+							reactiveFieldInfo.value = newValue;
+							this.update = true
+						}
+					},
+				},
+				inputType() {
+					return (!this.multiple || this.type === 'radio') ? 'radio' : 'checkbox'
+				}
+			},
+			template: `
+				<span v-if="!options">
+					<input type="checkbox" :id="qualifiedName" v-model="_value"/>
+				</span>
+				<span v-else>
+					<span v-for="(entry, index) in options" :key="entry.id || qualifiedName + '.' + index">
+						<input 
+							:type="inputType"
+							:name="qualifiedName"
+							:label="entry.label"
+							:id="entry.id || qualifiedName + '.' + index"
+							:value="entry.value"
+							v-model="_value"
+						/>
+						<label :for="entry.id || qualifiedName + '.' + index">
+							{{entry.label}}
+						</label>
+					</span>
+				</span>
+			`,
 		};
 	}
 }
