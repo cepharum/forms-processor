@@ -57,10 +57,10 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					value: this.constructor.createOptions(v),
 				}
 			},
-			multiple(v){
+			multiple(v) {
 				let value = Boolean(v);
-				if(v instanceof String){
-					value = (  Boolean(v) && v !== "false");
+				if (v instanceof String) {
+					value = (Boolean(v) && v !== "false");
 				}
 				return {
 					value
@@ -146,7 +146,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					get() {
 						if (this.update) {
 							this.update = false;
-							if(multiple){
+							if (multiple) {
 								return readValue(qualifiedName) || [];
 							}
 							return readValue(qualifiedName);
@@ -165,7 +165,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					},
 				},
 				inputType() {
-					return (!this.multiple || this.type === 'radio') ? 'radio' : 'checkbox'
+					return ((!(this.multiple) || this.type === 'radio') && (options && options.length > 1)) ? 'radio' : 'checkbox'
 				}
 			},
 			template: `
@@ -183,7 +183,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							v-model="_value"
 						/>
 						<label :for="entry.id || qualifiedName + '.' + index">
-							{{entry.label}}
+							{{entry.label || entry.value}}
 						</label>
 					</span>
 				</span>

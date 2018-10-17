@@ -59,11 +59,26 @@
 					"size": "5-63"
 				},
 				{
-					"name": "agreeing",
+					"name": "noLabel",
 					"label": {
-						"en": "Agreeing",
-						"ANY": "Zustimmend"
+						"en": "no options",
+						"ANY": "Keine Optionen"
 					},
+					"type": "checkBox",
+					"visible": true,
+					"required": true
+				},
+				{
+					"name": "label",
+					"label": {
+						"en": "labeled",
+						"ANY": "mit label"
+					},
+					"options": [
+						{
+							"label": "agreeing", "value": "stimmt zu"
+						}
+					],
 					"type": "checkBox",
 					"visible": true,
 					"required": true
@@ -85,15 +100,30 @@
 					"size": "5-63"
 				},
 				{
-					"name": "do you like this tool",
+					"name": "not multiple",
 					"label": {
-						"en": "Do you like this tool?",
-						"ANY": "Gefällt ihnen dieses Tool?"
+						"en": "not multiple choice",
+						"ANY": "keine Mehrfachauswahl"
 					},
 					"options": [
-						"Ja",
-						"Nein",
-						"Definitiv"
+						"erste",
+						"zweite",
+						"dritte"
+					],
+					"type": "checkbox",
+					"visible": true,
+					"size": "5-63"
+				},
+				{
+					"name": "radio",
+					"label": {
+						"en": "type radio",
+						"ANY": "Typ Radio"
+					},
+					"options": [
+						"erste",
+						"zweite",
+						"dritte"
 					],
 					"type": "radio",
 					"visible": true,
