@@ -134,8 +134,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						return readValue(qualifiedName);
 					},
 					set(newValue) {
-						writeValue(qualifiedName, newValue);
-						options = options.slice();
+						reactiveFieldInfo.pristine = false;
+						if (newValue !== this._value) {
+							writeValue(qualifiedName, newValue);
+							reactiveFieldInfo.value = newValue;
+						}
 					},
 				}
 			},
