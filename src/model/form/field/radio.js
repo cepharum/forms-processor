@@ -40,93 +40,128 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
-		super( form, definition, fieldIndex, reactiveFieldInfo, ["size"] );
+	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
+		super(form, definition, fieldIndex, reactiveFieldInfo, ["options"]);
+
+		Object.defineProperties(this, {
+			/**
+			 * @name options
+			 * @property {Array<{value:string, label:string}>}
+			 * @readonly
+			 */
+			options: {value: this.constructor.createOptions(definition.options)},
+		});
 	}
+
+	static createOptions(definition) {
+		if (!definition) {
+			throw new TypeError("missing list of options to offer in a selector");
+		}
+
+		const options = typeof definition === "string" ? definition.trim().split(/\s*[,;]\s*/) : definition;
+		if (!Array.isArray(options)) {
+			throw new TypeError("not a list of options to offer in a selector");
+		}
+
+		const numOptions = options.length;
+		const normalized = new Array(numOptions);
+		let write = 0;
+
+		for (let i = 0; i < numOptions; i++) {
+			const item = options[i];
+
+			if (!item) {
+				continue;
+			}
+
+			switch (typeof item) {
+				case "string" : {
+					const value = item.trim();
+
+					normalized[write++] = {
+						value,
+						label: value,
+					};
+
+					break;
+				}
+
+				case "object" : {
+					if (!item.value) {
+						throw new TypeError("invalid option to be provided in selector misses value");
+					}
+
+					const value = item.value.trim();
+
+					normalized[write++] = {
+						value,
+						label: item.label == null ? value : String(item.label).trim(),
+					};
+
+					break;
+				}
+			}
+		}
+
+		normalized.splice(write);
+
+		return normalized;
+	}
+
 
 	/** @inheritDoc */
 	static get isInteractive() {
 		return false;
 	}
 
-
 	/** @inheritDoc */
-	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
-		if ( value instanceof String ) {
-			return value !== "false";
-		}
-
-		return Boolean( value );
-	}
-
-	/** @inheritDoc */
-	_renderFieldComponent( reactiveFieldInfo ) {
+	_renderFieldComponent(reactiveFieldInfo) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
-		const options = [
-			{ label: "Ja", value: true },
-			"Nein",
-			"Definitiv"
-		];
+		const {form: {readValue, writeValue}, qualifiedName} = that;
+		let {options} = that;
 
 		return {
-			render( createElement ) {
-				const selected = readValue( qualifiedName );
-				return createElement( "span", {}, options.map( ( option, index ) => {
-					let domProps = {};
-					let label = "";
-					let value = "";
-					if ( option instanceof Object ) {
-						const { id } = option;
-						value = option.value;
-						label = option.label || "";
-						domProps = {
-							type: "radio",
-							name: qualifiedName,
-							id: id || `${qualifiedName}.${index}`,
-							value
-						};
-						if ( value === selected ) {
-							domProps.checked = true;
-						}
-					}
-					if ( typeof option === "string" ) {
-						label = option;
-						value = option;
-						domProps = {
-							type: "radio",
-							name: qualifiedName,
-							id: `${qualifiedName}.${index}`,
-							value: option,
-						};
-						if ( option === selected ) {
-							domProps.checked = true;
-						}
-					}
-					return createElement( "span", {}, [
-						createElement( "input", {
-							domProps,
-							on: {
-								click: () => {
-									reactiveFieldInfo.pristine = false;
-
-									writeValue( qualifiedName, value );
-									reactiveFieldInfo.value = value;
-
-									this.$emit( "input", value );
-									this.$parent.$emit( "input", value );
-								},
-							}
-						} ),
-						createElement( "label", {
-							attrs: {
-								for: domProps.id,
-							},
-						}, [label] )
-					] );
-				} ) );
+			data: () => {
+				return {
+					options,
+					reactiveFieldInfo,
+					qualifiedName,
+				}
 			},
-			data: () => reactiveFieldInfo,
+			computed: {
+				_value() {
+					return readValue(qualifiedName);
+				}
+			},
+			methods: {
+				clickHandler(value) {
+					reactiveFieldInfo.pristine = false;
+
+					if (reactiveFieldInfo.value !== value) {
+						writeValue(qualifiedName, value);
+						reactiveFieldInfo.value = value;
+
+						this.$emit("input", value);
+						this.$parent.$emit("input", value);
+						options = options.slice(0);
+					}
+				}
+			},
+			template: `
+			<span>
+				<span v-for="(entry, index) in options" >
+					<input
+							:key="entry.id || qualifiedName + '.' + index" 
+							type="radio"
+							:name="qualifiedName"
+							:label="entry.label"
+							:id="entry.id || qualifiedName + '.' + index"
+							:checked="entry.value === _value"
+							v-on:click='clickHandler(entry.value)'
+					/>
+					<label v-on:click='clickHandler(entry.value)'>{{entry.label}}</label>
+				</span>
+			</span>`,
 		};
 	}
 }
