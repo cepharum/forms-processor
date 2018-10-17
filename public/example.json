@@ -98,6 +98,7 @@
           "type": "checkbox",
           "multiple": "true",
           "required": true,
+          "classes": "very-important, urgent",
           "visible": true,
           "size": "5-63"
         },

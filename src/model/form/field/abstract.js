@@ -26,7 +26,7 @@
  * @author: cepharum
  */
 
-import { Processor } from "simple-terms";
+import {Processor} from "simple-terms";
 
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
@@ -74,7 +74,6 @@ const reserved = [
 ];
 
 
-
 /**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
@@ -98,10 +97,10 @@ export default class FormFieldAbstractModel {
 	 * @param {PropertyDescriptorMap} properties defines custom properties to be
 	 *        exposed instead of those derived from definition by default
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, properties = {} ) {
-		const { name } = definition;
-		if ( !name ) {
-			throw new TypeError( `missing field name in definition` );
+	constructor(form, definition, fieldIndex, reactiveFieldInfo, properties = {}) {
+		const {name} = definition;
+		if (!name) {
+			throw new TypeError(`missing field name in definition`);
 		}
 
 
@@ -109,12 +108,12 @@ export default class FormFieldAbstractModel {
 		 * --- expose essential properties of field ---------------------------
 		 */
 
-		const originalName = String( name ).trim();
+		const originalName = String(name).trim();
 		const normalizedName = originalName.toLowerCase();
 		const formName = form.name;
 		const qualifiedName = `${formName}.${normalizedName}`;
 
-		Object.defineProperties( this, {
+		Object.defineProperties(this, {
 			/**
 			 * Provides reference on instance managing form containing field.
 			 *
@@ -122,7 +121,7 @@ export default class FormFieldAbstractModel {
 			 * @property {FormModel}
 			 * @readonly
 			 */
-			form: { value: form },
+			form: {value: form},
 
 			/**
 			 * Provides index of field in sequence of its containing form's
@@ -132,7 +131,7 @@ export default class FormFieldAbstractModel {
 			 * @property {int}
 			 * @readonly
 			 */
-			index: { value: parseInt( fieldIndex ) },
+			index: {value: parseInt(fieldIndex)},
 
 			/**
 			 * Provides defined name of field.
@@ -141,7 +140,7 @@ export default class FormFieldAbstractModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			name: { value: normalizedName },
+			name: {value: normalizedName},
 
 			/**
 			 * Provides original name of field which is the name used in field's
@@ -156,7 +155,7 @@ export default class FormFieldAbstractModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			originalName: { value: originalName },
+			originalName: {value: originalName},
 
 			/**
 			 * Provides qualified name of field consisting of its containing
@@ -166,7 +165,7 @@ export default class FormFieldAbstractModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			qualifiedName: { value: qualifiedName },
+			qualifiedName: {value: qualifiedName},
 
 			/**
 			 * Reads current value of field.
@@ -175,11 +174,10 @@ export default class FormFieldAbstractModel {
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
 			 */
 			value: this.constructor.isInteractive ? {
-				get: () => form.readValue( qualifiedName ),
-				set: value => form.writeValue( qualifiedName, value ),
-			} : { value: undefined },
-		} );
-
+				get: () => form.readValue(qualifiedName),
+				set: value => form.writeValue(qualifiedName, value),
+			} : {value: undefined},
+		});
 
 
 		/*
@@ -206,89 +204,88 @@ export default class FormFieldAbstractModel {
 		 *
 		 * @type {object}
 		 */
-		const qualifiedDefinition = Object.assign( {}, defaultProperties, definition );
-
+		const qualifiedDefinition = Object.assign({}, defaultProperties, definition);
 
 
 		{
-			const propNames = Object.keys( qualifiedDefinition );
+			const propNames = Object.keys(qualifiedDefinition);
 			const numProps = propNames.length;
 
-			for ( let pni = 0; pni < numProps; pni++ ) {
+			for (let pni = 0; pni < numProps; pni++) {
 				const propertyName = propNames[pni];
 				let propertyValue = qualifiedDefinition[propertyName];
 
-				switch ( propertyName ) {
+				switch (propertyName) {
 					case "type" :
 						// this property is essential, can't be computed and
 						// requires certain type of value
-						if ( typeof propertyValue !== "string" || !propertyValue.trim().length ) {
-							throw new TypeError( `invalid type of field ${qualifiedName}` );
+						if (typeof propertyValue !== "string" || !propertyValue.trim().length) {
+							throw new TypeError(`invalid type of field ${qualifiedName}`);
 						}
 
-						getters[propertyName] = { value: propertyValue };
+						getters[propertyName] = {value: propertyValue};
 						break;
 
 					default :
-						if ( reserved.indexOf( propertyName ) < 0 ) {
+						if (reserved.indexOf(propertyName) < 0) {
 							// handle non-reserved properties of definition in a common way
 
-							if ( properties.hasOwnProperty( propertyName ) ) {
+							if (properties.hasOwnProperty(propertyName)) {
 								// got some custom descriptor of property to expose
 								const descriptor = properties[propertyName];
-								if ( descriptor ) {
+								if (descriptor) {
 									properties[propertyName] = null;
 
-									if ( typeof descriptor === "function" ) {
+									if (typeof descriptor === "function") {
 										// descriptor depends on value of qualified definition's property
-										getters[propertyName] = descriptor.call( this, propertyValue, propertyName, qualifiedDefinition );
+										getters[propertyName] = descriptor.call(this, propertyValue, propertyName, qualifiedDefinition);
 									} else {
 										getters[propertyName] = descriptor;
 									}
 								}
 							} else {
-								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
-								if ( propertyValue != null ) {
-									propertyValue = String( propertyValue ).trim();
+								propertyValue = L10n.selectLocalized(propertyValue, form.locale);
+								if (propertyValue != null) {
+									propertyValue = String(propertyValue).trim();
 
-									if ( propertyValue.charAt( 0 ) === "=" ) {
-										const term = new Processor( propertyValue.slice( 1 ), {}, termCache, resolveVariableName );
-										terms.push( term );
+									if (propertyValue.charAt(0) === "=") {
+										const term = new Processor(propertyValue.slice(1), {}, termCache, resolveVariableName);
+										terms.push(term);
 										getters[propertyName] = {
-											get: () => normalizeDefinitionValue( propertyName, term.evaluate( form.data ) ),
+											get: () => normalizeDefinitionValue(propertyName, term.evaluate(form.data)),
 										};
 									} else {
-										const slices = propertyValue.split( ptnBinding );
+										const slices = propertyValue.split(ptnBinding);
 										const numSlices = slices.length;
 										let isDynamic = false;
 
-										for ( let i = 0; i < numSlices; i++ ) { // eslint-disable-line max-depth
+										for (let i = 0; i < numSlices; i++) { // eslint-disable-line max-depth
 											const slice = slices[i];
-											const match = slice.match( ptnBinding );
-											if ( match ) { // eslint-disable-line max-depth
-												const term = new Processor( slice.slice( 2, -2 ), {}, termCache, resolveVariableName );
-												terms.push( term );
+											const match = slice.match(ptnBinding);
+											if (match) { // eslint-disable-line max-depth
+												const term = new Processor(slice.slice(2, -2), {}, termCache, resolveVariableName);
+												terms.push(term);
 												slices[i] = term;
 												isDynamic = true;
 											}
 										}
 
-										if ( isDynamic ) { // eslint-disable-line max-depth
+										if (isDynamic) { // eslint-disable-line max-depth
 											getters[propertyName] = {
 												get: () => {
-													const rendered = new Array( numSlices );
+													const rendered = new Array(numSlices);
 
-													for ( let i = 0; i < numSlices; i++ ) {
+													for (let i = 0; i < numSlices; i++) {
 														const slice = slices[i];
 
-														if ( slice instanceof Processor ) {
-															rendered[i] = slice.evaluate( form.data );
+														if (slice instanceof Processor) {
+															rendered[i] = slice.evaluate(form.data);
 														} else {
 															rendered[i] = slice;
 														}
 													}
 
-													const result = normalizeDefinitionValue( propertyName, rendered.join( "" ) );
+													const result = normalizeDefinitionValue(propertyName, rendered.join(""));
 
 													reactiveFieldInfo[propertyName] = result;
 
@@ -296,9 +293,9 @@ export default class FormFieldAbstractModel {
 												}
 											};
 										} else {
-											propertyValue = normalizeDefinitionValue( propertyName, propertyValue );
+											propertyValue = normalizeDefinitionValue(propertyName, propertyValue);
 
-											getters[propertyName] = { value: propertyValue };
+											getters[propertyName] = {value: propertyValue};
 											reactiveFieldInfo[propertyName] = propertyValue;
 										}
 									}
@@ -310,18 +307,18 @@ export default class FormFieldAbstractModel {
 		}
 
 		{ // make sure to transfer "default" behaviour of custom properties due to lacking definition mentioning it
-			const propNames = Object.keys( properties );
+			const propNames = Object.keys(properties);
 			const numProps = propNames.length;
 
-			for ( let pni = 0; pni < numProps; pni++ ) {
+			for (let pni = 0; pni < numProps; pni++) {
 				const propertyName = propNames[pni];
 				const descriptor = properties[propertyName];
 
-				if ( reserved.indexOf( propertyName ) < 0 ) {
-					if ( descriptor && !getters.hasOwnProperty( propertyName ) ) {
-						if ( typeof descriptor === "function" ) {
+				if (reserved.indexOf(propertyName) < 0) {
+					if (descriptor && !getters.hasOwnProperty(propertyName)) {
+						if (typeof descriptor === "function") {
 							// descriptor depends on value of qualified definition's property
-							getters[propertyName] = descriptor.call( this, undefined, propertyName, qualifiedDefinition );
+							getters[propertyName] = descriptor.call(this, undefined, propertyName, qualifiedDefinition);
 						} else {
 							getters[propertyName] = descriptor;
 						}
@@ -330,8 +327,7 @@ export default class FormFieldAbstractModel {
 			}
 		}
 
-		Object.defineProperties( this, getters );
-
+		Object.defineProperties(this, getters);
 
 
 		/*
@@ -340,11 +336,11 @@ export default class FormFieldAbstractModel {
 
 		// collect combined dependencies of all terms processed before
 		const collectedDependencies = {};
-		for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
+		for (let i = 0, numTerms = terms.length; i < numTerms; i++) {
 			const dependencies = terms[i].dependsOn;
 
-			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
-				collectedDependencies[dependencies[j].join( "." )] = true;
+			for (let j = 0, numDependencies = dependencies.length; j < numDependencies; j++) {
+				collectedDependencies[dependencies[j].join(".")] = true;
 			}
 		}
 
@@ -379,7 +375,6 @@ export default class FormFieldAbstractModel {
 		let component = null;
 
 
-
 		// qualify provided variable space to be reactive data of current field
 		// in context of containing form's reactive data
 		reactiveFieldInfo.required = null;
@@ -392,8 +387,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.errors = [];
 
 
-
-		Object.defineProperties( this, {
+		Object.defineProperties(this, {
 			/**
 			 * Lists paths of variables this field depends on due to terms used
 			 * in field's definition.
@@ -402,7 +396,7 @@ export default class FormFieldAbstractModel {
 			 * @property {Array<string[]>}
 			 * @readonly
 			 */
-			dependsOn: { value: Object.keys( collectedDependencies ) },
+			dependsOn: {value: Object.keys(collectedDependencies)},
 
 			/**
 			 * Lists names of fields depending on current one's value/state.
@@ -412,10 +406,10 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			dependents: {
-				get: () => ( dependents == null ? [] : dependents ),
+				get: () => (dependents == null ? [] : dependents),
 				set: dependingFieldNames => {
-					if ( Array.isArray( dependingFieldNames ) ) {
-						if ( dependents == null ) {
+					if (Array.isArray(dependingFieldNames)) {
+						if (dependents == null) {
 							dependents = dependingFieldNames;
 						}
 					}
@@ -431,17 +425,17 @@ export default class FormFieldAbstractModel {
 			 * @name FormFieldAbstractModel#valid
 			 * @property {boolean}
 			 * @readonly
- 			 */
+			 */
 			valid: {
 				get: () => {
-					if ( reactiveFieldInfo.valid == null ) {
-						if ( reactiveFieldInfo.pristine ) {
+					if (reactiveFieldInfo.valid == null) {
+						if (reactiveFieldInfo.pristine) {
 							return true;
 						}
 
 						try {
-							reactiveFieldInfo.errors = Data.unique( this.validate() );
-						} catch ( e ) {
+							reactiveFieldInfo.errors = Data.unique(this.validate());
+						} catch (e) {
 							reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
 						}
 
@@ -466,8 +460,8 @@ export default class FormFieldAbstractModel {
 			pristine: {
 				get: () => reactiveFieldInfo.pristine,
 				set: value => {
-					if ( value ) {
-						throw new TypeError( `invalid request for marking field ${this.qualifiedName} as pristine` );
+					if (value) {
+						throw new TypeError(`invalid request for marking field ${this.qualifiedName} as pristine`);
 					}
 
 					reactiveFieldInfo.pristine = false;
@@ -481,8 +475,8 @@ export default class FormFieldAbstractModel {
 			 * @name FormFieldAbstractModel#errors
 			 * @property {string[]}
 			 * @readonly
- 			 */
-			errors: { get: () => reactiveFieldInfo.errors },
+			 */
+			errors: {get: () => reactiveFieldInfo.errors},
 
 			/**
 			 * Exposes reactive data of current field as used by any component
@@ -492,15 +486,17 @@ export default class FormFieldAbstractModel {
 			 * @property {object<string,*>}
 			 * @readonly
 			 */
-			$data: { get: () => {
-				if ( !initializedReactiveInfo ) {
-					initializedReactiveInfo = true;
+			$data: {
+				get: () => {
+					if (!initializedReactiveInfo) {
+						initializedReactiveInfo = true;
 
-					form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+						form.writeValue(qualifiedName, this._initializeReactive(reactiveFieldInfo));
+					}
+
+					return reactiveFieldInfo;
 				}
-
-				return reactiveFieldInfo;
-			} },
+			},
 
 			/**
 			 * Provides description of component representing current field.
@@ -509,21 +505,22 @@ export default class FormFieldAbstractModel {
 			 * @property {Component}
 			 * @readonly
 			 */
-			component: { get() {
-				if ( component == null ) {
-					if ( !initializedReactiveInfo ) {
-						initializedReactiveInfo = true;
+			component: {
+				get() {
+					if (component == null) {
+						if (!initializedReactiveInfo) {
+							initializedReactiveInfo = true;
 
-						form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+							form.writeValue(qualifiedName, this._initializeReactive(reactiveFieldInfo));
+						}
+
+						component = this._renderComponent(reactiveFieldInfo);
 					}
 
-					component = this._renderComponent( reactiveFieldInfo );
+					return component;
 				}
-
-				return component;
-			} },
-		} );
-
+			},
+		});
 
 
 		/**
@@ -533,9 +530,9 @@ export default class FormFieldAbstractModel {
 		 * @param {string[]} originalPath segments of path addressing variable as given in term
 		 * @returns {string[]} optionally qualified list of segments for addressing some variable globally
 		 */
-		function resolveVariableName( originalPath ) {
-			if ( originalPath.length === 1 ) {
-				return [ form.name, originalPath[0] ];
+		function resolveVariableName(originalPath) {
+			if (originalPath.length === 1) {
+				return [form.name, originalPath[0]];
 			}
 
 			return originalPath;
@@ -549,8 +546,8 @@ export default class FormFieldAbstractModel {
 	 * @returns {*} initial value of field as used on initializing reactive data
 	 * @private
 	 */
-	_initializeReactive( reactiveFieldInfo ) {
-		const initialValue = this.normalizeValue( this.initial );
+	_initializeReactive(reactiveFieldInfo) {
+		const initialValue = this.normalizeValue(this.initial);
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
@@ -569,8 +566,8 @@ export default class FormFieldAbstractModel {
 	 * @param {string|object<string,string>} internationalizedValue non-internationalized string or object mapping locale tag into one of several translation
 	 * @returns {string} localized string
 	 */
-	selectLocalization( internationalizedValue ) {
-		return L10n.selectLocalized( internationalizedValue, this.form.locale );
+	selectLocalization(internationalizedValue) {
+		return L10n.selectLocalized(internationalizedValue, this.form.locale);
 	}
 
 	/**
@@ -581,32 +578,32 @@ export default class FormFieldAbstractModel {
 	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
 	 * @returns {void}
 	 */
-	onUpdateValue( store, newValue, updatedFieldName = null ) {
+	onUpdateValue(store, newValue, updatedFieldName = null) {
 		const data = this.$data;
 		const itsMe = updatedFieldName == null;
 
-		this.updateFieldInformation( data );
+		this.updateFieldInformation(data);
 
-		if ( !itsMe && data.pristine ) {
+		if (!itsMe && data.pristine) {
 			// some other field has been updated
 			// -> my initial value might depend on it, so
 			//    re-assign my initial unless field has been
 			//    adjusted before
-			store.dispatch( "form/writeInput", {
+			store.dispatch("form/writeInput", {
 				name: this.qualifiedName,
 				value: this.initial,
-			} );
+			});
 		}
 
 		// changing current field or some field current one
 		// depends on might affect validity of current field
-		if ( !data.pristine ) {
+		if (!data.pristine) {
 			data.valid = null;
 			const valid = this.valid; // eslint-disable-line no-unused-vars
 		}
 
-		if ( !itsMe ) {
-			EventBus.$emit( "form:update", this.qualifiedName, updatedFieldName, newValue );
+		if (!itsMe) {
+			EventBus.$emit("form:update", this.qualifiedName, updatedFieldName, newValue);
 		}
 	}
 
@@ -620,7 +617,7 @@ export default class FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInformation contains reactive properties of field
 	 * @returns {void}
 	 */
-	updateFieldInformation( reactiveFieldInformation ) {
+	updateFieldInformation(reactiveFieldInformation) {
 		reactiveFieldInformation.label = this.label;
 		reactiveFieldInformation.hint = this.hint;
 		reactiveFieldInformation.required = this.required;
@@ -633,10 +630,10 @@ export default class FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} description of Vue component
 	 */
-	_renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
+	_renderFieldComponent(reactiveFieldInfo) { // eslint-disable-line no-unused-vars
 		return {
-			render( createElement ) {
-				return createElement( "<!-- abstract field -->" );
+			render(createElement) {
+				return createElement("<!-- abstract field -->");
 			},
 		};
 	}
@@ -647,26 +644,31 @@ export default class FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} provides definition of field's component
 	 */
-	_renderComponent( reactiveFieldInfo ) {
+	_renderComponent(reactiveFieldInfo) {
 		const that = this;
-		const { type, originalName, name, qualifiedName } = this;
+		const {type, originalName, name, qualifiedName, classes} = this;
 
 		return {
 			components: {
-				FieldComponent: this._renderFieldComponent( reactiveFieldInfo ),
+				FieldComponent: this._renderFieldComponent(reactiveFieldInfo),
+			},
+			computed: {
+				componentClasses() {
+					return [
+						`field`,
+						`type-${type}`,
+						`name-${originalName}`,
+						`nname-${name}`,
+						`qname-${qualifiedName.replace(/\./g, "_")}`,
+						this.required ? 'mandatory' : 'optional',
+						this.pristine ? 'pristine' : 'touched',
+						this.label ? 'with-label' : 'without-label',
+						this.valid ? 'valid' : 'invalid'
+					].concat(classes)
+				}
 			},
 			template: `
-<div v-if="required || visible" :class="[ 
-	'field',
-	'type-${type}', 
-	'name-${originalName}',
-	'nname-${name}',
-	'qname-${qualifiedName.replace( /\./g, "_" )}',
-	required ? 'mandatory' : 'optional', 
-	pristine ? 'pristine' : 'touched',
-	valid ? 'valid' : 'invalid',
-	label ? 'with-label' : 'without-label',
-]">
+<div v-if="required || visible" :class="componentClasses">
 	<span class="label">
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
@@ -681,18 +683,18 @@ export default class FormFieldAbstractModel {
 			`,
 			data: () => reactiveFieldInfo,
 			methods: {
-				localize( lookup ) {
-					if ( Array.isArray( lookup ) ) {
-						const [ _lookup, args ] = lookup;
+				localize(lookup) {
+					if (Array.isArray(lookup)) {
+						const [_lookup, args] = lookup;
 
-						return L10n.translate( this.$store.getters.l10n, _lookup, ...args );
+						return L10n.translate(this.$store.getters.l10n, _lookup, ...args);
 					}
 
-					if ( typeof lookup === "string" ) {
+					if (typeof lookup === "string") {
 						const _lookup = lookup.trim();
 
-						if ( _lookup[0] === "@" ) {
-							return L10n.translate( this.$store.getters.l10n, _lookup.slice( 1 ) );
+						if (_lookup[0] === "@") {
+							return L10n.translate(this.$store.getters.l10n, _lookup.slice(1));
 						}
 					}
 
@@ -701,52 +703,52 @@ export default class FormFieldAbstractModel {
 			},
 			created() {
 				this.__onGlobalFormAutoFocusEvent = () => {
-					if ( that.form.autoFocusField === that ) {
-						this.$nextTick( () => {
-							const firstControl = this.$el.querySelector( "input, select, button" );
+					if (that.form.autoFocusField === that) {
+						this.$nextTick(() => {
+							const firstControl = this.$el.querySelector("input, select, button");
 
-							if ( firstControl ) {
+							if (firstControl) {
 								firstControl.focus();
 
-								if ( typeof firstControl.select === "function" ) {
+								if (typeof firstControl.select === "function") {
 									firstControl.select();
 								}
 							}
-						} );
+						});
 					}
 				};
 
-				EventBus.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				EventBus.$on("form:autofocus", this.__onGlobalFormAutoFocusEvent);
 			},
 			beforeMount() {
-				if ( that.pristine ) {
-					reactiveFieldInfo.value = that.normalizeValue( that.initial );
+				if (that.pristine) {
+					reactiveFieldInfo.value = that.normalizeValue(that.initial);
 				}
 
-				this.$on( "input", () => {
-					if ( !this.pristine ) {
+				this.$on("input", () => {
+					if (!this.pristine) {
 						this.valid = null;
 						const valid = that.valid; // eslint-disable-line no-unused-vars
 					}
-				} );
+				});
 
-				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
-					if ( emittingQualifiedName === qualifiedName ) {
+				this.__onGlobalFormUpdateEvent = (emittingQualifiedName, updatedFieldName, newValue) => { // eslint-disable-line no-unused-vars
+					if (emittingQualifiedName === qualifiedName) {
 						const field = this.$refs.fieldComponent;
-						if ( field ) {
+						if (field) {
 							const fieldUpdater = field.updateOnDataChanged;
-							if ( typeof fieldUpdater === "function" ) {
+							if (typeof fieldUpdater === "function") {
 								fieldUpdater();
 							}
 						}
 					}
 				};
 
-				EventBus.$on( "form:update", this.__onGlobalFormUpdateEvent );
+				EventBus.$on("form:update", this.__onGlobalFormUpdateEvent);
 			},
 			beforeDestroy() {
-				EventBus.$off( "form:update", this.__onGlobalFormUpdateEvent );
-				EventBus.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				EventBus.$off("form:update", this.__onGlobalFormUpdateEvent);
+				EventBus.$off("form:autofocus", this.__onGlobalFormAutoFocusEvent);
 			},
 		};
 	}
@@ -758,7 +760,7 @@ export default class FormFieldAbstractModel {
 	 * @param {object} options additional options
 	 * @returns {*} normalized value
 	 */
-	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
+	normalizeValue(value, options = {}) { // eslint-disable-line no-unused-vars
 		return value;
 	}
 
@@ -773,12 +775,12 @@ export default class FormFieldAbstractModel {
 	 * @param {boolean} live indicates whether validation occurs live while user is providing input
 	 * @returns {string[]} lists validation error messages, empty list indicates valid field
 	 */
-	validate( live = false ) { // eslint-disable-line no-unused-vars
+	validate(live = false) { // eslint-disable-line no-unused-vars
 		const errors = [];
-		const { value, required } = this;
+		const {value, required} = this;
 
-		if ( required && ( value == null || value === "" ) ) {
-			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		if (required && (value == null || value === "")) {
+			errors.push("@VALIDATION.MISSING_REQUIRED");
 		}
 
 		return errors;
@@ -794,8 +796,8 @@ export default class FormFieldAbstractModel {
 	 * @param {function} subClassConstructor constructor function
 	 * @returns {function} provided constructor function
 	 */
-	static makeInherit( subClassConstructor ) {
-		const subProto = subClassConstructor.prototype = Object.create( this.prototype );
+	static makeInherit(subClassConstructor) {
+		const subProto = subClassConstructor.prototype = Object.create(this.prototype);
 		subProto.constructor = subClassConstructor;
 		subProto.$super = this;
 
@@ -808,15 +810,15 @@ export default class FormFieldAbstractModel {
 	 * @param {function|class} subClass some class to be tested for inheriting from current one
 	 * @returns {boolean} true if current one is base class of provided one
 	 */
-	static isBaseClassOf( subClass ) {
+	static isBaseClassOf(subClass) {
 		let iter = subClass.prototype;
 
-		while ( iter ) {
-			if ( iter.constructor === this ) {
+		while (iter) {
+			if (iter.constructor === this) {
 				return true;
 			}
 
-			iter = Object.getPrototypeOf( iter );
+			iter = Object.getPrototypeOf(iter);
 		}
 
 		return false;
@@ -831,22 +833,24 @@ export default class FormFieldAbstractModel {
  * @param {*} value some arbitrary value
  * @returns {*} normalized value for use with named definition property
  */
-function normalizeDefinitionValue( name, value ) {
-	switch ( name ) {
+function normalizeDefinitionValue(name, value) {
+	switch (name) {
+		case "classes":
+			return (typeof value === "string") ? value.trim().split(/\s*[,;]\s*/) : value;
 		case "label" :
 		case "hint" :
-			return String( value );
+			return String(value);
 
 		case "required" :
 		case "visible" :
-			switch ( typeof value ) {
+			switch (typeof value) {
 				case "string" : {
-					const boolean = Data.normalizeToBoolean( value );
+					const boolean = Data.normalizeToBoolean(value);
 					return boolean == null ? value.trim().length > 0 : boolean;
 				}
 
 				default :
-					return Boolean( value );
+					return Boolean(value);
 			}
 
 		default :
