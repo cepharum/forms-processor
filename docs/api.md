@@ -76,19 +76,23 @@ This method registers type of field with current instance of Forms Processor. Th
 
 A custom type of field's implementation is expected to overload one or more methods of its base class:
 
-* `onUpdateValue( store, newValue, updatedFieldName = null )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L444))
+* `static get isInteractive()` ([see source](https://git.cepharum.de/cepharum/forms/processor/blob/master/src/model/form/field/abstract.js#L89))
+
+  This _static_ getter must be overloaded to return `true` in case of your custom field is provided value to be part of finally resulting set of input data. This getter marks whether some field is interactive by means of accepting user input.
+
+* `onUpdateValue( store, newValue, updatedFieldName = null )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L584))
 
   This method is invoked when value of field has been updated e.g. due to the field's dependencies.
 
-* `_renderComponent( reactiveFieldInfo )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L496))
+* `_renderFieldComponent( reactiveFieldInfo )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L636))
 
   This method is invoked to describe component injected into some container component controlled by abstract base class. The generated component focuses on part of field which is expected to have type-specific appearance and behaviour. Thus it shouldn't include the field's label, any errors or hints on it.
 
-* `normalizeValue( value, options = {} )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L615))
+* `normalizeValue( value, options = {} )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L761))
 
   On processing input this method is invoked to adjust the input to comply with configured constraints of form. This method isn't expected to validate any input but focuses on preparing any raw input for the upcoming validation.
 
-* `validate( live = false )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L630))
+* `validate( live = false )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L776))
 
   After normalizing input this method is invoked to validate the field's current value. The method shouldn't throw exception on invalid data but return a list of strings each describing another failed step of validation. This list is used to provide error messages on screen.
   

@@ -31,27 +31,6 @@
  */
 export default class Storage {
 	/**
-	 * @param {object} storage refers to object managed as _storage_ by constructed instance
-	 */
-	constructor( storage ) {
-		if ( !storage || typeof storage !== "object" ) {
-			throw new TypeError( "invalid storage" );
-		}
-
-		Object.defineProperties( this, {
-			/**
-			 * Exposes object to be controlled.
-			 *
-			 * @name Storage#data
-			 * @property {object}
-			 * @readonly
-			 * @protected
-			 */
-			data: { value: storage },
-		} );
-	}
-
-	/**
 	 * Normalizes qualified name of a field.
 	 *
 	 * @param {?string} name qualified name of field to be normalized
@@ -64,16 +43,21 @@ export default class Storage {
 	/**
 	 * Reads value from storage selected by qualified name.
 	 *
+	 * @param {object} storage refers to object managed as _storage_ by constructed instance
 	 * @param {string} name path name of value to be read
 	 * @return {?*} found value, null if value is missing
 	 */
-	read( name ) {
-		const _name = this.constructor.normalizeName( name );
+	static read( storage, name ) {
+		if ( !storage || typeof storage !== "object" ) {
+			throw new TypeError( "invalid storage" );
+		}
+
+		const _name = this.normalizeName( name );
 		if ( _name == null ) {
 			return null;
 		}
 
-		let pointer = this.data;
+		let pointer = storage;
 		const segments = _name.split( /\s*\.\s*/ );
 		const numSegments = segments.length;
 
@@ -93,17 +77,22 @@ export default class Storage {
 	/**
 	 * Writes value to hierarchical storage.
 	 *
+	 * @param {object} storage refers to object managed as _storage_ by constructed instance
 	 * @param {string} name path name of value to be written
 	 * @param {*} value value to be written
-	 * @return {boolean} true if properties have been added to storage
+	 * @returns {boolean} true if properties have been added to storage
 	 */
-	write( name, value ) {
-		const _name = this.constructor.normalizeName( name );
+	static write( storage, name, value ) {
+		if ( !storage || typeof storage !== "object" ) {
+			throw new TypeError( "invalid storage" );
+		}
+
+		const _name = this.normalizeName( name );
 		if ( _name == null ) {
 			return false;
 		}
 
-		let pointer = this.data;
+		let pointer = storage;
 		const segments = _name.split( /\s*\.\s*/ );
 		const maxIndex = segments.length - 1;
 		let changed = false;
