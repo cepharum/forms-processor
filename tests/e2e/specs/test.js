@@ -2,13 +2,15 @@
 // http://nightwatchjs.org/guide#usage
 
 module.exports = {
-	"default e2e tests": browser => {
+	"Most Simple Form": browser => {
 		browser
-			.url( process.env.VUE_DEV_SERVER_URL )
-			.waitForElementVisible( "#app", 5000 )
-			.assert.elementPresent( ".hello" )
-			.assert.containsText( "h1", "Welcome to Your Vue.js App" )
-			.assert.elementCount( "img", 1 )
+			.url( process.env.VUE_DEV_SERVER_URL + "#most-simple/definition.js" )
+			.waitForElementVisible( ".forms-processor", 5000 )
+			.waitForElementVisible( "#some-input-1234", 5000 )
+			.assert.elementPresent( ".form-progress" )
+			.assert.elementPresent( ".form-content" )
+			.assert.elementPresent( ".form-control" )
+			.assert.elementCount( ".form .fields > .field", 1 )
 			.end();
 	}
 };
