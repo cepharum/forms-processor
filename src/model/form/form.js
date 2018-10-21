@@ -44,6 +44,10 @@ export default class FormModel {
 		const originalName = ( name == null ? "" : String( name ) ).trim();
 		const formName = originalName.toLowerCase();
 
+		if ( !originalName.length ) {
+			throw new TypeError( "Every form in sequence must have a name." );
+		}
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides index of form in containing sequence of forms.
