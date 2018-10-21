@@ -114,7 +114,7 @@ export default class FormsAPI {
 				};
 			}
 
-			console.error( "ignoring invalid pre-definition of forms" ); // eslint-disable-line no-console
+			console.error( "Ignoring invalid pre-definition of forms." ); // eslint-disable-line no-console
 
 			return {};
 		} )( configuration );
@@ -262,13 +262,13 @@ export default class FormsAPI {
 		const registry = this._registry.fields;
 
 		if ( registry.hasOwnProperty( _name ) ) {
-			throw new TypeError( `conflict: handler for fields of type "${typeName}" has been registered before` );
+			throw new TypeError( `Handler for fields of type "${typeName}" has been registered before.` );
 		}
 
 		const field = typeof implementationOrFactory === "function" && !Fields.abstract.isBaseClassOf( implementationOrFactory ) ? implementationOrFactory( Fields.abstract ) : implementationOrFactory;
 
 		if ( !Fields.abstract.isBaseClassOf( field ) ) {
-			throw new TypeError( `invalid handler for fields of type "${typeName}" rejected` );
+			throw new TypeError( `Handler for fields of type "${typeName}" isn't inheriting from abstract base class.` );
 		}
 
 		registry[_name] = field;
@@ -288,13 +288,13 @@ export default class FormsAPI {
 		const registry = this._registry.processors;
 
 		if ( registry.hasOwnProperty( _name ) ) {
-			throw new TypeError( `conflict: input processor of type "${name}" has been registered before` );
+			throw new TypeError( `Input processor of type "${name}" has been registered before.` );
 		}
 
 		const processor = typeof implementationOrFactory === "function" && !Processors.abstract.isBaseClassOf( implementationOrFactory ) ? implementationOrFactory( Processors.abstract ) : implementationOrFactory;
 
 		if ( !Processors.abstract.isBaseClassOf( processor ) ) {
-			throw new TypeError( `invalid input processor of type "${name}" rejected` );
+			throw new TypeError( `Invalid input processor of type "${name}" rejected.` );
 		}
 
 		registry[_name] = processor;

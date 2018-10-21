@@ -153,13 +153,13 @@ export default class Data {
 		}
 
 		if ( typeof target !== "object" || !target || typeof source !== "object" ) {
-			throw new TypeError( "cannot merge provided data" );
+			throw new TypeError( "Merging provided data rejected." );
 		}
 
 		const sourceIsArray = Array.isArray( source );
 
 		if ( sourceIsArray ? 1 : 0 ^ Array.isArray( target ) ? 1 : 0 ) {
-			throw new TypeError( "cannot merge incompatible data types" );
+			throw new TypeError( "Merge incompatible data types rejected." );
 		}
 
 		if ( sourceIsArray ) {
@@ -209,7 +209,7 @@ export default class Data {
 		}
 
 		if ( !Array.isArray( items ) ) {
-			throw new TypeError( "not a list of items" );
+			throw new TypeError( "Rejecting to eliminate duplicates from anything but a list of items." );
 		}
 
 		const map = new Map();

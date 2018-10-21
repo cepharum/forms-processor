@@ -51,20 +51,20 @@ export default class Range {
 					if ( ptnNumber.test( definition[0] ) ) {
 						lower = parseFloat( definition[0] );
 					} else {
-						throw new TypeError( "invalid lower boundary in definition of range" );
+						throw new TypeError( `Invalid lower boundary in definition of range [${definition}].` );
 					}
 					break;
 
 				case 2 :
 					if ( definition[0] == null && definition[1] == null ) {
-						throw new TypeError( "invalid range definition" );
+						throw new TypeError( `Invalid range definition [${definition}].` );
 					}
 
 					if ( definition[0] != null ) {
 						if ( ptnNumber.test( definition[0] ) ) {
 							lower = parseFloat( definition[0] );
 						} else {
-							throw new TypeError( "invalid lower boundary in definition of range" );
+							throw new TypeError( `Invalid lower boundary in definition of range [${definition}].` );
 						}
 					}
 
@@ -72,13 +72,13 @@ export default class Range {
 						if ( ptnNumber.test( definition[1] ) ) {
 							upper = parseFloat( definition[1] );
 						} else {
-							throw new TypeError( "invalid upper boundary in definition of range" );
+							throw new TypeError( `Invalid upper boundary in definition of range [${definition}].` );
 						}
 					}
 					break;
 
 				default :
-					throw new TypeError( "invalid range definition" );
+					throw new TypeError( `Invalid range definition [${definition}]: provide one or two elements in array.` );
 			}
 		} else if ( typeof definition === "string" ) {
 			let parsed = ptnSimpleRange.exec( definition );
@@ -117,11 +117,11 @@ export default class Range {
 						granularity = parseFloat( parsed[5].replace( /,/, "." ) );
 					}
 				} else {
-					throw new TypeError( "invalid range definition" );
+					throw new TypeError( `Invalid range definition "${definition}".` );
 				}
 			}
 		} else if ( definition != null ) {
-			throw new TypeError( "invalid range definition" );
+			throw new TypeError( "Invalid range definition: provide string or array." );
 		}
 
 

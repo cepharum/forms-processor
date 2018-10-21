@@ -48,7 +48,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 
 		const _url = url.trim();
 		if ( typeof url !== "string" || !ptnProbableUrl.test( url ) ) {
-			throw new TypeError( "invalid or missing URL for sending input data to" );
+			throw new TypeError( "URL for sending input data is missing or invalid." );
 		}
 
 		const _method = method.trim().toUpperCase() || "POST";
@@ -58,7 +58,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 				break;
 
 			default :
-				throw new TypeError( "invalid HTTP method to use on sending input data" );
+				throw new TypeError( "Rejecting invalid HTTP method to use on sending input data." );
 		}
 
 
@@ -93,7 +93,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 	 */
 	process( data, sequence ) {
 		if ( !data || typeof data !== "object" || Array.isArray( data ) ) {
-			return Promise.reject( new TypeError( "invalid input data to be sent" ) );
+			return Promise.reject( new TypeError( "Rejecting invalid input data to be sent." ) );
 		}
 
 		const url = this.url.replace( /{([^}]+)}/, ( all, code ) => {
@@ -122,7 +122,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 					return data;
 				}
 
-				throw new Error( `sending input data to ${url} responded on error` );
+				throw new Error( `Sending input data to ${url} responded on error.` );
 			} )
 			.catch( error => {
 				if ( this.definition.ignoreFailure ) {

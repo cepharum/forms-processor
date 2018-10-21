@@ -257,7 +257,7 @@ export default class FormModel {
 				},
 				set: value => {
 					if ( value ) {
-						throw new TypeError( `invalid request for marking form #${this.index} as pristine` );
+						throw new TypeError( `Invalid request for marking form #${this.index} as pristine rejected.` );
 					}
 
 					const numFields = this.fields.length;
@@ -406,7 +406,7 @@ function createField( form, sequence, fieldDefinition, fieldIndex, reactiveField
 		return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
 	}
 
-	console.error( `missing manager for handling form fields of type ${type}` ); // eslint-disable-line no-console
+	console.error( `Missing manager for handling form fields of type ${type}.` ); // eslint-disable-line no-console
 
 	return null;
 }

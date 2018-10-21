@@ -49,7 +49,7 @@ export default class Storage {
 	 */
 	static read( storage, name ) {
 		if ( !storage || typeof storage !== "object" ) {
-			throw new TypeError( "invalid storage" );
+			throw new TypeError( "Reading from invalid storage rejected." );
 		}
 
 		const _name = this.normalizeName( name );
@@ -84,7 +84,7 @@ export default class Storage {
 	 */
 	static write( storage, name, value ) {
 		if ( !storage || typeof storage !== "object" ) {
-			throw new TypeError( "invalid storage" );
+			throw new TypeError( "Writing to invalid storage rejected." );
 		}
 
 		const _name = this.normalizeName( name );
@@ -104,7 +104,7 @@ export default class Storage {
 				pointer[segment] = {};
 				changed = true;
 			} else if ( !pointer[segment] || typeof pointer[segment] !== "object" ) {
-				throw new TypeError( `can't write to ${name} due to value at ${segment.slice( 0, i + 1 ).join( "." )}` );
+				throw new TypeError( `Can't write to ${name} due to value at ${segment.slice( 0, i + 1 ).join( "." )}.` );
 			}
 
 			pointer = pointer[segment];

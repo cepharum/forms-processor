@@ -43,7 +43,7 @@ export default class Definition {
 				return fetch( source )
 					.then( response => {
 						if ( !response.ok ) {
-							throw new Error( `fetching form description failed: ${response.status} ${response.statusText}` );
+							throw new Error( `Fetching form description failed: ${response.status} ${response.statusText}` );
 						}
 
 						return response.json();
@@ -56,7 +56,7 @@ export default class Definition {
 
 				// falls through
 			default :
-				return Promise.reject( new TypeError( "invalid source of form's definition" ) );
+				return Promise.reject( new TypeError( "Invalid source of form's definition." ) );
 		}
 	}
 }

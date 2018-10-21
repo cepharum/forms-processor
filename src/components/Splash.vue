@@ -4,7 +4,10 @@
 			<h1>{{splashHeadline}}</h1>
 			<p>{{splashExplanation}}</p>
 		</div>
-		<div v-if="error" class="error">{{error}}</div>
+		<div v-if="error" class="error">
+			<p>Failed starting forms processor:</p>
+			<p>{{error}}</p>
+		</div>
 	</div>
 </template>
 
@@ -24,7 +27,7 @@ export default {
 					const locale = this.$store.getters["l10n/current"];
 					return L10n.loadMap( locale )
 						.catch( () => {
-							console.error( `loading translation for ${locale} failed, using en instead` ); // eslint-disable-line no-console
+							console.error( `Loading translation for ${locale} failed, using en instead.` ); // eslint-disable-line no-console
 
 							return this.$store.dispatch( "l10n/select", "en" )
 								.then( L10n.loadMap( this.$store.getters["l10n/current"] ) );
@@ -53,7 +56,7 @@ export default {
 			} ) )
 			.then( () => this.$store.dispatch( "switchView", "forms" ) )
 			.catch( error => {
-				this.error = `setting up forms client failed: ${error.message}`;
+				this.error = error.message;
 				console.error( this.error ); // eslint-disable-line no-console
 			} );
 	},

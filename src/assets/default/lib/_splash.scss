@@ -2,4 +2,20 @@
 	display: grid;
 	grid-template-columns: 100%;
 	grid-template-rows: 100%;
+
+	p {
+		margin: 0;
+
+		+ p {
+			margin-top: 0.5rem;
+		}
+	}
+
+	.error {
+		margin: 1rem auto;
+		padding: 0.5rem 0.7rem;
+		background: #d00;
+		border: 1px solid #a00;
+		color: white;
+	}
 }

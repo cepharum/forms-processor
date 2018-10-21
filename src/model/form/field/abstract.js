@@ -97,10 +97,10 @@ export default class FormFieldAbstractModel {
 	 * @param {PropertyDescriptorMap} properties defines custom properties to be
 	 *        exposed instead of those derived from definition by default
 	 */
-	constructor(form, definition, fieldIndex, reactiveFieldInfo, properties = {}) {
-		const {name} = definition;
-		if (!name) {
-			throw new TypeError(`missing field name in definition`);
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, properties = {} ) {
+		const { name } = definition;
+		if ( !name ) {
+			throw new TypeError( "Missing field name in definition." );
 		}
 
 
@@ -219,8 +219,8 @@ export default class FormFieldAbstractModel {
 					case "type" :
 						// this property is essential, can't be computed and
 						// requires certain type of value
-						if (typeof propertyValue !== "string" || !propertyValue.trim().length) {
-							throw new TypeError(`invalid type of field ${qualifiedName}`);
+						if ( typeof propertyValue !== "string" || !propertyValue.trim().length ) {
+							throw new TypeError( `Rejecting invalid type of field ${qualifiedName}.` );
 						}
 
 						getters[propertyName] = {value: propertyValue};
@@ -460,8 +460,8 @@ export default class FormFieldAbstractModel {
 			pristine: {
 				get: () => reactiveFieldInfo.pristine,
 				set: value => {
-					if (value) {
-						throw new TypeError(`invalid request for marking field ${this.qualifiedName} as pristine`);
+					if ( value ) {
+						throw new TypeError( `Invalid request for marking field ${this.qualifiedName} as pristine rejected.` );
 					}
 
 					reactiveFieldInfo.pristine = false;

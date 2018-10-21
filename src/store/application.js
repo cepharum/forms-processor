@@ -50,7 +50,7 @@ export default {
 					break;
 
 				default :
-					console.error( `invalid request for switching to view ${view}` ); // eslint-disable-line no-console
+					console.error( `Invalid request for switching to view ${view} ignored.` ); // eslint-disable-line no-console
 			}
 		},
 	},

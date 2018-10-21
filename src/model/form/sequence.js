@@ -57,11 +57,11 @@ export default class FormSequenceModel {
 		};
 
 		if ( typeof id !== "string" ) {
-			throw new TypeError( "invalid ID of sequence of forms" );
+			throw new TypeError( "Invalid ID of sequence of forms." );
 		}
 
 		if ( typeof name !== "string" ) {
-			throw new TypeError( "invalid name of sequence of forms" );
+			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
 		Object.defineProperties( this, {
@@ -267,7 +267,7 @@ export default class FormSequenceModel {
 					const _index = parseInt( index );
 
 					if ( _index < 0 || _index >= numForms || !forms[_index] ) {
-						throw new TypeError( `invalid request for selecting form with index ${_index} out of bounds` );
+						throw new TypeError( `Invalid request for selecting form with index ${_index} out of bounds.` );
 					}
 
 					const maxPermittedIndex = this.firstUnfinishedIndex;
@@ -310,7 +310,7 @@ export default class FormSequenceModel {
 					}
 
 					if ( nameIndex < 0 ) {
-						throw new TypeError( `rejecting selection of form by unknown name "${newName}"` );
+						throw new TypeError( `Rejecting selection of form by unknown name "${newName}".` );
 					}
 
 					this.currentIndex = nameIndex;
@@ -478,7 +478,7 @@ export default class FormSequenceModel {
 	 */
 	updateFormInfo( formIndex, infoName, infoValue ) {
 		if ( formIndex < 0 || formIndex >= this.forms.length ) {
-			throw new TypeError( `invalid index of form #${formIndex}` );
+			throw new TypeError( `Invalid index of form #${formIndex}.` );
 		}
 
 		const components = [ this.progressComponent, this.formsComponent ];
@@ -555,7 +555,7 @@ export default class FormSequenceModel {
 		this.advance();
 
 		if ( !this.finished ) {
-			return Promise.reject( new Error( "forms aren't finished, yet" ) );
+			return Promise.reject( new Error( "Forms aren't finished, yet." ) );
 		}
 
 		const originalData = this.deriveOriginallyNamedData( this.data );
@@ -585,7 +585,7 @@ export default class FormSequenceModel {
 		} )
 			.then( () => _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData ) )
 			.catch( error => {
-				console.error( `processing input failed: ${error.message}` ); // eslint-disable-line no-console
+				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
 				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, this.locale ), error ) );
 			} );
@@ -898,7 +898,7 @@ export default class FormSequenceModel {
 	 */
 	createProcessors( definitions ) {
 		if ( !Array.isArray( definitions ) ) {
-			throw new TypeError( "invalid list of processor definitions" );
+			throw new TypeError( "Invalid list of processor definitions rejected." );
 		}
 
 		const registry = this.registry.processors;
@@ -914,7 +914,7 @@ export default class FormSequenceModel {
 				const Implementation = registry[typeName];
 
 				if ( !Implementation ) {
-					throw new TypeError( `definition of unknown input processor "${typeName}"` );
+					throw new TypeError( `Definition of unknown input processor "${typeName}" rejected.` );
 				}
 
 				processors[write++] = new Implementation( definition );
@@ -922,7 +922,7 @@ export default class FormSequenceModel {
 		}
 
 		if ( !write ) {
-			throw new TypeError( "empty list of input processors" );
+			throw new TypeError( "Got empty list of input processors." );
 		}
 
 		processors.splice( write );

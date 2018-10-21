@@ -91,7 +91,7 @@ export default class Pattern {
 			if ( matchers[code] == null ) {
 				if ( code === "?" ) {
 					if ( matcherCode == null ) {
-						throw new TypeError( `invalid optional functional in pattern w/o preceding functional at "${trimmedPattern.substr( i )}"` );
+						throw new TypeError( `Rejecting question mark in pattern w/o preceding functional character at "${trimmedPattern.substr( i )}".` );
 					}
 
 					lastFunctionalIndex = steps.length;
@@ -120,7 +120,7 @@ export default class Pattern {
 						}
 
 						if ( end === numPattern ) {
-							throw new TypeError( `unclosed group of optional literals` );
+							throw new TypeError( `Unclosed group of optional literals rejected.` );
 						}
 
 						steps.push( literals );
@@ -149,7 +149,7 @@ export default class Pattern {
 					steps.splice( lastFunctionalIndex + 1 );
 				}
 			} else {
-				throw new TypeError( "pattern must not end w/ literal characters" );
+				throw new TypeError( "Pattern must not end w/ literal characters." );
 			}
 		}
 
@@ -190,7 +190,7 @@ export default class Pattern {
 		if ( typeof _pattern === "string" ) {
 			_pattern = this.compilePattern( _pattern );
 		} else if ( !Array.isArray( _pattern ) ) {
-			throw new TypeError( "invalid or missing pattern" );
+			throw new TypeError( "Invalid or missing pattern rejected." );
 		}
 
 		const numPattern = _pattern.length;
@@ -272,11 +272,11 @@ export default class Pattern {
 						nextLiteral = null;
 						patternIndex = nextLiteralIndex + 1;
 					} else if ( !ignoreInvalid ) {
-						throw new TypeError( `premature encounter of literal character ${char} at "${fixedInput.substr( inputIndex )}"` );
+						throw new TypeError( `Rejecting premature literal character ${char} at "${fixedInput.substr( inputIndex )}".` );
 					}
 				} else if ( !ignoreInvalid ) {
 					if ( char !== " " || inputIndex > 0 ) {
-						throw new TypeError( `unexpected literal character ${char} at "${fixedInput.substr( inputIndex )}"` );
+						throw new TypeError( `Rejecting unexpected literal character ${char} at "${fixedInput.substr( inputIndex )}".` );
 					}
 				}
 			}
@@ -284,13 +284,13 @@ export default class Pattern {
 
 		if ( !ignoreInvalid ) {
 			if ( inputIndex < numInput && fixedInput.substr( inputIndex ).trim().length > 0 ) {
-				throw new TypeError( `invalid additional input "${fixedInput.substr( inputIndex )}"` );
+				throw new TypeError( `Rejecting invalid additional input "${fixedInput.substr( inputIndex )}".` );
 			}
 
 			for ( ; patternIndex < numPattern; patternIndex++ ) {
 				const subStep = _pattern[patternIndex];
 				if ( !Array.isArray( subStep ) && !subStep.optional ) {
-					throw new TypeError( `expecting additional input matching at least ${subStep.regexp}` );
+					throw new TypeError( `Missing expected additional input matching at least ${subStep.regexp}.` );
 				}
 			}
 		}
