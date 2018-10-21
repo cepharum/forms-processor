@@ -1,0 +1,94 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "staticList",
+			"label": "Static List",
+			"fields": [
+				{
+					"name": "stringList",
+					"label": "String List",
+					"type": "select",
+					"options": "one , two, three "
+				},
+				{
+					"name": "optionsList",
+					"label": "Options List",
+					"type": "select",
+					"options": [
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					]
+				},
+				{
+					"name": "requiredStringList",
+					"label": "Required String List",
+					"type": "select",
+					"options": "one , two, three ",
+					"required": true
+				},
+				{
+					"name": "requiredOptionsList",
+					"label": "Required Options List",
+					"type": "select",
+					"options": [
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					],
+					"required": true
+				},
+				{
+					"name": "dependingStringList",
+					"label": "Depending String List",
+					"type": "select",
+					"options": "one , two, three ",
+					"required": "=stringList=='one'"
+				},
+				{
+					"name": "dependingOptionsList",
+					"label": "Depending Options List",
+					"type": "select",
+					"options": [
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					],
+					"required": "=stringList=='two'"
+				}
+			]
+		}
+	]
+}

@@ -34,6 +34,18 @@
 			flex: 1 1 70%;
 		}
 
+		select {
+			-moz-appearance: none;
+			-webkit-appearance: none;
+			background: rgba(0,0,0,0.05);
+			border: 1px solid rgba(0,0,0,0.1);
+			padding: 0.2em 0.5em;
+			font: normal 1rem sans-serif;
+			line-height: inherit;
+			width: 100%;
+			box-sizing: border-box;
+		}
+
 		input[type=text] {
 			-moz-appearance: none;
 			-webkit-appearance: none;

@@ -43,6 +43,7 @@ export default function() {
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
+			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
 		},
 		BUTTONS: {
 			PREVIOUS: "Zurück",

@@ -30,6 +30,7 @@ import FormFieldAbstractModel from "./abstract";
 import FormFieldInfoModel from "./info";
 import FormFieldTextModel from "./text";
 import FormFieldCheckBoxModel from "./checkbox";
+import FormFieldSelectModel from "./select";
 
 export default {
 	abstract: FormFieldAbstractModel,
@@ -38,5 +39,6 @@ export default {
 		text: FormFieldTextModel,
 		checkbox: FormFieldCheckBoxModel,
 		radio: FormFieldCheckBoxModel,
+		select: FormFieldSelectModel,
 	},
 };
