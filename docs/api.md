@@ -4,7 +4,7 @@ By injecting forms processor into your HTML document an API is exposed as `Forms
 
 ## Exposed API in Detail
 
-### create( element, options )
+### `create( element, options )`
 
 Invoke this method to create (another) forms processor attached to selected element of your HTML document.
 
@@ -41,76 +41,16 @@ Every sequence of forms may have a name which is an _temporary_ identifier to di
 
 This is the URL of a JSON file defining forms to be processed. See the separate description on [how to define a sequence of forms](definition/README.md).
 
-### addField( typeName, implementationOrFactory )
+### `addField( typeName, implementationOrFactory )`
 
 This method registers type of field with current instance of Forms Processor. This type of field becomes available in all sequences of forms _created afterwards_.
 
 * `typeName` is a string containing the name of type of field to be registered. This name is normalized by means of being trimmed and converted to all lowercase characters.
-* `implementationOrFactory` is either some _class_ implementing particular behaviour of new type of field or some function generating this implementation on demand. In most cases providing factory function is preferred as it enables implementation to be properly derived from abstract base class as required by FormsProcessor.
+* `implementationOrFactory` is either some _class_ implementing particular behaviour of new type of field or some function generating this implementation on demand.
 
-  The factory function is invoked with [required base class of generated implementation](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js). To simplify inheritance setup with legacy Javascript this class exposes static method `makeInherit()` to be invoked with constructor function of new _class_ to become type's implementation. You need to set up inheritance before replacing elements of related prototype.
-  
-  ```javascript
-  FormsProcessor.addField( "catalog", function( abstract ) {
-    const catalogType = abstract.makeInherit( function( form, definition, fieldIndex, reactiveFieldInfo, omitProperties ) {
-      this.$super( form, definition, fieldIndex, reactiveFieldInfo, omitProperties );
-    
-      // put your constructor code here  
-    } );
+See the separate document on [how to create custom types of fields](./definition/fields/custom-fields.md) for more details.
 
-    catalogType.prototype.validate = function() {};
-
-    return catalogType;
-  } );
-  ```
-  
-  The same is possible with ES6 (though probably requiring to transpile the code to work in older browsers):
-
-  ```javascript
-  FormsProcessor.addField( "catalog", function( Abstract ) {
-    return class FieldTypeCatalog extends Abstract {
-      validate() {};
-    }
-  } );
-  ```
-
-A custom type of field's implementation is expected to overload one or more methods of its base class:
-
-* `static get isInteractive()` ([see source](https://git.cepharum.de/cepharum/forms/processor/blob/master/src/model/form/field/abstract.js#L89))
-
-  This _static_ getter must be overloaded to return `true` in case of your custom field is provided value to be part of finally resulting set of input data. This getter marks whether some field is interactive by means of accepting user input.
-
-* `onUpdateValue( store, newValue, updatedFieldName = null )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L584))
-
-  This method is invoked when value of field has been updated e.g. due to the field's dependencies.
-
-* `_renderFieldComponent( reactiveFieldInfo )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L636))
-
-  This method is invoked to describe component injected into some container component controlled by abstract base class. The generated component focuses on part of field which is expected to have type-specific appearance and behaviour. Thus it shouldn't include the field's label, any errors or hints on it.
-
-* `normalizeValue( value, options = {} )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L761))
-
-  On processing input this method is invoked to adjust the input to comply with configured constraints of form. This method isn't expected to validate any input but focuses on preparing any raw input for the upcoming validation.
-
-* `validate( live = false )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/field/abstract.js#L776))
-
-  After normalizing input this method is invoked to validate the field's current value. The method shouldn't throw exception on invalid data but return a list of strings each describing another failed step of validation. This list is used to provide error messages on screen.
-  
-  > Returned strings may be internationalized. Strings starting with `@` followed by name of an entry in current localization table using dot-notation is replaced with localized string of selected entry.
-  > 
-  > ```javascript
-  > catalogType.prototype.validate = function( live ) {
-  >   const errors = [];
-  >
-  >   if ( this.somethingFailed ) {
-  >     errors.push( "@VALIDATION.MISSING_REQUIRED" );
-  >   }
-  >
-  >   return errors;
-  > };
-  > ```
-
-### addProcessor( typeName, implementationOrFactory )
+### `addProcessor( typeName, implementationOrFactory )`
 
 When user is submitting last form in a sequence of forms a defined sequence of input data processors is invoked passing data returned by one input data processor into next one. The list of input data processors is customized in definition of sequence of forms.
 
@@ -157,7 +97,7 @@ A custom input data processor must overload this method:
   
   Every input data processor should return some data. Whenever an input data processor isn't adjusting the provided data it should return the originally provided data, at least. By returning promise for resulting data the method may start asynchronous processes. This will defer invocation of further input data processors.
 
-### addTranslations( locale, translationsOverlay )
+### `addTranslations( locale, translationsOverlay )`
 
 FormsProcessor has internationalization support built in. Internal fields use lookup trees providing translations for current locale. This method is provided to add custom overlays to extend or replace existing entries in a translation tree.
 
@@ -170,3 +110,57 @@ Any provided overlay of translations is associated with a particular locale to b
 Due to the fact that API works in a global scope probably managing multiple instances of FormsProcessor with each one considering different locale to be current one, there is no possibility using this API to detect current locale and provide translation for that locale, only. Due to controlling all instances of FormsProcessor your code might have an option to decide what translations is required, though.
 
 Applying translations affect FormsProcessor instances created afterwards, only.
+
+### `FormsProcessor.runConfiguration()`
+
+
+By invoking `FormsProcessor.runConfiguration()` a single configuration defining fields and processors to register as well as sequences of forms to inject in current HTML document is conveniently customizing injected Forms Processor. The provided configuration is expected to basically comply with one of two structures.
+
+### Simple Structure
+
+If you don't want to register any custom input processor or type of field it's sufficient to provide an array of form components to be injected into HTML document as soon as the forms processor has been loaded.
+
+Every element in this array is yet another array consisting of these sub-elements:
+
+1. First sub-element is a reference on an HTML element or a CSS query used to select first matching element of current HTML document. This element will be used to attach another forms component to.
+2. Second sub-element is an object providing individual customizations of forms component to be injected. This includes provision of URL used to fetch forms' definition from.
+
+### Complex Structure
+
+In case you want to register custom input processors or additional types of fields you need to use a more complex structure. It starts with an object containing one or more of the following properties:
+
+#### sequences
+
+This property takes an array of component descriptors to be processed as soon as the forms processor has been loaded. This array is equivalent to the simple structure of configuration described before. 
+
+#### fields
+
+This object maps names a field's type name into a function returning class instantiated for every field of that type used in injected forms' definition. This pattern is required due to any such class must properly inherit from an abstract base class defined by loaded forms processor. Thus you can't preliminary configure custom types of fields without loading the forms processor first but have to postpone definition of a type's class until then. 
+
+The factory callback is invoked with required base class in its first argument. This base class is exposing static method `makeInherit()` taking constructor of the desired sub-class to help with creating an actually inheriting class the original way. 
+
+```javascript
+function generateNewType( abstract ) {
+	const newType = abstract.makeInherit( function( form, definition, fieldIndex, reactiveFieldInfo ) {
+		this.$super( form, definition, fieldIndex, reactiveFieldInfo );
+	} );
+
+	newType.prototype.validate = function() { ... };
+
+	return newType;
+}
+```
+
+Of course using ES6 class syntax is possible as well:
+
+```javascript
+function generateNewType( abstract ) {
+	return class NewType extends abstract {
+		validate() { ... };
+	};
+}
+```
+
+#### processors
+
+This object works mostly similar to the one in property `fields` above but maps type names of custom input processors into functions invoked with a different abstract base class for generating the related class of input processor instances per type.

@@ -165,59 +165,8 @@ For the sake of clarity here comes the resulting HTML document:
 </html>
 ```
 
-## Adding Custom Fields And Processors
+## Customizing Forms Processor
 
-Prior to creating a sequence of forms you may use `FormsProcessor.addField()` to register a custom type of fields. `FormsProcessor.addProcessor()` may be used to register custom types of input processors.
+Prior to creating a sequence of forms you may use `FormsProcessor.addField()` to register a custom type of fields. `FormsProcessor.addProcessor()` provides registration of custom input processors. Finally, `FormsProcessor.addTranslations()` is available to inject your own translations for display text.
 
-## Running A Whole Configuration
-
-By invoking `FormsProcessor.runConfiguration()` a single configuration defining fields and processors to register as well as sequences of forms to inject in current HTML document is conveniently customizing injected Forms Processor. The provided configuration is expected to basically comply with one of two structures.
-
-### Simple Structure
-
-If you don't want to register any custom input processor or type of field it's sufficient to provide an array of form components to be injected into HTML document as soon as the forms processor has been loaded.
-
-Every element in this array is yet another array consisting of these sub-elements:
-
-1. First sub-element is a reference on an HTML element or a CSS query used to select first matching element of current HTML document. This element will be used to attach another forms component to.
-2. Second sub-element is an object providing individual customizations of forms component to be injected. This includes provision of URL used to fetch forms' definition from.
-
-### Complex Structure
-
-In case you want to register custom input processors or additional types of fields you need to use a more complex structure. It starts with an object containing one or more of the following properties:
-
-#### sequences
-
-This property takes an array of component descriptors to be processed as soon as the forms processor has been loaded. This array is equivalent to the simple structure of configuration described before. 
-
-#### fields
-
-This object maps names a field's type name into a function returning class instantiated for every field of that type used in injected forms' definition. This pattern is required due to any such class must properly inherit from an abstract base class defined by loaded forms processor. Thus you can't preliminary configure custom types of fields without loading the forms processor first but have to postpone definition of a type's class until then. 
-
-The factory callback is invoked with required base class in its first argument. This base class is exposing static method `makeInherit()` taking constructor of the desired sub-class to help with creating an actually inheriting class the original way. 
-
-```javascript
-function generateNewType( abstract ) {
-	const newType = abstract.makeInherit( function( form, definition, fieldIndex, reactiveFieldInfo, omitProperties ) {
-		this.$super( form, definition, fieldIndex, reactiveFieldInfo, omitProperties );
-	} );
-
-	newType.prototype.validate = function() { ... };
-
-	return newType;
-}
-```
-
-Of course using ES6 class syntax is possible as well:
-
-```javascript
-function generateNewType( abstract ) {
-	return class NewType extends abstract {
-		validate() { ... };
-	};
-}
-```
-
-#### processors
-
-This object works mostly similar to the one in property `fields` above but maps type names of custom input processors into functions invoked with a different abstract base class for generating the related class of input processor instances per type.
+Read more about this in [API documentation](./api.md).
