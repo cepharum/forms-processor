@@ -1,6 +1,4 @@
 {
-	"label": "Most Simple",
-	"description": "This sequence consists of single form, only.",
 	"processors": [
 		{
 			"url": "/"
@@ -10,7 +8,6 @@
 		{
 			"name": "soleForm",
 			"label": "Sole Form",
-			"description": "This is a sole form in a single-step sequence.",
 			"fields": [
 				{
 					"name": "someField",
