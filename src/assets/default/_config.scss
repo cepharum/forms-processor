@@ -1,6 +1,7 @@
 $desktopPageWidth: 1280px;
 
-$navBarColor: #55f;
+$baseColor: #55f;
+$navBarColor: $baseColor;
 $navBarTextColor: white;
 
 $fontSize: 12pt;
