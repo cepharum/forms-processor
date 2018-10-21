@@ -85,7 +85,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	_renderFieldComponent( reactiveFieldInfo ) {
+	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { form: { readValue, writeValue }, qualifiedName } = that;
 

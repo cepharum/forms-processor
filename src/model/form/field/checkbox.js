@@ -141,7 +141,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	_renderFieldComponent(reactiveFieldInfo) {
+	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
 		const {form: {readValue, writeValue}, qualifiedName, type, value, options, multiple} = that;
 

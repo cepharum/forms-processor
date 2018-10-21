@@ -630,7 +630,7 @@ export default class FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} description of Vue component
 	 */
-	_renderFieldComponent(reactiveFieldInfo) { // eslint-disable-line no-unused-vars
+	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		return {
 			render(createElement) {
 				return createElement("<!-- abstract field -->");
@@ -644,13 +644,13 @@ export default class FormFieldAbstractModel {
 	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
 	 * @returns {object} provides definition of field's component
 	 */
-	_renderComponent(reactiveFieldInfo) {
+	renderComponent( reactiveFieldInfo ) {
 		const that = this;
 		const {type, originalName, name, qualifiedName, classes} = this;
 
 		return {
 			components: {
-				FieldComponent: this._renderFieldComponent(reactiveFieldInfo),
+				FieldComponent: this.renderFieldComponent( reactiveFieldInfo ),
 			},
 			computed: {
 				componentClasses() {

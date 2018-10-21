@@ -406,7 +406,7 @@ export default class FormSequenceModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			formsComponent: { value: this._renderComponent( reactiveInfo ) },
+			formsComponent: { value: this.renderComponent( reactiveInfo ) },
 
 			/**
 			 * Provides component rendering progress bar in sequence of forms.
@@ -415,7 +415,7 @@ export default class FormSequenceModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			progressComponent: { value: this._renderProgressComponent( reactiveInfo ) },
+			progressComponent: { value: this.renderProgressComponent( reactiveInfo ) },
 		} );
 	}
 
@@ -735,7 +735,7 @@ export default class FormSequenceModel {
 	 * @returns {{render: function}} description of Vue component
 	 * @protected
 	 */
-	_renderComponent( data ) {
+	renderComponent( data ) {
 		const that = this;
 		const { forms, showAllForms, fields } = this;
 		const numForms = forms.length;
@@ -809,7 +809,7 @@ export default class FormSequenceModel {
 	 * @returns {{render: function}} description of Vue component
 	 * @protected
 	 */
-	_renderProgressComponent( data ) {
+	renderProgressComponent( data ) {
 		const formsDefinition = this.forms;
 
 		return {

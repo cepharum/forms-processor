@@ -331,7 +331,7 @@ export default class FormModel {
 			 * @property {{render:function}}
 			 * @readonly
 			 */
-			component: { value: this._renderComponent( reactiveFormInfo ) },
+			component: { value: this.renderComponent( reactiveFormInfo ) },
 		} );
 	}
 
@@ -341,7 +341,7 @@ export default class FormModel {
 	 * @param {object} formInfo provides reactive information on form
 	 * @returns {{render:function()}} description of Vue component
 	 */
-	_renderComponent( formInfo ) {
+	renderComponent( formInfo ) {
 		const fields = this.fields;
 		const numFields = fields.length;
 		const components = new Array( numFields );
