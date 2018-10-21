@@ -482,7 +482,7 @@ export default class FormFieldAbstractModel {
 							form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
 						}
 
-						component = this._renderComponent(reactiveFieldInfo);
+						component = this.renderComponent( reactiveFieldInfo );
 					}
 
 					return component;
