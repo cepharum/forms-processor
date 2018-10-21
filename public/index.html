@@ -13,47 +13,60 @@
 				JavaScript enabled. Please enable it to continue.</strong>
 		</noscript>
 		<div id="app"></div>
-		<script type="text/javascript">
-			var CepharumForms = {
-				processors: {
-					extract: function( abstract ) {
-						return class ExtractProcessor extends abstract {
-							process( data ) {
-								return Promise.resolve( {
-									Vorname: data.personal.firstName,
-									Nachname: data.personal.lastName,
-									IBAN: data.delivery.iban || "keine angegeben",
-								} );
-							}
-						};
-					},
-					log: function( abstract ) {
-						const processor = abstract.makeInherit( function( definition ) {
-							this.$super( definition );
-						} );
+		<script type="text/javascript" id="loaderScript">
+			var definitionFile = location.hash.slice( 1 );
+			if ( definitionFile.match( /^([a-z_.0-9-]+\/)+definition\.js$/i ) ) {
+				// got hash selecting particular definition file to use instead
+				// of static example (supporting different E2E tests this way)
+				var script = document.createElement( "script" );
+				script.type = "text/javascript";
 
-						processor.prototype.process = function( data ) {
-							console.log( data );
-							return Promise.resolve( data );
-						};
+				var me = document.getElementById( "loaderScript" );
+				me.parentNode.insertBefore( script, me.nextSibling );
 
-						return processor;
-					},
-				},
-				translations: {
-					de: {
-						VALIDATION: {
-							MISSING_REQUIRED: "Gib hier was an, Mann!",
+				script.src = definitionFile;
+			} else {
+				var CepharumForms = {
+					processors: {
+						extract: function( abstract ) {
+							return class ExtractProcessor extends abstract {
+								process( data ) {
+									return Promise.resolve( {
+										Vorname: data.personal.firstName,
+										Nachname: data.personal.lastName,
+										IBAN: data.delivery.iban || "keine angegeben",
+									} );
+								}
+							};
+						},
+						log: function( abstract ) {
+							const processor = abstract.makeInherit( function( definition ) {
+								this.$super( definition );
+							} );
+
+							processor.prototype.process = function( data ) {
+								console.log( data );
+								return Promise.resolve( data );
+							};
+
+							return processor;
 						},
 					},
-				},
-				sequences: [ [ "#app", {
-					//definition: "http://127.0.0.1:8000/form/describe/test.yaml",
-					definition: "example.json",
-					id: "some-input-1234",
-					name: "testform",
-				} ] ],
-			};
+					translations: {
+						de: {
+							VALIDATION: {
+								MISSING_REQUIRED: "Gib hier was an, Mann!",
+							},
+						},
+					},
+					sequences: [ [ "#app", {
+						//definition: "http://127.0.0.1:8000/form/describe/test.yaml",
+						definition: "example.json",
+						id: "some-input-1234",
+						name: "testform",
+					} ] ],
+				};
+			}
 		</script>
 		<!-- built files will be auto injected -->
 	</body>
