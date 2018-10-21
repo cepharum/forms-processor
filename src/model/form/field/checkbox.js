@@ -27,6 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import Data from "../../../service/data";
+import Options from "../utility/options";
 
 
 /**
@@ -45,143 +47,99 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 */
-	constructor(form, definition, fieldIndex, reactiveFieldInfo) {
-		super(form, definition, fieldIndex, reactiveFieldInfo, {
-			options(v) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+		super( form, definition, fieldIndex, reactiveFieldInfo, {
+			options( definitionValue, definitionName, definitions, cbTermHandler ) {
 				/**
-				 * @name options
+				 * @name FormFieldCheckBoxModel#options
 				 * @property {Array<{value:string, label:string}>}
 				 * @readonly
 				 */
-				return {
-					value: this.constructor.createOptions(v),
-				}
+				return cbTermHandler( definitionValue, value => {
+					const computed = Options.createOptions( value, null, map => this.selectLocalization( map ) );
+
+					reactiveFieldInfo.checkboxes = computed;
+
+					return computed;
+				} );
 			},
-			multiple(v) {
-				let value = Boolean(v);
-				if (v instanceof String) {
-					value = (Boolean(v) && v !== "false");
-				}
+
+			multiple( definitionValue, _, qualifiedDefinition ) {
+				/**
+				 * Indicates whether user might select multiple options or not.
+				 *
+				 * @name FormFieldCheckBoxModel#multiple
+				 * @property boolean
+				 * @readonly
+				 */
 				return {
-					value
-				}
+					value: definitionValue == null ? qualifiedDefinition.type !== "radio" : Data.normalizeToBoolean( definitionValue ),
+				};
 			}
-		});
+		} );
 	}
 
 	/** @inheritDoc */
-	validate(live) {
-		const {value, required} = this;
+	validate() {
+		const { value, required } = this;
 		const errors = [];
-		if (required) {
-			if (value instanceof Array) {
-				if (!value.length) {
-					errors.push("@VALIDATION.MISSING_REQUIRED")
+		if ( required ) {
+			if ( value instanceof Array ) {
+				if ( !value.length ) {
+					errors.push( "@VALIDATION.MISSING_REQUIRED" );
 				}
-			} else if (!Boolean(value)) {
-				errors.push("@VALIDATION.MISSING_REQUIRED");
+			} else if ( !value ) {
+				errors.push( "@VALIDATION.MISSING_REQUIRED" );
 			}
 		}
 		return errors;
 	}
 
-	static createOptions(definition) {
-		if (!definition) {
-			return undefined;
-		}
-
-		const options = typeof definition === "string" ? definition.trim().split(/\s*[,;]\s*/) : definition;
-		if (!Array.isArray(options)) {
-			throw new TypeError("not a list of options to offer in a selector");
-		}
-
-		const numOptions = options.length;
-		const normalized = new Array(numOptions);
-		let write = 0;
-
-		for (let i = 0; i < numOptions; i++) {
-			const item = options[i];
-
-			if (!item) {
-				continue;
-			}
-
-			switch (typeof item) {
-				case "string" : {
-					const value = item.trim();
-
-					normalized[write++] = {
-						value,
-						label: value,
-					};
-
-					break;
-				}
-
-				case "object" : {
-					if (!item.value) {
-						throw new TypeError("invalid option to be provided in selector misses value");
-					}
-
-					const value = item.value.trim();
-
-					normalized[write++] = {
-						value,
-						label: item.label == null ? value : String(item.label).trim(),
-					};
-
-					break;
-				}
-			}
-		}
-
-		normalized.splice(write);
-
-		return normalized;
-	}
-
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const {form: {readValue, writeValue}, qualifiedName, type, value, options, multiple} = that;
+		const { form: { readValue, writeValue }, qualifiedName, type, value, options, multiple } = that;
 
 		return {
 			data: () => {
 				return {
-					reactiveFieldInfo,
 					qualifiedName,
-					options,
+					options: reactiveFieldInfo.checkboxes,
 					type,
 					value,
 					multiple,
 					update: true,
-				}
+				};
 			},
 			computed: {
 				_value: {
 					get() {
-						if (this.update) {
+						if ( this.update ) {
 							this.update = false;
-							if (multiple) {
-								return readValue(qualifiedName) || [];
+
+							if ( multiple ) {
+								return readValue( qualifiedName ) || [];
 							}
-							return readValue(qualifiedName);
+
+							return readValue( qualifiedName );
 						}
+
+						return undefined;
 					},
-					set(newValue) {
+					set( newValue ) {
 						reactiveFieldInfo.pristine = false;
-						if (!newValue) {
-							newValue = undefined;
-						}
-						if (newValue !== this._value) {
-							writeValue(qualifiedName, newValue);
-							reactiveFieldInfo.value = newValue;
-							this.update = true
+
+						const _v = newValue ? newValue : undefined;
+
+						if ( _v !== this._value ) {
+							writeValue( qualifiedName, _v );
+							reactiveFieldInfo.value = _v;
+							this.update = true;
 						}
 					},
 				},
 				inputType() {
-					return ((!(this.multiple) || this.type === 'radio') && (options && options.length > 1)) ? 'radio' : 'checkbox'
+					return ( !this.multiple || this.type === "radio" ) && ( options && options.length > 1 ) ? "radio" : "checkbox";
 				}
 			},
 			template: `
