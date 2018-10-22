@@ -7,6 +7,7 @@
 		<div v-if="error" class="error">
 			<p>Failed starting forms processor:</p>
 			<p>{{error}}</p>
+			<pre v-if="stack">{{stack}}</pre>
 		</div>
 	</div>
 </template>
@@ -56,13 +57,19 @@ export default {
 			} ) )
 			.then( () => this.$store.dispatch( "switchView", "forms" ) )
 			.catch( error => {
-				this.error = error.message;
+				this.error = [error.message];
+
+				if ( process.env.NODE_ENV === "development" ) {
+					this.stack = error.stack;
+				}
+
 				console.error( this.error ); // eslint-disable-line no-console
 			} );
 	},
 	data() {
 		return {
 			error: "",
+			stack: "",
 		};
 	},
 	computed: {
@@ -78,3 +85,12 @@ export default {
 	},
 };
 </script>
+
+<style scoped lang="scss">
+	pre {
+		max-width: 100vh;
+		position: relative;
+		overflow-x: auto;
+		text-align: left;
+	}
+</style>
