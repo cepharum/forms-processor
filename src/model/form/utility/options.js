@@ -194,7 +194,7 @@ export default class Options {
 
 						copy[i] = {
 							label: localizer ? localizer( _label ) : _label,
-							value: localizer ? localizer( _value ) : _value,
+							value: String( localizer ? localizer( _value ) : _value ).trim(),
 						};
 					}
 
