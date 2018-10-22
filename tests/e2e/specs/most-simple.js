@@ -2,7 +2,7 @@
 // http://nightwatchjs.org/guide#usage
 
 module.exports = {
-	"Most Simple Form": browser => {
+	"Most simple form": browser => {
 		browser
 			.url( process.env.VUE_DEV_SERVER_URL + "#most-simple/definition.js" )
 			.waitForElementVisible( ".forms-processor", 5000 )

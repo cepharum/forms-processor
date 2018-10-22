@@ -2,7 +2,7 @@
 // http://nightwatchjs.org/guide#usage
 
 module.exports = {
-	"Most Simple Form": browser => {
+	"Lists with static options": browser => {
 		const { Keys } = browser;
 
 		// console.log( Keys );
