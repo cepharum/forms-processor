@@ -74,6 +74,73 @@ const reserved = [
 ];
 
 
+
+/**
+ * Defines callback function available for detecting embedded terms in a custom
+ * value returning property descriptor.
+ *
+ * In addition this function is expected to privately know the name of a
+ * property some provided value is originating from. It is thus implicitly
+ * updating the reactive set of properties accordingly. However, if value
+ * provided here isn't related to the definition property this function
+ * considers to manage the argument `isSubValue` must be set true to prevent the
+ * invoked function from updating reactive data using that property's name.
+ *
+ * @typedef {function( value:*, normalizer:function(*):*, isSubValue:boolean ):PropertyDescriptor} CustomPropertyLimitedTermHandler
+ */
+
+/**
+ * Defines callback function available for detecting embedded terms in a custom
+ * value returning property descriptor.
+ *
+ * In addition this function is expected to privately know the name of a
+ * property some provided value is originating from. It is thus implicitly
+ * updating the reactive set of properties accordingly. However, if value
+ * provided here isn't related to the definition property this function
+ * considers to manage the argument `isSubValue` must be set true to prevent the
+ * invoked function from updating reactive data using that property's name.
+ *
+ * @typedef {function( value:*, normalizer:function(*):*, isSubValue:boolean ):PropertyDescriptor} CustomPropertyLimitedTermHandler
+ */
+
+/**
+ * Defines callback to be invoked for explicitly updating some definition
+ * property's value in field's reactive set of properties after having
+ * (re-)computed it.
+ *
+ * @typedef {function(newValue:*)} CustomPropertyReactiveWriter
+ */
+
+/**
+ * Defines signature of a function generating property descriptor for some
+ * custom property.
+ *
+ * @typedef {function(
+ *     value:*,
+ *     name:string,
+ *     definition:object<string,*>,
+ *     termHandler:CustomPropertyLimitedTermHandler,
+ *     reactiveWriter:CustomPropertyReactiveWriter
+ * ):PropertyDescriptor} PropertyDescriptorFactory
+ */
+
+/**
+ * Combines types of data supported by abstract base class of a field on
+ * handling custom properties in a field's definition.
+ *
+ * @typedef {PropertyDescriptor|PropertyDescriptorFactory|*} CustomProperty
+ */
+
+/**
+ * Defines a map of custom properties' names used in a field's definition into
+ * descriptors or handlers creating exposure for value of either definition
+ * property.
+ *
+ * @typedef {object<string,CustomProperty>} CustomPropertyMap
+ */
+
+
+
 /**
  * Implements abstract base class of managers handling certain type of field in
  * a form.
@@ -94,10 +161,9 @@ export default class FormFieldAbstractModel {
 	 * @param {object} definition properties and constraints of single form field
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {PropertyDescriptorMap} properties defines custom properties to be
-	 *        exposed instead of those derived from definition by default
+	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, properties = {} ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {} ) {
 		const { name } = definition;
 		if ( !name ) {
 			throw new TypeError( "Missing field name in definition." );
@@ -230,37 +296,13 @@ export default class FormFieldAbstractModel {
 						if ( reserved.indexOf( propertyName ) < 0 ) {
 							// handle non-reserved properties of definition in a common way
 
-							if ( properties.hasOwnProperty( propertyName ) ) {
+							if ( customProperties.hasOwnProperty( propertyName ) ) {
 								// got some custom descriptor of property to expose
-								const descriptor = properties[propertyName];
+								const descriptor = customProperties[propertyName];
 								if ( descriptor !== undefined ) {
-									properties[propertyName] = null;
+									customProperties[propertyName] = undefined;
 
-									if ( typeof descriptor === "function" ) {
-										// got generator for custom property's description
-										const description = descriptor.call( this, propertyValue, propertyName, qualifiedDefinition,
-											( value, normalizer, isSubValue = false ) => {
-												return handleComputableValue( value, propertyName, isSubValue ? null : reactiveFieldInfo, normalizer );
-											}, value => {
-												reactiveFieldInfo[propertyName] = value;
-											} );
-
-										if ( description !== undefined ) { // eslint-disable-line max-depth
-											getters[propertyName] = description;
-										}
-									} else if ( typeof descriptor.get === "function" ) {
-										// got custom property's description containing getter function
-										getters[propertyName] = descriptor;
-										reactiveFieldInfo[propertyName] = descriptor.get();
-									} else if ( descriptor.hasOwnProperty( "value" ) ) {
-										// got custom property's description containing fixed value
-										getters[propertyName] = descriptor;
-										reactiveFieldInfo[propertyName] = descriptor.value;
-									} else {
-										// got fixed value of custom property
-										getters[propertyName] = { value: descriptor };
-										reactiveFieldInfo[propertyName] = descriptor;
-									}
+									handleCustomProperty.call( this, descriptor, propertyValue, propertyName );
 								}
 							} else {
 								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
@@ -275,21 +317,16 @@ export default class FormFieldAbstractModel {
 		}
 
 		{ // make sure to transfer "default" behaviour of custom properties due to lacking definition mentioning it
-			const propNames = Object.keys( properties );
+			const propNames = Object.keys( customProperties );
 			const numProps = propNames.length;
 
 			for ( let pni = 0; pni < numProps; pni++ ) {
 				const propertyName = propNames[pni];
-				const descriptor = properties[propertyName];
+				const descriptor = customProperties[propertyName];
 
 				if ( reserved.indexOf( propertyName ) < 0 ) {
-					if ( descriptor && !getters.hasOwnProperty( propertyName ) ) {
-						if ( typeof descriptor === "function" ) {
-							// descriptor depends on value of qualified definition's property
-							getters[propertyName] = descriptor.call( this, undefined, propertyName, qualifiedDefinition );
-						} else {
-							getters[propertyName] = descriptor;
-						}
+					if ( descriptor !== undefined && !getters.hasOwnProperty( propertyName ) ) {
+						handleCustomProperty.call( this, descriptor, undefined, propertyName );
 					}
 				}
 			}
@@ -459,7 +496,7 @@ export default class FormFieldAbstractModel {
 					if ( !initializedReactiveInfo ) {
 						initializedReactiveInfo = true;
 
-						form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+						form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
 					}
 
 					return reactiveFieldInfo;
@@ -479,7 +516,7 @@ export default class FormFieldAbstractModel {
 						if ( !initializedReactiveInfo ) {
 							initializedReactiveInfo = true;
 
-							form.writeValue( qualifiedName, this._initializeReactive( reactiveFieldInfo ) );
+							form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
 						}
 
 						component = this.renderComponent( reactiveFieldInfo );
@@ -592,6 +629,62 @@ export default class FormFieldAbstractModel {
 
 			return { value: normalized };
 		}
+
+		/**
+		 * Handles integration of defined property using some custom property
+		 * descriptor or some factory to generate this descriptor as provided
+		 * by caller.
+		 *
+		 * @param {CustomPropertyMap} customProperty property descriptor to use, factory to create that or some fixed value
+		 * @param {*} definedValue value of property found in definition
+		 * @param {string} propertyName name of definition property to be integrated
+		 * @returns {void}
+		 */
+		function handleCustomProperty( customProperty, definedValue, propertyName ) {
+			if ( typeof customProperty === "function" ) {
+				// got generator for custom property's description
+				const description = customProperty.call( this,
+					definedValue,
+					propertyName,
+					qualifiedDefinition,
+					( value, normalizer, isSubValue = false ) => handleComputableValue(
+						value,
+						propertyName,
+						isSubValue ? null : reactiveFieldInfo,
+						normalizer
+					),
+					value => { reactiveFieldInfo[propertyName] = value; }
+				);
+
+				if ( description !== undefined ) { // eslint-disable-line max-depth
+					if ( description.get ) {
+						const originalGet = description.get;
+						description.get = function() {
+							const original = originalGet.call( this );
+							reactiveFieldInfo[propertyName] = original;
+							return original;
+						};
+						reactiveFieldInfo[propertyName] = originalGet();
+					} else {
+						reactiveFieldInfo[propertyName] = description.value;
+					}
+
+					getters[propertyName] = description;
+				}
+			} else if ( typeof customProperty.get === "function" ) {
+				// got custom property's description containing getter function
+				getters[propertyName] = customProperty;
+				reactiveFieldInfo[propertyName] = customProperty.get();
+			} else if ( customProperty.hasOwnProperty( "value" ) ) {
+				// got custom property's description containing fixed value
+				getters[propertyName] = customProperty;
+				reactiveFieldInfo[propertyName] = customProperty.value;
+			} else {
+				// got fixed value of custom property
+				getters[propertyName] = { value: customProperty };
+				reactiveFieldInfo[propertyName] = customProperty;
+			}
+		}
 	}
 
 	/**
@@ -599,9 +692,9 @@ export default class FormFieldAbstractModel {
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
 	 * @returns {*} initial value of field as used on initializing reactive data
-	 * @private
+	 * @protected
 	 */
-	_initializeReactive( reactiveFieldInfo ) {
+	initializeReactive( reactiveFieldInfo ) {
 		const initialValue = this.normalizeValue( this.initial );
 
 		reactiveFieldInfo.required = this.required;
@@ -637,7 +730,7 @@ export default class FormFieldAbstractModel {
 		const data = this.$data;
 		const itsMe = updatedFieldName == null;
 
-		this.updateFieldInformation( data );
+		this.updateFieldInformation( data, itsMe );
 
 		if ( !itsMe && data.pristine ) {
 			// some other field has been updated
@@ -670,9 +763,11 @@ export default class FormFieldAbstractModel {
 	 *       re-evaluated per type of field.
 	 *
 	 * @param {object} reactiveFieldInformation contains reactive properties of field
+	 * @param {boolean} onLocalUpdate if true method is invoked due to recent change of current field itself,
+	 *        otherwise it's been an update of field this one depends on
 	 * @returns {void}
 	 */
-	updateFieldInformation( reactiveFieldInformation ) {
+	updateFieldInformation( reactiveFieldInformation, onLocalUpdate ) {
 		reactiveFieldInformation.label = this.label;
 		reactiveFieldInformation.hint = this.hint;
 		reactiveFieldInformation.required = this.required;
@@ -702,6 +797,8 @@ export default class FormFieldAbstractModel {
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { type, originalName, name, qualifiedName, classes } = this;
+
+		this.initializeReactive( reactiveFieldInfo );
 
 		return {
 			components: {

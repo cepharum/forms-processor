@@ -27,6 +27,42 @@
  */
 
 /**
+ * Describes single option to choose out of a set of options.
+ *
+ * Each option consists of a value and a human-readable label briefly explaining
+ * the option.
+ *
+ * @typedef {{label:string, value:string}} LabelledOption
+ */
+
+/**
+ * Describes a sorted list of options to choose from.
+ *
+ * @typedef {LabelledOption[]} LabelledOptionsList
+ */
+
+/**
+ * Describes property instantly delivering a sorted list of options to choose
+ * from.
+ *
+ * @typedef {{value:LabelledOptionsList}} InstantLabelledOptionsListProperty
+ */
+
+/**
+ * Describes property deferredly delivering a sorted list of options to choose
+ * from.
+ *
+ * @typedef {{get:function():LabelledOptionsList}} DeferredLabelledOptionsListProperty
+ */
+
+/**
+ * Describes property delivering a sorted list of options to choose from.
+ *
+ * @typedef {InstantLabelledOptionsListProperty|DeferredLabelledOptionsListProperty} LabelledOptionsListProperty
+ */
+
+
+/**
  * Provides helpers for working with a list of options to choose from e.g. in a
  * selector or in a set of checkboxes, buttons or radio buttons.
  */
@@ -34,13 +70,14 @@ export default class Options {
 	/**
 	 * Extracts normalized array of options to be listed in selector.
 	 *
-	 * @param {string|array<{label:string, value:string}>} definition options as provided in field's definition
-	 * @param {array<{label:string, value:string}>} fallback to return if `definition` is missing/unset
+	 * @param {string|array<{label:string, value:string}>} definitionValue options as provided in field's definition
+	 * @param {?LabelledOptionsListProperty} fallback to return if `definition` is missing/unset
 	 * @param {function(string):string} localizer optional callback selecting matching translation from a map of available localizations
-	 * @return {array<{label:string, value:string}>} normalized list of option descriptors for listing in selector
+	 * @param {function(string):PropertyDescriptor} termHandler optional callback selecting matching translation from a map of available localizations
+	 * @return {LabelledOptionsListProperty} property descriptor describing normalized list of options to choose from
 	 */
-	static createOptions( definition, fallback = null, localizer = null ) {
-		if ( !definition ) {
+	static createOptions( definitionValue, fallback = null, { localizer = null, termHandler = null } = {} ) {
+		if ( !definitionValue ) {
 			if ( fallback == null ) {
 				throw new TypeError( "Missing list of options to offer in a selector." );
 			}
@@ -48,53 +85,136 @@ export default class Options {
 			return fallback;
 		}
 
-		const options = typeof definition === "string" ? definition.trim().split( /\s*[,;]\s*/ ) : definition;
-		if ( !Array.isArray( options ) ) {
-			throw new TypeError( "Normalized definition of selectable options does not result in a list." );
+
+		if ( Array.isArray( definitionValue ) ) {
+			return normalizeOptions( definitionValue, termHandler );
 		}
 
-		const numOptions = options.length;
-		const normalized = new Array( numOptions );
-		let write = 0;
+		{
+			const _value = String( definitionValue ).trim();
+			if ( termHandler ) {
+				const { get, value } = termHandler( _value );
 
-		for ( let i = 0; i < numOptions; i++ ) {
-			const item = options[i];
-
-			if ( !item ) {
-				continue;
-			}
-
-			switch ( typeof item ) {
-				case "string" : {
-					const value = item.trim();
-
-					normalized[write++] = {
-						value,
-						label: value,
-					};
-
-					break;
+				if ( typeof get === "function" ) {
+					return { get: () => normalizeOptions( get() ).value };
 				}
 
-				case "object" : {
-					if ( !item.value ) {
-						throw new TypeError( "Rejecting selectable option due to missing value." );
+				return normalizeOptions( value );
+			}
+
+			return normalizeOptions( _value );
+		}
+
+
+		/**
+		 * Processes provided definition of list creating property descriptor
+		 * delivering normalized list of options instantly or deferredly.
+		 *
+		 * @param {string|Array<string|object>} processedDefinitionValue definition of options, probably computed
+		 * @param {function(string):PropertyDescriptor} cbTermHandler callback computing terms optionally embedded in passed value
+		 * @return {LabelledOptionsListProperty} normalized list of options, probably deferred
+		 */
+		function normalizeOptions( processedDefinitionValue, cbTermHandler = null ) {
+			if ( !processedDefinitionValue ) {
+				return { value: [] };
+			}
+
+			// convert different ways of defining list of options into homogenic
+			// list of options, though keeping track of items with deferred data
+			const list = Array.isArray( processedDefinitionValue ) ? processedDefinitionValue : String( processedDefinitionValue ).trim().split( /(?:\s*,)+\s*/ );
+			const numItems = list.length;
+			const filtered = new Array( numItems );
+			let write = 0;
+			let hasDynamicItem = false;
+
+			for ( let read = 0; read < numItems; read++ ) {
+				const source = list[read];
+				let value = null;
+				let label = null;
+
+				switch ( typeof source ) {
+					case "string" : {
+						const computed = cbTermHandler ? cbTermHandler( source ) : { value: source };
+						if ( computed.get ) {
+							hasDynamicItem = true;
+							label = value = computed;
+						} else if ( computed.value != null ) {
+							label = value = computed;
+						}
+
+						break;
 					}
 
-					const value = item.value.trim();
+					case "object" :
+						if ( source && source.value != null ) {
+							const _label = source.label == null ? source.value : source.label;
 
-					normalized[write++] = {
-						value,
-						label: item.label == null ? value : localizer ? localizer( item.label ) : String( item.label ).trim(),
-					};
+							if ( cbTermHandler ) {
+								value = cbTermHandler( source.value );
+								label = cbTermHandler( _label );
 
-					break;
+								if ( value.get || label.get ) {
+									hasDynamicItem = true;
+								}
+							} else {
+								value = { value: source.value };
+								label = { value: _label };
+							}
+						}
+						break;
+
+					case "undefined" :
+						break;
+
+					default :
+						throw new TypeError( `Invalid option of type ${typeof source} rejected.` );
+				}
+
+				if ( value && label ) {
+					filtered[write++] = { value, label };
 				}
 			}
+
+			filtered.splice( write );
+
+
+			// As soon as any option in resulting list of options relies on
+			// computed data the whole list must be delivered using re-computing
+			// function.
+
+			if ( hasDynamicItem ) {
+				return { get: () => {
+					const copy = new Array( write );
+
+					for ( let i = 0; i < write; i++ ) {
+						const { label, value } = filtered[i];
+
+						const _label = label.get ? label.get() : label.value;
+						const _value = value.get ? value.get() : value.value;
+
+						copy[i] = {
+							label: localizer ? localizer( _label ) : _label,
+							value: localizer ? localizer( _value ) : _value,
+						};
+					}
+
+					return copy;
+				} };
+			}
+
+			for ( let i = 0; i < write; i++ ) {
+				const { label, value } = filtered[i];
+
+				const _label = label.value;
+				const _value = value.value;
+
+				filtered[i] = {
+					label: localizer ? localizer( _label ) : _label,
+					value: localizer ? localizer( _value ) : _value,
+				};
+			}
+
+			return { value: filtered };
 		}
-
-		normalized.splice( write );
-
-		return normalized;
 	}
 }

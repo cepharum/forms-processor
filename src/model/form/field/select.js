@@ -33,7 +33,7 @@ import Options from "../utility/options";
 /**
  * Implements field type displaying list of options to choose one from.
  */
-export default class SelectFieldType extends FormFieldAbstractModel {
+export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	static get isInteractive() {
 		return true;
@@ -47,21 +47,65 @@ export default class SelectFieldType extends FormFieldAbstractModel {
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
+			/**
+			 * Generates property descriptor exposing options to choose from in
+			 * list control.
+			 *
+			 * @param {*} definitionValue value of property provided in definition of field
+			 * @param {string} definitionName name of property provided in definition of field
+			 * @param {object<string,*>} definitions all properties of qualified definition of field
+			 * @param {CustomPropertyLimitedTermHandler} cbTermHandler term handler detecting computable terms in a provided string returning property map
+			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
+			 * @this {FormFieldSelectModel}
+			 */
 			options( definitionValue, definitionName, definitions, cbTermHandler ) {
 				/**
-				 * @name SelectFieldType#options
-				 * @property {Array<{value:string, label:string}>}
+				 * @name FormFieldSelectModel#options
+				 * @property {LabelledOptionsList}
 				 * @readonly
 				 */
-				return cbTermHandler( definitionValue, value => {
-					const computed = Options.createOptions( value, null, map => this.selectLocalization( map ) );
+				if ( Array.isArray( definitionValue ) ) {
+					// handling array of options ...
+					// support terms in either option's properties
+					return Options.createOptions( definitionValue, null, {
+						localizer: map => this.selectLocalization( map ),
+						termHandler: v => cbTermHandler( v, _v => String( _v ), true ),
+					} );
+				}
 
-					reactiveFieldInfo.listOptions = computed;
+				// handling simple definition of options using comma-separated string
+				// support term in whole definition of list
+				return cbTermHandler( definitionValue, computed => {
+					if ( computed == null ) {
+						return [];
+					}
 
-					return computed;
+					const normalized = Options.createOptions( computed );
+					if ( normalized.get ) {
+						return normalized.get();
+					}
+
+					return normalized.value;
 				} );
 			},
 		} );
+	}
+
+	/** @inheritDoc */
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
+		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
+
+		if ( !onLocalUpdate ) {
+			reactiveFieldInfo.options = this.options;
+		}
+	}
+
+	/** @inheritDoc */
+	initializeReactive( reactiveFieldInfo ) {
+		const initial = super.initializeReactive( reactiveFieldInfo );
+
+		reactiveFieldInfo.options = this.options;
+		return initial;
 	}
 
 	/** @inheritDoc */
@@ -72,11 +116,13 @@ export default class SelectFieldType extends FormFieldAbstractModel {
 			template: `<select v-model="value"><option v-for="item in options" :key="item.value" :value="item.value">{{item.label}}</option></select>`,
 			data: () => {
 				return {
-					options: reactiveFieldInfo.listOptions,
 					v: readValue( qualifiedName ),
 				};
 			},
 			computed: {
+				options() {
+					return reactiveFieldInfo.options;
+				},
 				value: {
 					get() {
 						return this.v;

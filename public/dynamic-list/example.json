@@ -1,0 +1,64 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "dynamicList",
+			"label": "Dynamic List",
+			"fields": [
+				{
+					"name": "items",
+					"label": "Items",
+					"type": "text",
+					"initial": "one , two, three "
+				},
+				{
+					"name": "stringList",
+					"label": "String List",
+					"type": "select",
+					"options": "=items"
+				},
+				{
+					"name": "itemA",
+					"label": "Item A",
+					"type": "text",
+					"initial": "one"
+				},
+				{
+					"name": "itemB",
+					"label": "Item B",
+					"type": "text",
+					"initial": "two"
+				},
+				{
+					"name": "itemC",
+					"label": "Item C",
+					"type": "text",
+					"initial": "three"
+				},
+				{
+					"name": "optionsList",
+					"label": "Options List",
+					"type": "select",
+					"options": [
+						{
+							"value": "=itemA",
+							"label": "=stringList || 'humpty'"
+						},
+						{
+							"value": "=itemB",
+							"label": "=stringList || 'dumpty'"
+						},
+						{
+							"value": "=itemC",
+							"label": "=stringList || 'empty'"
+						}
+					]
+				}
+			]
+		}
+	]
+}
