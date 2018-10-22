@@ -29,6 +29,7 @@
 import Processors from "./model/form/processor";
 import Fields from "./model/form/field";
 import Data from "@/service/data";
+import EventBus from "@/service/events";
 
 
 /**
@@ -356,5 +357,15 @@ export default class FormsAPI {
 	 */
 	get AbstractProcessorModel() {
 		return Processors.abstract;
+	}
+
+	/**
+	 * Exposes internal event bus for listening to internal events of forms
+	 * processor or triggering events.
+	 *
+	 * @returns {Component} empty vue component serving as internal event bus
+	 */
+	get events() {
+		return EventBus;
 	}
 }
