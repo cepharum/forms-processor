@@ -145,23 +145,27 @@ export default class Options {
 						break;
 					}
 
-					case "object" :
-						if ( source && source.value != null ) {
-							const _label = source.label == null ? source.value : source.label;
+					case "object" : {
+						const localized = source && !source.hasOwnProperty( "value" ) && localizer ? localizer( source ) : source;
+
+						if ( localized && localized.value != null ) {
+							const _value = localizer ? localizer( localized.value ) : localized.value;
+							const _label = localized.label == null ? _value : localizer ? localizer( localized.label ) : localized.label;
 
 							if ( cbTermHandler ) {
-								value = cbTermHandler( source.value );
+								value = cbTermHandler( localized.value );
 								label = cbTermHandler( _label );
 
 								if ( value.get || label.get ) {
 									hasDynamicItem = true;
 								}
 							} else {
-								value = { value: source.value };
+								value = { value: localized.value };
 								label = { value: _label };
 							}
 						}
 						break;
+					}
 
 					case "undefined" :
 						break;
