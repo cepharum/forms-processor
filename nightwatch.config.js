@@ -45,7 +45,8 @@ module.exports = {
 					args: [
 						// disabled due to causing high CPU load after tests finished due to hanging background Chrome process
 						// "--no-sandbox",
-					]
+						process.env.NODE_ENV === "development" ? null : "--headless",
+					].filter( i => i ),
 				},
 				acceptSslCerts: true
 			}
