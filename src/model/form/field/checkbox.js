@@ -148,7 +148,6 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				</span>
 			`,
 			data: () => {
-				console.log( that.qualifiedName, readValue( qualifiedName ) );
 				return {
 					value: readValue( qualifiedName ),
 					name: qualifiedName,
@@ -168,7 +167,6 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						const normalized = that.normalizeValue( newValue );
 
 						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							console.log( qualifiedName, normalized, typeof normalized );
 							writeValue( qualifiedName, normalized );
 							this.value = normalized;
 						}
@@ -203,7 +201,6 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 		const mapped = handlesArrayOfValues ? value : value ? isRadio ? [value] : [options[0].value] : [];
 		const extracted = Options.extractOptions( mapped, options );
-		console.log( this.qualifiedName, value, mapped, extracted );
 
 		if ( this.multiple ) {
 			return extracted;
