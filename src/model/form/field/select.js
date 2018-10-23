@@ -28,6 +28,7 @@
 
 import FormFieldAbstractModel from "./abstract";
 import Options from "../utility/options";
+import Data from "../../../service/data";
 
 
 /**
@@ -110,26 +111,37 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
-		const { form: { readValue, writeValue }, qualifiedName } = this;
+		const that = this;
+		const { form: { readValue, writeValue }, qualifiedName } = that;
 
 		return {
-			template: `<select v-model="value"><option v-for="item in options" :key="item.value" :value="item.value">{{item.label}}</option></select>`,
+			template: `
+				<select v-model="model">
+					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
+				</select>
+			`,
 			data: () => {
 				return {
-					v: readValue( qualifiedName ),
+					value: readValue( qualifiedName ),
 				};
 			},
 			computed: {
 				options() {
 					return reactiveFieldInfo.options;
 				},
-				value: {
+				model: {
 					get() {
-						return this.v;
+						return this.value;
 					},
 					set( newValue ) {
-						writeValue( qualifiedName, newValue );
-						this.v = newValue;
+						reactiveFieldInfo.pristine = false;
+
+						const normalized = that.normalizeValue( newValue );
+
+						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
+							writeValue( qualifiedName, normalized );
+							this.value = normalized;
+						}
 					},
 				}
 			},
