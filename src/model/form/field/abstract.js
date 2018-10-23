@@ -308,7 +308,7 @@ export default class FormFieldAbstractModel {
 								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
 								if ( propertyValue != null ) {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
-										reactiveFieldInfo, v => normalizeDefinitionValue( propertyName, v ) );
+										reactiveFieldInfo, v => this.constructor.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 								}
 							}
 						}
@@ -905,6 +905,42 @@ export default class FormFieldAbstractModel {
 		};
 	}
 
+
+	/**
+	 * Converts provided arbitrary value of a definition to type expected for named
+	 * definition property.
+	 *
+	 * @param {*} value some arbitrary value
+	 * @param {string} name name of definition property provided value is associated with
+	 * @param {object<string,*>} definitions qualified set of a field's definition properties
+	 * @returns {*} normalized value for use with named definition property
+	 */
+	static normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
+		switch ( name ) {
+			case "classes" :
+				return typeof value === "string" ? value.trim().split( /\s*[,;]\s*/ ) : value;
+
+			case "label" :
+			case "hint" :
+				return String( value );
+
+			case "required" :
+			case "visible" :
+				switch ( typeof value ) {
+					case "string" : {
+						const boolean = Data.normalizeToBoolean( value );
+						return boolean == null ? value.trim().length > 0 : boolean;
+					}
+
+					default :
+						return Boolean( value );
+				}
+
+			default :
+				return value;
+		}
+	}
+
 	/**
 	 * Normalizes provided input value in compliance with current type of field.
 	 *
@@ -974,39 +1010,5 @@ export default class FormFieldAbstractModel {
 		}
 
 		return false;
-	}
-}
-
-/**
- * Converts provided arbitrary value of a definition to type expected for named
- * definition property.
- *
- * @param {string} name name of definition property provided value is associated with
- * @param {*} value some arbitrary value
- * @returns {*} normalized value for use with named definition property
- */
-function normalizeDefinitionValue( name, value ) {
-	switch ( name ) {
-		case "classes" :
-			return typeof value === "string" ? value.trim().split( /\s*[,;]\s*/ ) : value;
-
-		case "label" :
-		case "hint" :
-			return String( value );
-
-		case "required" :
-		case "visible" :
-			switch ( typeof value ) {
-				case "string" : {
-					const boolean = Data.normalizeToBoolean( value );
-					return boolean == null ? value.trim().length > 0 : boolean;
-				}
-
-				default :
-					return Boolean( value );
-			}
-
-		default :
-			return value;
 	}
 }
