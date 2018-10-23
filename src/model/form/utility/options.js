@@ -245,4 +245,39 @@ export default class Options {
 			throw new TypeError( "Rejecting unknown data provided as option value." );
 		}
 	}
+
+	/**
+	 * Extracts parts of provided value(s) matching values in provided set of
+	 * normalized option definitions.
+	 *
+	 * @param {*|Array} values one or more values to be filtered
+	 * @param {LabelledOptionsList} normalizedOptions processed list of defined options
+	 * @return {*} excerpt of of first list containing values also listed in second list, only
+	 */
+	static extractOptions( values, normalizedOptions ) {
+		const numOptions = normalizedOptions.length;
+
+		const rawValues = Array.isArray( values ) ? values : values == null ? [] : [values];
+		const numRaw = rawValues.length;
+
+		const extracted = new Array( numRaw );
+		let write = 0;
+
+		for ( let i = 0; i < numRaw; i++ ) {
+			const item = rawValues[i];
+
+			for ( let j = 0; j < numOptions; j++ ) {
+				const option = normalizedOptions[j].value;
+
+				if ( item === option || item === String( option ) ) {
+					extracted[write++] = option;
+					break;
+				}
+			}
+		}
+
+		extracted.splice( write );
+
+		return normalizedOptions.length === 1 ? extracted[0] || null : extracted;
+	}
 }
