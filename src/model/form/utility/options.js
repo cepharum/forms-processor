@@ -194,7 +194,7 @@ export default class Options {
 
 						copy[i] = {
 							label: localizer ? localizer( _label ) : _label,
-							value: String( localizer ? localizer( _value ) : _value ).trim(),
+							value: normalizeValue( localizer ? localizer( _value ) : _value ),
 						};
 					}
 
@@ -210,11 +210,39 @@ export default class Options {
 
 				filtered[i] = {
 					label: localizer ? localizer( _label ) : _label,
-					value: localizer ? localizer( _value ) : _value,
+					value: normalizeValue( localizer ? localizer( _value ) : _value ),
 				};
 			}
 
 			return { value: filtered };
+		}
+
+		/**
+		 * Normalizes a single option's value.
+		 *
+		 * @param {*} value value to be normalized
+		 * @return {*} normalized value
+		 */
+		function normalizeValue( value ) {
+			switch ( typeof value ) {
+				case "string" :
+					return value.trim();
+
+				case "number" :
+				case "boolean" :
+					return value;
+
+				case "undefined" :
+					return null;
+
+				case "object" :
+					return value;
+
+				case "function" :
+					throw new TypeError( "Rejecting function provided as option value." );
+			}
+
+			throw new TypeError( "Rejecting unknown data provided as option value." );
 		}
 	}
 }
