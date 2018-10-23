@@ -1,0 +1,158 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "checkboxes",
+			"label": "Checkboxes",
+			"fields": [
+				{
+					"name": "simpleNoLabel",
+					"label": "Simple, No Label",
+					"type": "checkbox"
+				},
+				{
+					"name": "simple",
+					"label": "Simple",
+					"type": "checkbox",
+					"boxLabel": {
+						"de": "Setz mich!!",
+						"*": "Check me!"
+					}
+				},
+				{
+					"name": "single",
+					"label": "Single",
+					"type": "checkbox",
+					"options": [
+						{
+							"value": "set"
+						}
+					]
+				},
+				{
+					"name": "singleNoLabel",
+					"label": "Single, No Label",
+					"type": "checkbox",
+					"options": [
+						{
+							"label": "",
+							"value": "visible"
+						}
+					]
+				},
+				{
+					"name": "singleCustomLabel",
+					"label": "Single, Custom Label",
+					"type": "checkbox",
+					"options": [
+						{
+							"label": {
+								"de": "Das stimmt!",
+								"ANY": "This is true!"
+							},
+							"value": "wahr"
+						}
+					]
+				},
+				{
+					"name": "simpleRequired",
+					"label": "Simple Required",
+					"type": "checkbox",
+					"required": true
+				},
+				{
+					"name": "singleRequired",
+					"label": "Single Required",
+					"type": "checkbox",
+					"required": true,
+					"options": [
+						{
+							"label": {
+								"de": "Ich stimme zu!",
+								"ANY": "I confirm!"
+							},
+							"value": "confirmed"
+						}
+					]
+				},
+				{
+					"name": "singleRadio",
+					"label": "Single Radio",
+					"type": "radio",
+					"options": [
+						{
+							"label": "should be checkbox",
+							"value": 1
+						}
+					]
+				},
+				{
+					"name": "multiple",
+					"label": "Multiple",
+					"type": "checkbox",
+					"visible": "=singleNoLabel",
+					"options": [
+						{
+							"label": "one",
+							"value": 1
+						},
+						{
+							"label": "two",
+							"value": 2
+						},
+						{
+							"label": "three",
+							"value": 3
+						}
+					]
+				},
+				{
+					"name": "multipleRadio",
+					"label": "Multiple",
+					"type": "radio",
+					"visible": "=!singleNoLabel",
+					"options": [
+						{
+							"label": "one",
+							"value": 1
+						},
+						{
+							"label": "two",
+							"value": 2
+						},
+						{
+							"label": "three",
+							"value": 3
+						}
+					]
+				},
+				{
+					"name": "multipleDynamicRadio",
+					"label": "Multiple Dynamic Radio",
+					"type": "radio",
+					"options": [
+						{
+							"label": {
+								"de": "=simpleNoLabel&&'eins'||'keins'",
+								"ANY": "=simpleNoLabel&&'one'||'none'"
+							},
+							"value": 1
+						},
+						{
+							"label": "two",
+							"value": "=simpleNoLabel&&2||'4'"
+						},
+						{
+							"label": "three",
+							"value": 3
+						}
+					]
+				}
+			]
+		}
+	]
+}

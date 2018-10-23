@@ -32,8 +32,7 @@ import Options from "../utility/options";
 
 
 /**
- * Implements abstract base class of managers handling certain type of field in
- * a form.
+ * Implements field type displaying set of checkboxes to choose one or more from.
  */
 export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
@@ -49,18 +48,50 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
+			/**
+			 * Generates property descriptor exposing options to choose from in
+			 * list control.
+			 *
+			 * @param {*} definitionValue value of property provided in definition of field
+			 * @param {string} definitionName name of property provided in definition of field
+			 * @param {object<string,*>} definitions all properties of qualified definition of field
+			 * @param {CustomPropertyLimitedTermHandler} cbTermHandler term handler detecting computable terms in a provided string returning property map
+			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
+			 * @this {FormFieldSelectModel}
+			 */
 			options( definitionValue, definitionName, definitions, cbTermHandler ) {
 				/**
 				 * @name FormFieldCheckBoxModel#options
-				 * @property {Array<{value:string, label:string}>}
+				 * @property {LabelledOptionsList}
 				 * @readonly
 				 */
-				return cbTermHandler( definitionValue, value => {
-					const computed = Options.createOptions( value, null, map => this.selectLocalization( map ) );
+				const _d = definitionValue == null ? [{
+					label: this.selectLocalization( definitions.boxLabel ) || "",
+					value: true,
+				}] : definitionValue;
 
-					reactiveFieldInfo.checkboxes = computed;
+				if ( Array.isArray( _d ) ) {
+					// handling array of options ...
+					// support terms in either option's properties
+					return Options.createOptions( _d, null, {
+						localizer: map => this.selectLocalization( map ),
+						termHandler: v => cbTermHandler( v, null, true ),
+					} );
+				}
 
-					return computed;
+				// handling simple definition of options using comma-separated string
+				// support term in whole definition of list
+				return cbTermHandler( _d, computed => {
+					if ( computed == null ) {
+						return [];
+					}
+
+					const normalized = Options.createOptions( computed );
+					if ( normalized.get ) {
+						return normalized.get();
+					}
+
+					return normalized.value;
 				} );
 			},
 
@@ -80,10 +111,113 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
+		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
+
+		if ( !onLocalUpdate ) {
+			reactiveFieldInfo.options = this.options;
+		}
+	}
+
+	/** @inheritDoc */
+	initializeReactive( reactiveFieldInfo ) {
+		const initial = super.initializeReactive( reactiveFieldInfo );
+
+		reactiveFieldInfo.options = this.options;
+		return initial;
+	}
+
+	/** @inheritDoc */
+	renderFieldComponent( reactiveFieldInfo ) {
+		const that = this;
+		const { form: { readValue, writeValue }, qualifiedName, type, multiple } = that;
+
+		return {
+			template: `
+				<span class="checkbox options" :class="multiple ? 'multi' : 'single'">
+					<span class="option" :class="{checked:isSet(item.value)}" v-for="(item, index) in options" :key="index">
+						<input 
+							:type="isRadio ? 'radio' : 'checkbox'"
+							:id="isRadio || multiple ? name + '.' + index : name"
+							:name="name"
+							:value="item.value"
+							v-model="model"
+						/>
+						<label v-if="item.label" :for="isRadio || multiple ? name + '.' + index : name">{{item.label}}</label>
+					</span>
+				</span>
+			`,
+			data: () => {
+				console.log( that.qualifiedName, readValue( qualifiedName ) );
+				return {
+					value: readValue( qualifiedName ),
+					name: qualifiedName,
+				};
+			},
+			computed: {
+				options() {
+					return reactiveFieldInfo.options;
+				},
+				model: {
+					get() {
+						return that.normalizeValue( this.value );
+					},
+					set( newValue ) {
+						reactiveFieldInfo.pristine = false;
+
+						const normalized = that.normalizeValue( newValue );
+
+						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
+							console.log( qualifiedName, normalized, typeof normalized );
+							writeValue( qualifiedName, normalized );
+							this.value = normalized;
+						}
+					},
+				},
+				isRadio() {
+					return type === "radio" && this.options && this.options.length > 1;
+				},
+				multiple() {
+					return multiple && ( this.options && this.options.length > 1 );
+				},
+			},
+			methods: {
+				isSet( value ) {
+					const current = this.value;
+
+					if ( Array.isArray( current ) ) {
+						return current.indexOf( value ) > -1;
+					}
+
+					return current === value;
+				},
+			},
+		};
+	}
+
+	/** @inheritDoc */
+	normalizeValue( value ) {
+		const options = this.options;
+		const isRadio = this.type === "radio" && this.options && this.options.length > 1;
+		const handlesArrayOfValues = !isRadio && options && options.length > 1;
+
+		const mapped = handlesArrayOfValues ? value : value ? isRadio ? [value] : [options[0].value] : [];
+		const extracted = Options.extractOptions( mapped, options );
+		console.log( this.qualifiedName, value, mapped, extracted );
+
+		if ( this.multiple ) {
+			return extracted;
+		}
+
+		return Array.isArray( extracted ) ? extracted[0] : extracted;
+	}
+
+	/** @inheritDoc */
 	validate() {
-		const { value, required } = this;
+		const { value } = this;
 		const errors = [];
-		if ( required ) {
+
+		if ( this.required ) {
 			if ( value instanceof Array ) {
 				if ( !value.length ) {
 					errors.push( "@VALIDATION.MISSING_REQUIRED" );
@@ -92,76 +226,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				errors.push( "@VALIDATION.MISSING_REQUIRED" );
 			}
 		}
+
 		return errors;
-	}
-
-	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
-		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, type, value, options, multiple } = that;
-
-		return {
-			data: () => {
-				return {
-					qualifiedName,
-					options: reactiveFieldInfo.checkboxes,
-					type,
-					value,
-					multiple,
-					update: true,
-				};
-			},
-			computed: {
-				_value: {
-					get() {
-						if ( this.update ) {
-							this.update = false;
-
-							if ( multiple ) {
-								return readValue( qualifiedName ) || [];
-							}
-
-							return readValue( qualifiedName );
-						}
-
-						return undefined;
-					},
-					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
-
-						const _v = newValue ? newValue : undefined;
-
-						if ( _v !== this._value ) {
-							writeValue( qualifiedName, _v );
-							reactiveFieldInfo.value = _v;
-							this.update = true;
-						}
-					},
-				},
-				inputType() {
-					return ( !this.multiple || this.type === "radio" ) && ( options && options.length > 1 ) ? "radio" : "checkbox";
-				}
-			},
-			template: `
-				<span v-if="!options">
-					<input type="checkbox" :id="qualifiedName" v-model="_value"/>
-				</span>
-				<span v-else>
-					<span v-for="(entry, index) in options" :key="entry.id || qualifiedName + '.' + index">
-						<input 
-							:type="inputType"
-							:name="qualifiedName"
-							:label="entry.label"
-							:id="entry.id || qualifiedName + '.' + index"
-							:value="entry.value"
-							v-model="_value"
-						/>
-						<label :for="entry.id || qualifiedName + '.' + index">
-							{{entry.label || entry.value}}
-						</label>
-					</span>
-				</span>
-			`,
-		};
 	}
 }
