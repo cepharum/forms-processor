@@ -233,4 +233,55 @@ export default class Data {
 
 		return filtered;
 	}
+
+	/**
+	 * Detects whether two values assumed to be arrays are equivalent or not.
+	 *
+	 * This method considers these values equivalent:
+	 *
+	 * - `null`, `undefined` and `[]`
+	 * - some scalar and an array consisting of the same scalar, only
+	 * - two arrays consisting of the same values in arbitrary order
+	 *
+	 * @param {*} arrayA some value assumed to be array or capable of being compared with array as described above
+	 * @param {*} arrayB some value assumed to be array or capable of being compared with array as described above
+	 * @return {boolean} true if both provided values are considered equivalent according to the mentioned rules
+	 */
+	static isEquivalentArray( arrayA, arrayB ) {
+		switch ( ( Array.isArray( arrayA ) ? 2 : 0 ) + ( Array.isArray( arrayB ) ? 1 : 0 ) ) {
+			case 0 :
+				return arrayA == null ? arrayB == null : arrayA === arrayB;
+
+			case 1 :
+				return arrayA == null ? !arrayB.length : arrayB.length === 1 && arrayB[0] === arrayA;
+
+			case 2 :
+				return arrayB == null ? !arrayA.length : arrayA.length === 1 && arrayA[0] === arrayB;
+
+			case 3 : {
+				const numItemsArrayA = arrayA.length;
+				const numItemsArrayB = arrayB.length;
+
+				if ( numItemsArrayA !== numItemsArrayB ) {
+					return false;
+				}
+
+				for ( let i = 0; i < numItemsArrayA; i++ ) {
+					if ( arrayB.indexOf( arrayA[i] ) < 0 ) {
+						return false;
+					}
+				}
+
+				for ( let i = 0; i < numItemsArrayB; i++ ) {
+					if ( arrayA.indexOf( arrayB[i] ) < 0 ) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			default : return false;
+		}
+	}
 }
