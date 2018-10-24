@@ -55,7 +55,7 @@
 							"label": "Two!"
 						},
 						{
-							"value": "three",
+							"value": 3,
 							"label": "Three!"
 						}
 					],
@@ -87,6 +87,26 @@
 						}
 					],
 					"required": "=stringList=='two'"
+				},
+				{
+					"name": "multipleOptionsList",
+					"label": "Multiple Options List",
+					"type": "select",
+					"multiple": true,
+					"options": [
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": 2,
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					]
 				}
 			]
 		}

@@ -172,11 +172,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						}
 					},
 				},
-				isRadio() {
-					return type === "radio" && this.options && this.options.length > 1;
-				},
 				multiple() {
 					return multiple && ( this.options && this.options.length > 1 );
+				},
+				isRadio() {
+					return type === "radio" && this.options && this.options.length > 1;
 				},
 			},
 			methods: {
@@ -206,7 +206,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 			return extracted;
 		}
 
-		return Array.isArray( extracted ) ? extracted[0] : extracted;
+		return Array.isArray( extracted ) ? extracted[0] || null : extracted;
 	}
 
 	/** @inheritDoc */

@@ -27,8 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import Options from "../utility/options";
 import Data from "../../../service/data";
+import Options from "../utility/options";
 
 
 /**
@@ -70,7 +70,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 					// support terms in either option's properties
 					return Options.createOptions( definitionValue, null, {
 						localizer: map => this.selectLocalization( map ),
-						termHandler: v => cbTermHandler( v, _v => String( _v ), true ),
+						termHandler: v => cbTermHandler( v, null, true ),
 					} );
 				}
 
@@ -89,6 +89,19 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 					return normalized.value;
 				} );
 			},
+
+			multiple( definitionValue ) {
+				/**
+				 * Indicates whether user might select multiple options or not.
+				 *
+				 * @name FormFieldCheckBoxModel#multiple
+				 * @property boolean
+				 * @readonly
+				 */
+				return {
+					value: Data.normalizeToBoolean( definitionValue ),
+				};
+			}
 		} );
 	}
 
@@ -112,11 +125,14 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
+		const { form: { readValue, writeValue }, qualifiedName, multiple } = that;
 
 		return {
 			template: `
-				<select v-model="model">
+				<select v-model="model" v-if="!multiple" class="select" :class="multiple ? 'multi' : 'single'">
+					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
+				</select>
+				<select v-model="model" v-else-if="multiple" multiple class="select" :class="multiple ? 'multi' : 'single'">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
@@ -131,7 +147,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				},
 				model: {
 					get() {
-						return this.value;
+						return that.normalizeValue( this.value );
 					},
 					set( newValue ) {
 						reactiveFieldInfo.pristine = false;
@@ -143,17 +159,38 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 							this.value = normalized;
 						}
 					},
-				}
+				},
+				multiple() {
+					return multiple && ( this.options && this.options.length > 1 );
+				},
 			},
 		};
 	}
 
 	/** @inheritDoc */
+	normalizeValue( value ) {
+		const extracted = Options.extractOptions( value, this.options );
+
+		if ( this.multiple ) {
+			return extracted;
+		}
+
+		return Array.isArray( extracted ) ? extracted[0] || null : extracted;
+	}
+
+	/** @inheritDoc */
 	validate() {
+		const { value } = this;
 		const errors = [];
 
-		if ( this.required && !this.value ) {
-			errors.push( "@VALIDATION.MISSING_SELECTION" );
+		if ( this.required ) {
+			if ( value instanceof Array ) {
+				if ( !value.length ) {
+					errors.push( "@VALIDATION.MISSING_SELECTED" );
+				}
+			} else if ( !value ) {
+				errors.push( "@VALIDATION.MISSING_SELECTED" );
+			}
 		}
 
 		return errors;

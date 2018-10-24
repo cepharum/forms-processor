@@ -24,7 +24,7 @@ module.exports = {
 			.assert.listOptionLabels( ".field.name-requiredStringList", [ "one", "two", "three" ] )
 
 			.assert.elementPresent( ".field.name-requiredOptionsList" )
-			.assert.listOptionValues( ".field.name-requiredOptionsList", [ "one", "two", "three" ] )
+			.assert.listOptionValues( ".field.name-requiredOptionsList", [ "one", "two", "3" ] )
 			.assert.listOptionLabels( ".field.name-requiredOptionsList", [ "One!", "Two!", "Three!" ] )
 
 			.assert.elementPresent( ".field.name-dependingStringList" )
