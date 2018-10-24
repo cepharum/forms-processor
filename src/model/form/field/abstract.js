@@ -767,7 +767,7 @@ export default class FormFieldAbstractModel {
 	 *        otherwise it's been an update of field this one depends on
 	 * @returns {void}
 	 */
-	updateFieldInformation( reactiveFieldInformation, onLocalUpdate ) {
+	updateFieldInformation( reactiveFieldInformation, onLocalUpdate ) { // eslint-disable-line no-unused-vars
 		reactiveFieldInformation.label = this.label;
 		reactiveFieldInformation.hint = this.hint;
 		reactiveFieldInformation.required = this.required;
