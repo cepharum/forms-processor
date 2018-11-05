@@ -273,6 +273,30 @@ export default class FormFieldAbstractModel {
 		const qualifiedDefinition = Object.assign( {}, defaultProperties, definition );
 
 
+		Object.defineProperties( this, {
+			/**
+			 * Creates getter for provided value which might contain a computable
+			 * term to be processed on every access on returned getter.
+			 *
+			 * @name FormFieldAbstractModel#createGetter
+			 * @property {function}
+			 * @param {?string} value value to be provided by resulting getter, inspected for optionally containing term
+			 * @param {string=} key name of this value in optionally provided data set, used on computing contained term
+			 * @param {object=} data set containing up-to-date value (e.g. on computing term) as well as any other value available in a term,
+			 *        omit or set null to implicitly use set of all reactive values of current field
+			 * @param {function(string):string} normalizer callback invoked to normalize provided or any computed value,
+			 *        omit or set null to implicitly use static method `normalizeDefinitionValue()`
+			 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
+			 */
+			createGetter: {
+				value: ( value, key, data = null, normalizer = null ) => {
+					return handleComputableValue( value, key,
+						data || reactiveFieldInfo,
+						normalizer || ( v => this.constructor.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
+				},
+			},
+		} );
+
 		{
 			const propNames = Object.keys( qualifiedDefinition );
 			const numProps = propNames.length;
@@ -524,28 +548,6 @@ export default class FormFieldAbstractModel {
 
 					return component;
 				}
-			},
-
-			/**
-			 * Creates getter for provided value which might contain a computable
-			 * term to be processed on every access on returned getter.
-			 *
-			 * @name FormFieldAbstractModel#createGetter
-			 * @property {function}
-			 * @param {?string} value value to be provided by resulting getter, inspected for optionally containing term
-			 * @param {string=} key name of this value in optionally provided data set, used on computing contained term
-			 * @param {object=} data set containing up-to-date value (e.g. on computing term) as well as any other value available in a term,
-			 *        omit or set null to implicitly use set of all reactive values of current field
-			 * @param {function(string):string} normalizer callback invoked to normalize provided or any computed value,
-			 *        omit or set null to implicitly use static method `normalizeDefinitionValue()`
-			 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
-			 */
-			createGetter: {
-				value: ( value, key, data = null, normalizer = null ) => {
-					return handleComputableValue( value, key,
-						data || reactiveFieldInfo,
-						normalizer || ( v => this.constructor.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
-				},
 			},
 		} );
 
