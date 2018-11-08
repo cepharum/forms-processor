@@ -153,14 +153,17 @@ export default class Data {
 			return target;
 		}
 
-		if ( typeof target !== "object" || !target || typeof source !== "object" ) {
+		if ( typeof target !== "object" || !target ) {
 			throw new TypeError( "Merging provided data rejected." );
 		}
 
 		for ( let i = 0; i < numSources; i++ ) {
 			const source = sources[i];
-			const sourceIsArray = Array.isArray( source );
+			if ( !source ) {
+				continue;
+			}
 
+			const sourceIsArray = Array.isArray( source );
 			if ( sourceIsArray ? 1 : 0 ^ Array.isArray( target ) ? 1 : 0 ) {
 				throw new TypeError( "Merge incompatible data types rejected." );
 			}
