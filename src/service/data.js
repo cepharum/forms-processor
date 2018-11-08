@@ -144,11 +144,12 @@ export default class Data {
 	 * Deeply merges source object into provided target object.
 	 *
 	 * @param {object} target object to be adjusted by merging
-	 * @param {object} source properties to be written into target object
+	 * @param {object[]} sources list of objects to be merged with target object
 	 * @returns {object} reference on provided target object with properties of source object merged
 	 */
-	static deepMerge( target, source ) {
-		if ( !source ) {
+	static deepMerge( target, ...sources ) {
+		const numSources = sources.length;
+		if ( !numSources ) {
 			return target;
 		}
 
@@ -156,41 +157,44 @@ export default class Data {
 			throw new TypeError( "Merging provided data rejected." );
 		}
 
-		const sourceIsArray = Array.isArray( source );
+		for ( let i = 0; i < numSources; i++ ) {
+			const source = sources[i];
+			const sourceIsArray = Array.isArray( source );
 
-		if ( sourceIsArray ? 1 : 0 ^ Array.isArray( target ) ? 1 : 0 ) {
-			throw new TypeError( "Merge incompatible data types rejected." );
-		}
+			if ( sourceIsArray ? 1 : 0 ^ Array.isArray( target ) ? 1 : 0 ) {
+				throw new TypeError( "Merge incompatible data types rejected." );
+			}
 
-		if ( sourceIsArray ) {
-			return target.concat( source );
-		}
+			if ( sourceIsArray ) {
+				return target.concat( source );
+			}
 
-		const names = Object.keys( source );
-		const numNames = names.length;
-		for ( let i = 0; i < numNames; i++ ) {
-			const name = names[i];
-			const sourceValue = source[name];
+			const names = Object.keys( source );
+			const numNames = names.length;
+			for ( let j = 0; j < numNames; j++ ) {
+				const name = names[j];
+				const sourceValue = source[name];
 
-			switch ( typeof sourceValue ) {
-				case "undefined" :
-					break;
+				switch ( typeof sourceValue ) {
+					case "undefined" :
+						break;
 
-				case "object" :
-					if ( sourceValue ) {
-						const sourceValueIsArray = Array.isArray( sourceValue );
-						let targetValue = target[name];
+					case "object" :
+						if ( sourceValue ) {
+							const sourceValueIsArray = Array.isArray( sourceValue );
+							let targetValue = target[name];
 
-						if ( !targetValue || ( sourceValueIsArray ? 1 : 0 ^ Array.isArray( targetValue ) ? 1 : 0 ) ) {
-							targetValue = target[name] = sourceValueIsArray ? [] : {};
+							if ( !targetValue || ( sourceValueIsArray ? 1 : 0 ^ Array.isArray( targetValue ) ? 1 : 0 ) ) {
+								targetValue = target[name] = sourceValueIsArray ? [] : {};
+							}
+
+							this.deepMerge( targetValue, sourceValue );
 						}
+						break;
 
-						this.deepMerge( targetValue, sourceValue );
-					}
-					break;
-
-				default :
-					target[name] = sourceValue;
+					default :
+						target[name] = sourceValue;
+				}
 			}
 		}
 

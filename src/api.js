@@ -172,7 +172,7 @@ export default class FormsAPI {
 				registry: {
 					processors: Object.assign( {}, this._registry.processors, individualRegistry.processors ),
 					fields: Object.assign( {}, this._registry.fields, individualRegistry.fields ),
-					translations: Data.deepClone( this._registry.translations ),
+					translations: Data.deepMerge( {}, this._registry.translations, individualRegistry.translations ),
 				},
 			} ) );
 
