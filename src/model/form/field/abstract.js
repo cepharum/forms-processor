@@ -748,10 +748,11 @@ export default class FormFieldAbstractModel {
 	 * @param {*} store reference on store the adjustments took place in
 	 * @param {*} newValue new value of field
 	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
-	 * @returns {void}
+	 * @returns {boolean} true if validity of field has changed
 	 */
 	onUpdateValue( store, newValue, updatedFieldName = null ) {
 		const data = this.$data;
+		const oldValidity = data.valid;
 		const itsMe = updatedFieldName == null;
 
 		this.updateFieldInformation( data, itsMe );
@@ -777,6 +778,8 @@ export default class FormFieldAbstractModel {
 		if ( !itsMe ) {
 			EventBus.$emit( "form:update", this.qualifiedName, updatedFieldName, newValue );
 		}
+
+		return oldValidity !== data.valid;
 	}
 
 	/**

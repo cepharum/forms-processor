@@ -773,7 +773,11 @@ export default class FormSequenceModel {
 
 						const field = fields[name];
 						if ( field ) {
-							field.onUpdateValue( this.$store, value );
+							const containingForms = [];
+
+							if ( field.onUpdateValue( this.$store, value ) ) {
+								containingForms.push( field.form );
+							}
 
 							const dependents = field.dependents;
 							const numDependents = dependents.length;
@@ -781,7 +785,17 @@ export default class FormSequenceModel {
 							for ( let i = 0; i < numDependents; i++ ) {
 								const dependent = fields[dependents[i]];
 								if ( dependent ) {
-									dependent.onUpdateValue( this.$store, value, name );
+									if ( dependent.onUpdateValue( this.$store, value, name ) ) {
+										if ( containingForms.indexOf( dependent.form ) > -1 ) {
+											containingForms.push( dependent.form );
+										}
+									}
+								}
+							}
+
+							if ( containingForms.length > 0 ) {
+								for ( let i = 0; i < containingForms.length; i++ ) {
+									const temp = containingForms[i].valid; // eslint-disable-line no-unused-vars
 								}
 							}
 						}
