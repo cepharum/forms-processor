@@ -6,6 +6,7 @@ build:library:
   script:
     - mkdir forms-processor
     - cp dist/FormsProcessor.css forms-processor/style.css
+    - cp dist/README.md dist/package.json forms-processor/
     - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
   artifacts:
     name: "forms-processor-$CI_COMMIT_REF_SLUG"
