@@ -1,34 +1,41 @@
-# forms-client
+# Forms Processor
 
-> client application processing forms descriptions for gathering information
+a complex forms processor build for running in browsers
 
-## Project setup
-```
-npm install
-```
+## License
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+MIT
 
-### Compiles and minifies for production
-```
-npm run build
+## Installation
+
+```bash
+npm install forms-processor-build
 ```
 
-### Lints and fixes files
-```
-npm run lint
+## Usage
+
+The package contains universally defined modules (UMD) e.g. to be imported using WebPack in your application.
+
+```javascript
+import FormsProcessor from "forms-processor-build";
+
+FormsProcessor.create( someDOMElement, {
+	describe: "./url/of/forms/configuration.json",
+} );
 ```
 
-### Run your unit tests
-```
-npm run test:unit
+As an alternative you may inject the file **node_modules/forms-processor-build/FormsProcessor.umd.min.js** into an HTML document using referencing `<script>` tag:
+
+```html
+<!DOCTYPE html>
+<html>
+	<head>...</head>
+	<body>
+		<div id=form></div>
+		<script src="vue/vue.min.js" type="text/javascript"></script>
+		<script src="node_modules/forms-processor-build/FormsProcessor.umd.min.js" type="text/javascript"></script>
+	</body>
+</html>
 ```
 
-### Run your end-to-end tests
-```
-npm run test:e2e
-```
-s
+This files requires you to 
