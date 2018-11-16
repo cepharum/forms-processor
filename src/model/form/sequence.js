@@ -839,7 +839,7 @@ export default class FormSequenceModel {
 
 					const classes = ["step"];
 
-					classes.push( formData.pristine ? "pristine" : "touched" );
+					classes.push( formData.pristine ? "pristine" : "affected" );
 					classes.push( formData.valid ? "valid" : "invalid" );
 
 					if ( i === currentIndex ) {

@@ -854,7 +854,7 @@ export default class FormFieldAbstractModel {
 						`nname-${name}`,
 						`qname-${qualifiedName.replace( /\./g, "_" )}`,
 						this.required ? "mandatory" : "optional",
-						this.pristine ? "pristine" : "touched",
+						this.pristine ? "pristine" : "affected",
 						this.label ? "with-label" : "without-label",
 						this.valid ? "valid" : "invalid"
 					].concat( classes );

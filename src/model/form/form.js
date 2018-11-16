@@ -384,7 +384,7 @@ export default class FormModel {
 					"form",
 					`form-name-${originalName}`,
 					`form-nname-${name}`,
-					this.pristine ? "pristine" : "touched",
+					this.pristine ? "pristine" : "affected",
 					this.valid ? "valid" : "invalid",
 				];
 
