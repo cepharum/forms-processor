@@ -1,6 +1,6 @@
 {
   "name": "forms-processor-build",
-  "version": "0.0.2",
+  "version": "%%version%%",
   "description": "processes description of forms in browsers",
   "main": "index.js",
   "author": "Thomas Urban",
