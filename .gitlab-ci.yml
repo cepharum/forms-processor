@@ -1,4 +1,5 @@
 build:library:
+  stage: build
   image: node:8
   before_script:
     - npm ci
@@ -6,9 +7,14 @@ build:library:
   script:
     - mkdir forms-processor
     - cp dist/FormsProcessor.css forms-processor/style.css
-    - cp dist/README.md dist/package.json forms-processor/
+    - cp build/README.md build/package.json forms-processor/
+    - sed -i -e "s/%%version%%/${CI_COMMIT_TAG#v}/" forms-processor/package.json
     - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
+    - cp dist/FormsProcessor.umd.min.js forms-processor/index.js
+    - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'>.npmrc
+    - npm publish forms-processor
   artifacts:
     name: "forms-processor-$CI_COMMIT_REF_SLUG"
     paths:
       - forms-processor/
+
