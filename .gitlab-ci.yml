@@ -17,7 +17,7 @@ build:library:
       - forms-processor/
 deploy:
   except:
-    branches
+    - branches
   stage: deploy
   image: node:8
   script:
