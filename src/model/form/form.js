@@ -194,42 +194,17 @@ export default class FormModel {
 			 * @property {Boolean}
 			 * @readonly
 			 */
-			valid: {
-				get: () => {
-					const numFields = this.fields.length;
-					let valid = true;
+			valid: { get: this.readValidState, },
 
-					for ( let i = 0; i < numFields; i++ ) {
-						const field = this.fields[i];
-
-						if ( !field.valid ) {
-							valid = false;
-							break;
-						}
-
-						if ( field.pristine ) {
-							// pristine fields are basically marked "valid" due
-							// to haven't been touched so far
-							// -> but form's validity always depends on those
-							//    fields, too
-							if ( field.validate().length > 0 ) {
-								valid = false;
-								break;
-							}
-						}
-					}
-
-					if ( reactiveFormInfo.valid !== valid ) {
-						reactiveFormInfo.valid = valid;
-
-						if ( !valid ) {
-							reactiveFormInfo.finished = false;
-						}
-					}
-
-					return valid;
-				},
-			},
+			/**
+			 * Exposes reactive data of current form.
+			 *
+			 * @name FormModel#$data
+			 * @property {object}
+			 * @readonly
+			 * @protected
+			 */
+			$data: { value: reactiveFormInfo },
 
 			/**
 			 * Marks if form is pristine thus consisting of pristine fields,
@@ -337,6 +312,45 @@ export default class FormModel {
 			 */
 			component: { value: this.renderComponent( reactiveFormInfo ) },
 		} );
+	}
+
+	/**
+	 * Detects whether current form is valid or not.
+	 *
+	 * This method is used by property FormModel#valid internally, but exposed
+	 * separately to support parameter provision.
+	 *
+	 * @param {boolean} live true if validation is read due to user changing value of field, false if user tries to advance in sequence of forms
+	 * @param {boolean} force set true to prevent use of cached result of previous validation
+	 * @param {boolean} includePristine set true to validate pristine fields as well
+	 * @param {boolean} showErrors controls whether error messages of failed validations should be displayed/written in reactive data of field
+	 * @returns {boolean} true if form is considered valid, false otherwise
+	 */
+	readValidState( { live = true, force = false, includePristine = false, showErrors = true } = {} ) {
+		const numFields = this.fields.length;
+		let valid = true;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const field = this.fields[i];
+
+			if ( !field.readValidState( { live, force, includePristine, showErrors } ) ) {
+				valid = false;
+			}
+		}
+
+
+		const data = this.$data;
+
+		if ( data.valid !== valid ) {
+			data.valid = valid;
+
+			if ( !valid ) {
+				data.finished = false;
+			}
+		}
+
+
+		return valid;
 	}
 
 	/**

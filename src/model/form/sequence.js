@@ -510,7 +510,7 @@ export default class FormSequenceModel {
 
 		currentForm.finished = true;
 
-		if ( !currentForm.valid ) {
+		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
 			EventBus.$emit( "form:autofocus" );
 			return false;
 		}
@@ -795,7 +795,7 @@ export default class FormSequenceModel {
 
 							if ( containingForms.length > 0 ) {
 								for ( let i = 0; i < containingForms.length; i++ ) {
-									const temp = containingForms[i].valid; // eslint-disable-line no-unused-vars
+									containingForms[i].readValidState();
 								}
 							}
 						}

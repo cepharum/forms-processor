@@ -385,18 +385,6 @@ export default class FormFieldAbstractModel {
 		let dependents = null;
 
 		/**
-		 * Marks if this field's set of reactive properties for use with its
-		 * component instances has been fully initialized or not.
-		 *
-		 * Initialization of some reactive properties is delayed until their
-		 * first use due to relying on local methods requiring constructor to
-		 * finish in turn.
-		 *
-		 * @type {boolean}
-		 */
-		let initializedReactiveInfo = false;
-
-		/**
 		 * Caches reference on component created to render current field.
 		 *
 		 * @type {?Component}
@@ -455,31 +443,13 @@ export default class FormFieldAbstractModel {
 			 * @property {boolean}
 			 * @readonly
 			 */
-			valid: {
-				get: () => {
-					if ( reactiveFieldInfo.valid == null ) {
-						if ( reactiveFieldInfo.pristine ) {
-							return true;
-						}
-
-						try {
-							reactiveFieldInfo.errors = Data.unique( this.validate() );
-						} catch ( e ) {
-							reactiveFieldInfo.errors = ["@VALIDATION.UNEXPECTED_ERROR"];
-						}
-
-						reactiveFieldInfo.valid = reactiveFieldInfo.errors.length === 0;
-					}
-
-					return reactiveFieldInfo.valid;
-				},
-			},
+			valid: { get: this.readValidState, },
 
 			/**
 			 * Exposes information on current field being pristine or not.
 			 *
 			 * @note This information is basically read-only. It's possible to
-			 *       write falsy value to explicitly mark field _touched_. This
+			 *       write falsy value to explicitly mark field _affected_. This
 			 *       is implicitly dropping cached information on field's
 			 *       validity.
 			 *
@@ -517,14 +487,15 @@ export default class FormFieldAbstractModel {
 			 */
 			$data: {
 				get: () => {
-					if ( !initializedReactiveInfo ) {
-						initializedReactiveInfo = true;
+					form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
 
-						form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
-					}
+					Object.defineProperties( this, {
+						$data: { value: reactiveFieldInfo },
+					} );
 
 					return reactiveFieldInfo;
-				}
+				},
+				configurable: true,
 			},
 
 			/**
@@ -537,17 +508,12 @@ export default class FormFieldAbstractModel {
 			component: {
 				get() {
 					if ( component == null ) {
-						if ( !initializedReactiveInfo ) {
-							initializedReactiveInfo = true;
-
-							form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
-						}
-
-						component = this.renderComponent( reactiveFieldInfo );
+						component = this.renderComponent( this.$data );
 					}
 
 					return component;
-				}
+				},
+				configurable: true,
 			},
 		} );
 
@@ -712,6 +678,55 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Detects whether current field is valid or not.
+	 *
+	 * This method is used by property FormFieldAbstractModel#valid internally,
+	 * but exposed separately to support parameter provision.
+	 *
+	 * @param {boolean} live true if validation is read due to user changing value of field, false if user tries to advance in sequence of forms
+	 * @param {boolean} force set true to prevent use of cached result of previous validation
+	 * @param {boolean} includePristine set true to validate pristine fields as well
+	 * @param {boolean} showErrors controls whether error messages of failed validations should be displayed/written in reactive data of field
+	 * @returns {boolean} true if form is considered valid, false otherwise
+	 */
+	readValidState( { live = true, force = false, includePristine = false, showErrors = true } = {} ) {
+		const data = this.$data;
+
+		if ( !includePristine && data.pristine ) {
+			return true;
+		}
+
+		if ( force || data.valid == null ) {
+			let errors;
+
+			try {
+				errors = Data.unique( this.validate( live ) );
+			} catch ( e ) {
+				errors = ["@VALIDATION.UNEXPECTED_ERROR"];
+			}
+
+			if ( showErrors ) {
+				// support validate() returning special error message `true` to
+				// drop field's validity w/o actually showing some error message
+				data.errors = errors.filter( error => error !== true );
+			}
+
+			const isValid = errors.length === 0;
+
+			if ( !data.pristine ) {
+				// don't adjust mark on a pristine field's validity so it won't
+				// be visually reflected in GUI and to ensure it is re-validated
+				// first time after becoming affected
+				data.valid = isValid;
+			}
+
+			return isValid;
+		}
+
+		return data.valid;
+	}
+
+	/**
 	 * Initializes data in provided set of reactive data of field.
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
@@ -771,8 +786,7 @@ export default class FormFieldAbstractModel {
 		// changing current field or some field current one
 		// depends on might affect validity of current field
 		if ( !data.pristine ) {
-			data.valid = null;
-			const valid = this.valid; // eslint-disable-line no-unused-vars
+			this.readValidState( { force: true } );
 		}
 
 		if ( !itsMe ) {
