@@ -118,7 +118,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							reactiveFieldInfo.value = value;
 
 							this.$emit( "input", value );
-							this.$parent.$emit( "input", value );
+							this.$parent.$emit( "input", value ); // FIXME is this required due to $emit always forwarded to "parent"
 						},
 					},
 				} );
