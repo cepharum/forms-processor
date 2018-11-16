@@ -8,7 +8,8 @@ build:library:
     - mkdir forms-processor
     - cp dist/FormsProcessor.css forms-processor/style.css
     - cp build/README.md build/package.json forms-processor/
-    - sed -i -e "s/%%version%%/${CI_COMMIT_TAG#v}/" forms-processor/package.json
+    - export CURRENT_TAG="$CI_COMMIT_TAG"
+    - sed -i -e "s/%%version%%/${CURRENT_TAG#v}/" forms-processor/package.json
     - cp dist/FormsProcessor.umd.min.js forms-processor/index.js
     - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
   artifacts:
