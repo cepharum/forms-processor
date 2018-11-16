@@ -1,0 +1,8 @@
+{
+  "name": "forms-processor-browser",
+  "version": "%%version%%",
+  "description": "processes description of forms in browsers",
+  "main": "index.js",
+  "author": "Thomas Urban",
+  "license": "MIT"
+}
