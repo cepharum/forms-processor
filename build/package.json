@@ -1,8 +1,8 @@
 {
-  "name": "forms-processor-build",
+  "name": "forms-processor-browser",
   "version": "%%version%%",
-  "description": "processes description of forms in browsers",
-  "main": "index.js",
+  "description": "build of forms processor",
+  "main": "FormsProcessor.umd.min.js",
   "author": "Thomas Urban",
   "license": "MIT"
 }
