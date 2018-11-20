@@ -17,6 +17,9 @@ import L10n from "@/service/l10n";
 import Definition from "@/service/definition";
 import Data from "@/service/data";
 
+import FormFieldAbstractModel from "../model/form/field/abstract";
+import FormProcessorAbstractModel from "../model/form/processor/abstract";
+
 export default {
 	name: "Splash",
 	created() {
@@ -57,7 +60,45 @@ export default {
 			} )
 			// wait a sec so the splash has a chance to appear ...
 			.then( () => new Promise( resolve => setTimeout( resolve, 100 ) ) )
-			.then( () => configuration.dependencies )
+			.then( () => {
+				const store = this.$store;
+				const { dependencies } = configuration;
+
+				if ( typeof dependencies === "function" ) {
+					return dependencies.call( {
+						addField( name, field ) {
+							if ( field instanceof FormFieldAbstractModel ) {
+								configuration.registry.fields[name] = field;
+							} else {
+								throw new TypeError( `registering invalid field type as ${name} rejected` );
+							}
+						},
+						addProcessor( name, processor ) {
+							if ( processor instanceof FormProcessorAbstractModel ) {
+								configuration.registry.processors[name] = processor;
+							} else {
+								throw new TypeError( `registering invalid processor type as ${name} rejected` );
+							}
+						},
+						addTranslations( locale, translationsOverlay ) {
+							const currentLocale = store.getters["l10n/current"];
+							if ( locale === currentLocale ) {
+								const translations = store.getters["l10n/map"];
+								const translationsWithOverlay = Data.deepMerge( translations, translationsOverlay );
+
+								return store.dispatch( "l10n/load", {
+									locale: currentLocale,
+									translations: translationsWithOverlay,
+								} );
+							}
+
+							return undefined;
+						},
+					} );
+				}
+
+				return dependencies;
+			} )
 			.then( () => Definition.load( configuration.definition ) )
 			.then( definition => this.$store.dispatch( "form/define", {
 				id: configuration.id,
