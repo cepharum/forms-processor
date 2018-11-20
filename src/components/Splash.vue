@@ -46,12 +46,23 @@ export default {
 					translations: _translations,
 				} );
 			} )
-			.then( () => Promise.all( [
-				Definition.load( configuration.definition ),
-				configuration.splashDeferral
-			] ) )
-			.then( ( [definition] ) => this.$store.dispatch( "form/define", {
-				id: this.$root.$options.form.id,
+			.catch( error => {
+				this.error = [error.message];
+
+				if ( process.env.NODE_ENV === "development" ) {
+					this.stack = error.stack;
+				}
+
+				console.error( this.error ); // eslint-disable-line no-console
+			} );
+	},
+	mounted() {
+		const configuration = this.$root.$options.form;
+
+		Promise.resolve( configuration.dependencies )
+			.then( () => Definition.load( configuration.definition ) )
+			.then( definition => this.$store.dispatch( "form/define", {
+				id: configuration.id,
 				definition,
 				registry: configuration.registry,
 			} ) )
