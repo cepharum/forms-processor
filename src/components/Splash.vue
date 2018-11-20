@@ -67,15 +67,19 @@ export default {
 				if ( typeof dependencies === "function" ) {
 					return dependencies.call( {
 						addField( name, field ) {
-							if ( field instanceof FormFieldAbstractModel ) {
-								configuration.registry.fields[name] = field;
+							const _field = typeof field === "function" ? field( FormFieldAbstractModel ) : field;
+
+							if ( _field instanceof FormFieldAbstractModel ) {
+								configuration.registry.fields[name] = _field;
 							} else {
 								throw new TypeError( `registering invalid field type as ${name} rejected` );
 							}
 						},
 						addProcessor( name, processor ) {
-							if ( processor instanceof FormProcessorAbstractModel ) {
-								configuration.registry.processors[name] = processor;
+							const _processor = typeof processor === "function" ? processor( FormProcessorAbstractModel ) : processor;
+
+							if ( _processor instanceof FormProcessorAbstractModel ) {
+								configuration.registry.processors[name] = _processor;
 							} else {
 								throw new TypeError( `registering invalid processor type as ${name} rejected` );
 							}
