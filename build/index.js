@@ -26,7 +26,9 @@
  * @author: cepharum
  */
 
-import "./FormsProcessor.umd.min";
+import FormsProcessor from "./FormsProcessor.umd.min";
 import "./FormsProcessor.umd.min.form";
 import "./FormsProcessor.umd.min.l10n-en";
 import "./FormsProcessor.umd.min.l10n-de";
+
+export default FormsProcessor;
