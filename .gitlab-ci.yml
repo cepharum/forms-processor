@@ -1,12 +1,8 @@
-
 build:library:
   stage: build
   image: node:8
   before_script:
     - npm ci
-    - npm run lint
-    - npm run test:unit
-    - npm run test:e2e
     - npm run build-library
   script:
     - mkdir forms-processor
@@ -19,6 +15,13 @@ build:library:
     name: "forms-processor-$CI_COMMIT_REF_SLUG"
     paths:
       - forms-processor/
+
+test:
+  stage: test
+  script:
+  - npm run lint
+  - npm run test:unit
+
 deploy:
   except:
     - branches
