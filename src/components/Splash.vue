@@ -54,12 +54,10 @@ export default {
 				}
 
 				console.error( this.error ); // eslint-disable-line no-console
-			} );
-	},
-	mounted() {
-		const configuration = this.$root.$options.form;
-
-		Promise.resolve( configuration.dependencies )
+			} )
+			// wait a sec so the splash has a chance to appear ...
+			.then( () => new Promise( resolve => setTimeout( resolve, 100 ) ) )
+			.then( () => configuration.dependencies )
 			.then( () => Definition.load( configuration.definition ) )
 			.then( definition => this.$store.dispatch( "form/define", {
 				id: configuration.id,
