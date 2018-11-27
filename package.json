@@ -7,6 +7,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "build-library": "vue-cli-service build --target lib --name FormsProcessor src/library.js",
+    "create-library": "node create-library.sh.js",
     "lint": "cross-env NODE_ENV=production vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
@@ -30,6 +31,7 @@
     "eslint-plugin-promise": "^4.0.1",
     "node-sass": "^4.9.0",
     "sass-loader": "^7.0.1",
+    "shelljs": "^0.8.3",
     "should": "^13.2.3",
     "vue-template-compiler": "^2.5.17"
   }

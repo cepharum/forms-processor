@@ -4,13 +4,7 @@ build:library:
   before_script:
   - npm ci
   script:
-    - npm run build-library
-    - mkdir forms-processor
-    - cp dist/FormsProcessor.css forms-processor/style.css
-    - cp build/README.md build/package.json forms-processor/
-    - sed -i -e "s/%%version%%/${CI_COMMIT_TAG#v}/" forms-processor/package.json
-    - while read src; do cp "$src" "forms-processor/"; done < <(find dist -name "FormsProcessor.umd.min.*")
-    - cp build/index.js forms-processor/index.js
+    - npm run create-library
   artifacts:
     name: "forms-processor-$CI_COMMIT_REF_SLUG"
     paths:
