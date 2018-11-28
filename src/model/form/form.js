@@ -48,8 +48,6 @@ export default class FormModel {
 			throw new TypeError( "Every form in sequence must have a name." );
 		}
 
-		const numFields = fields.length;
-
 		Object.defineProperties( this, {
 			/**
 			 * Exposes reference on sequence of forms this form is part of.
@@ -176,7 +174,7 @@ export default class FormModel {
 			writeValue: { value: sequence.writeValue },
 		} );
 
-		reactiveFormInfo.fields = new Array( numFields );
+		reactiveFormInfo.fields = new Array( fields.length );
 
 		// define properties including code relying on properties defined before
 		Object.defineProperties( this, {
