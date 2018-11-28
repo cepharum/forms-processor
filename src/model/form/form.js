@@ -41,14 +41,25 @@ export default class FormModel {
 	constructor( sequence, definition, index, reactiveFormInfo ) {
 		const { name = "", fields = [] } = definition;
 
-		const originalName = ( name == null ? "" : String( name ) ).trim();
+		const originalName = String( name ).trim();
 		const formName = originalName.toLowerCase();
 
 		if ( !originalName.length ) {
 			throw new TypeError( "Every form in sequence must have a name." );
 		}
 
+		const numFields = fields.length;
+
 		Object.defineProperties( this, {
+			/**
+			 * Exposes reference on sequence of forms this form is part of.
+			 *
+			 * @name FormModel#sequence
+			 * @property {FormSequenceModel}
+			 * @readonly
+			 */
+			sequence: { value: sequence },
+
 			/**
 			 * Provides index of form in containing sequence of forms.
 			 *
@@ -165,7 +176,7 @@ export default class FormModel {
 			writeValue: { value: sequence.writeValue },
 		} );
 
-		reactiveFormInfo.fields = new Array( fields.length );
+		reactiveFormInfo.fields = new Array( numFields );
 
 		// define properties including code relying on properties defined before
 		Object.defineProperties( this, {
