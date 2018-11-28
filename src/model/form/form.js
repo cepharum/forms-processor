@@ -41,7 +41,7 @@ export default class FormModel {
 	constructor( sequence, definition, index, reactiveFormInfo ) {
 		const { name = "", fields = [] } = definition;
 
-		const originalName = ( name == null ? "" : String( name ) ).trim();
+		const originalName = String( name ).trim();
 		const formName = originalName.toLowerCase();
 
 		if ( !originalName.length ) {
@@ -49,6 +49,15 @@ export default class FormModel {
 		}
 
 		Object.defineProperties( this, {
+			/**
+			 * Exposes reference on sequence of forms this form is part of.
+			 *
+			 * @name FormModel#sequence
+			 * @property {FormSequenceModel}
+			 * @readonly
+			 */
+			sequence: { value: sequence },
+
 			/**
 			 * Provides index of form in containing sequence of forms.
 			 *

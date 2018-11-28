@@ -369,7 +369,7 @@ export default class FormFieldAbstractModel {
 			const dependencies = terms[i].dependsOn;
 
 			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
-				collectedDependencies[dependencies[j].join( "." )] = true;
+				collectedDependencies[dependencies[j].slice( 0, 2 ).join( "." )] = true;
 			}
 		}
 
@@ -528,6 +528,17 @@ export default class FormFieldAbstractModel {
 		function resolveVariableName( originalPath ) {
 			if ( originalPath.length === 1 ) {
 				return [ form.name, originalPath[0] ];
+			}
+
+			const { qualifiedNames } = form.sequence;
+			const [ major, minor ] = originalPath;
+
+			if ( qualifiedNames.indexOf( `${major}.${minor}` ) < 0 ) {
+				if ( qualifiedNames.indexOf( `${form.name}.${major}` ) < 0 ) {
+					throw new TypeError( `invalid dependency on unknown field ${originalPath.join( "." )}` );
+				}
+
+				return [form.name].concat( originalPath );
 			}
 
 			return originalPath;

@@ -64,6 +64,17 @@ export default class FormSequenceModel {
 			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
+		const qualifiedNames = [];
+		for ( let i = 0; i < numDefinedForms; i++ ) {
+			const { name: formName, fields } = sequence[i];
+
+			const numFields = Array.isArray( fields ) ? fields.length : 0;
+			for ( let j = 0; j < numFields; j++ ) {
+				qualifiedNames.push( `${formName}.${fields[j].name}` );
+			}
+		}
+
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides permanently unique ID of current sequence of forms.
@@ -199,7 +210,19 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
+
+			/**
+			 * Lists qualified names of all fields in either form in sequence
+			 * (used by FormFieldAbstractModel on qualifying relative field
+			 * names).
+			 *
+			 * @name FormSequenceModel#qualifiedNames
+			 * @property {string[]}
+			 * @readonly
+			 */
+			qualifiedNames: { value: qualifiedNames },
 		} );
+
 
 
 		// defer definition of additional properties requiring public access
