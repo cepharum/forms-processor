@@ -369,7 +369,7 @@ export default class FormFieldAbstractModel {
 			const dependencies = terms[i].dependsOn;
 
 			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
-				collectedDependencies[dependencies[j].join( "." )] = true;
+				collectedDependencies[dependencies[j].slice( 0, 2 ).join( "." )] = true;
 			}
 		}
 
