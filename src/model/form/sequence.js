@@ -64,13 +64,16 @@ export default class FormSequenceModel {
 			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
-		const qualifiedNames = [];
+		const qualifiedNames = new Map();
+
 		for ( let i = 0; i < numDefinedForms; i++ ) {
 			const { name: formName, fields } = sequence[i];
 
 			const numFields = Array.isArray( fields ) ? fields.length : 0;
 			for ( let j = 0; j < numFields; j++ ) {
-				qualifiedNames.push( `${formName}.${fields[j].name}` );
+				const qualifiedName = `${formName}.${fields[j].name}`;
+
+				qualifiedNames.set( qualifiedName.toLowerCase(), qualifiedName );
 			}
 		}
 
@@ -212,12 +215,14 @@ export default class FormSequenceModel {
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
 
 			/**
-			 * Lists qualified names of all fields in either form in sequence
-			 * (used by FormFieldAbstractModel on qualifying relative field
-			 * names).
+			 * Maps all-lowercase version of qualified name of every field in
+			 * every form to the actual qualified name of either field.
+			 *
+			 * This is used by FormFieldAbstractModel on qualifying relative
+			 * field names.
 			 *
 			 * @name FormSequenceModel#qualifiedNames
-			 * @property {string[]}
+			 * @property {Map<string,string>}
 			 * @readonly
 			 */
 			qualifiedNames: { value: qualifiedNames },
