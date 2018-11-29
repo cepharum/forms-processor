@@ -1,13 +1,16 @@
 <template>
 	<div class="form-control">
-		<button v-if="!isSole" @click="rewind()" :disabled="isFirst" class="previous">{{
-			labelPrevious }}
+		<button v-if="!isSole" @click="rewind()" :disabled="isFirst" class="previous">
+			{{ labelPrevious }}
 		</button>
-		<button v-if="!isLast" @click="advance()" :disabled="isInvalid && disable" :class="{next:true, disabled:isInvalid}">{{
-			labelNext }}
+		<button v-if="!isLast" @click="advance()" :disabled="isInvalid && disable" :class="{next:true, disabled:isInvalid}">
+			{{ labelNext }}
 		</button>
-		<button v-if="isLast" @click="submit()" :disabled="isInvalid && disable" :class="{submit:true, disabled:isInvalid}">{{
-			labelSubmit }}
+		<button v-if="mayContinue" @click="continueLatest" :disabled="isInvalid && disable" :class="{continue:true, disabled:isInvalid}">
+			{{ labelContinue }}
+		</button>
+		<button v-if="isLast" @click="submit()" :disabled="isInvalid && disable" :class="{submit:true, disabled:isInvalid}">
+			{{ labelSubmit }}
 		</button>
 	</div>
 </template>
@@ -39,8 +42,18 @@ export default {
 		labelNext() {
 			return this.$store.getters.l10n.BUTTONS.NEXT;
 		},
+		labelContinue() {
+			return this.$store.getters.l10n.BUTTONS.CONTINUE;
+		},
 		labelSubmit() {
 			return this.$store.getters.l10n.BUTTONS.SUBMIT;
+		},
+		mayContinue() {
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.mode.navigation === "auto"
+			       &&
+			       sequence.firstUnfinishedIndex > sequence.currentIndex + 1;
 		},
 	},
 	methods: {
@@ -49,6 +62,9 @@ export default {
 		},
 		advance() {
 			return this.$store.getters.sequence.advance();
+		},
+		continueLatest() {
+			return this.$store.getters.sequence.advance( true );
 		},
 		submit() {
 			return this.$store.getters.sequence.submit()
