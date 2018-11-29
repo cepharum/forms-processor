@@ -488,6 +488,8 @@ export default class FormSequenceModel {
 
 		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
 
+		input.navigation = String( input.navigation || "auto" ).trim().toLowerCase();
+
 		return input;
 	}
 
@@ -529,9 +531,10 @@ export default class FormSequenceModel {
 	 * Switches to next form in sequence of forms unless current form or any
 	 * other previously visited form is invalid.
 	 *
+	 * @param {boolean} toFirstUnfinished set true to advance
 	 * @returns {boolean} true if advancing succeeded, false on meeting end of sequence or if first invalid form has been selected instead
 	 */
-	advance() {
+	advance( toFirstUnfinished = false ) {
 		const forms = this.forms;
 		const currentIndex = this.currentIndex;
 		const currentForm = forms[currentIndex];
@@ -544,12 +547,22 @@ export default class FormSequenceModel {
 		}
 
 
-		const index = this.firstUnfinishedIndex;
-		if ( index < 0 ) {
-			this.currentIndex = Math.min( currentIndex + 1, forms.length - 1 );
+		let index;
 
-			return this.currentIndex > currentIndex;
+		switch ( this.mode.navigation ) {
+			case "dumb" :
+				index = currentIndex + 1;
+				break;
+
+			case "auto" :
+			default :
+				index = toFirstUnfinished ? this.firstUnfinishedIndex : currentIndex + 1;
+				if ( index < 0 ) {
+					index = currentIndex + 1;
+				}
 		}
+
+		index = Math.min( Math.max( index, 0 ), forms.length - 1 );
 
 		const isAdvancing = index > this.currentIndex;
 		this.currentIndex = index;
