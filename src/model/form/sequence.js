@@ -64,13 +64,16 @@ export default class FormSequenceModel {
 			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
-		const qualifiedNames = [];
+		const qualifiedNames = new Map();
+
 		for ( let i = 0; i < numDefinedForms; i++ ) {
 			const { name: formName, fields } = sequence[i];
 
 			const numFields = Array.isArray( fields ) ? fields.length : 0;
 			for ( let j = 0; j < numFields; j++ ) {
-				qualifiedNames.push( `${formName}.${fields[j].name}` );
+				const qualifiedName = `${formName}.${fields[j].name}`;
+
+				qualifiedNames.set( qualifiedName.toLowerCase(), qualifiedName );
 			}
 		}
 
@@ -212,12 +215,14 @@ export default class FormSequenceModel {
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
 
 			/**
-			 * Lists qualified names of all fields in either form in sequence
-			 * (used by FormFieldAbstractModel on qualifying relative field
-			 * names).
+			 * Maps all-lowercase version of qualified name of every field in
+			 * every form to the actual qualified name of either field.
+			 *
+			 * This is used by FormFieldAbstractModel on qualifying relative
+			 * field names.
 			 *
 			 * @name FormSequenceModel#qualifiedNames
-			 * @property {string[]}
+			 * @property {Map<string,string>}
 			 * @readonly
 			 */
 			qualifiedNames: { value: qualifiedNames },
@@ -483,6 +488,8 @@ export default class FormSequenceModel {
 
 		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
 
+		input.navigation = String( input.navigation || "auto" ).trim().toLowerCase();
+
 		return input;
 	}
 
@@ -524,9 +531,10 @@ export default class FormSequenceModel {
 	 * Switches to next form in sequence of forms unless current form or any
 	 * other previously visited form is invalid.
 	 *
+	 * @param {boolean} toFirstUnfinished set true to advance
 	 * @returns {boolean} true if advancing succeeded, false on meeting end of sequence or if first invalid form has been selected instead
 	 */
-	advance() {
+	advance( toFirstUnfinished = false ) {
 		const forms = this.forms;
 		const currentIndex = this.currentIndex;
 		const currentForm = forms[currentIndex];
@@ -539,12 +547,22 @@ export default class FormSequenceModel {
 		}
 
 
-		const index = this.firstUnfinishedIndex;
-		if ( index < 0 ) {
-			this.currentIndex = Math.min( currentIndex + 1, forms.length - 1 );
+		let index;
 
-			return this.currentIndex > currentIndex;
+		switch ( this.mode.navigation ) {
+			case "dumb" :
+				index = currentIndex + 1;
+				break;
+
+			case "auto" :
+			default :
+				index = toFirstUnfinished ? this.firstUnfinishedIndex : currentIndex + 1;
+				if ( index < 0 ) {
+					index = currentIndex + 1;
+				}
 		}
+
+		index = Math.min( Math.max( index, 0 ), forms.length - 1 );
 
 		const isAdvancing = index > this.currentIndex;
 		this.currentIndex = index;

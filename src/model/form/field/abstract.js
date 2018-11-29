@@ -533,8 +533,8 @@ export default class FormFieldAbstractModel {
 			const { qualifiedNames } = form.sequence;
 			const [ major, minor ] = originalPath;
 
-			if ( qualifiedNames.indexOf( `${major}.${minor}` ) < 0 ) {
-				if ( qualifiedNames.indexOf( `${form.name}.${major}` ) < 0 ) {
+			if ( !qualifiedNames.has( `${major}.${minor}`.toLowerCase() ) ) {
+				if ( !qualifiedNames.has( `${form.name}.${major}`.toLowerCase() ) ) {
 					throw new TypeError( `invalid dependency on unknown field ${originalPath.join( "." )}` );
 				}
 

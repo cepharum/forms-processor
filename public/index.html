@@ -14,7 +14,7 @@
 		</noscript>
 		<div id="app"></div>
 		<script type="text/javascript" id="loaderScript">
-			var definitionFile = location.hash.slice( 1 );
+			var definitionFile = location.hash.slice( 1 )
 			if ( definitionFile.match( /^([a-z_.0-9-]+\/)+definition\.js$/i ) ) {
 				// got hash selecting particular definition file to use instead
 				// of static example (supporting different E2E tests this way)
@@ -61,7 +61,7 @@
 					},
 					sequences: [ [ "#app", {
 						//definition: "http://127.0.0.1:8000/form/describe/test.yaml",
-						definition: "example.json",
+						definition: definitionFile.match( /\.json$/i ) ? definitionFile : "example.json",
 						id: "some-input-1234",
 						name: "testform",
 					} ] ],

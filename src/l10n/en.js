@@ -48,6 +48,7 @@ export default function() {
 		BUTTONS: {
 			PREVIOUS: "Back",
 			NEXT: "Next",
+			CONTINUE: "Continue",
 			SUBMIT: "Submit",
 		},
 		FORMATS: {

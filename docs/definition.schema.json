@@ -1,0 +1,51 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "http://cepharum.de/forms-processor/definition.schema.json",
+	"title": "Forms Processor Definition",
+	"description": "Defining structure and behaviour of a sequence of forms to be processed by Forms Processor.",
+	"type": "object",
+	"properties": {
+		"processors": {
+			"description": "list of objects each providing options to one of several sequentially passed processor handling all forms' input data after confirming last form of sequence",
+			"type": "array",
+			"items": {
+				"type": "object"
+			}
+		},
+		"mode": {
+			"description": "generic options commonly affecting processing of all forms in sequence",
+			"type": "object",
+			"properties": {
+				"view": {
+					"type": "object",
+					"properties": {
+						"progress": {
+							"type": "boolean"
+						}
+					}
+				},
+				"onSuccess": {
+					"description": "describes how to handle case of successfully having passed all defined processors, might be simple or localized text or URL for redirecting to",
+					"type": ["string", "object"]
+				},
+				"fullResult": {
+					"description": "if true, fields with values null or undefined will be provided to processors, too",
+					"type": "boolean"
+				},
+				"navigation": {
+					"description": "selects mode of navigating from form to form of sequence",
+					"type": "string",
+					"enum": ["auto", "dumb"]
+				}
+			}
+		},
+		"sequence": {
+			"description": "list of objects each defining structure of one form in a sequence of forms",
+			"type": "array",
+			"items": {
+				"type": "object"
+			}
+		}
+	},
+	"required": ["processors", "sequence"]
+}

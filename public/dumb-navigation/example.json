@@ -1,0 +1,56 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"mode": {
+		"navigation": "dumb"
+	},
+	"sequence": [
+		{
+			"name": "step1",
+			"label": "First Page",
+			"fields": [
+				{
+					"name": "data",
+					"label": "Some Data",
+					"required": true
+				}
+			]
+		},
+		{
+			"name": "step2",
+			"label": "Second Page",
+			"fields": [
+				{
+					"name": "data",
+					"label": "Some More Data",
+					"required": true
+				}
+			]
+		},
+		{
+			"name": "step3",
+			"label": "Third Page",
+			"fields": [
+				{
+					"name": "data",
+					"label": "Some Extra Data",
+					"required": true
+				}
+			]
+		},
+		{
+			"name": "step4",
+			"label": "Fourth Page",
+			"fields": [
+				{
+					"name": "data",
+					"label": "Some Final Data",
+					"required": true
+				}
+			]
+		}
+	]
+}
