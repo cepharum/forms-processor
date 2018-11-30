@@ -57,6 +57,13 @@ export default function() {
 				INVALID_SIZE: "An IPv4 address is a sequence of four decimal numbers separated by single periods from each other.",
 				INVALID_VALUE: "Every decimal number in an IPv4 address must be in range 0-255.",
 			},
+			MAIL: {
+				INVALID_FORMAT: "Your input does not look like a well-formed mail address.",
+			},
+			PHONE: {
+				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a phone number.",
+				INVALID_FORMAT: "Your input does not look like a well-formed phone number.",
+			},
 		},
 	};
 }

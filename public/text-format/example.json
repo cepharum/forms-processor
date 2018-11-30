@@ -1,0 +1,34 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "sole",
+			"label": "Sole Form",
+			"fields": [
+				{
+					"name": "free",
+					"label": "Free Input"
+				},
+				{
+					"name": "free",
+					"label": "Free Input",
+					"format": "ipv4"
+				},
+				{
+					"name": "mail",
+					"label": "Mail Address",
+					"format": "mail"
+				},
+				{
+					"name": "phone",
+					"label": "Phone Number",
+					"format": "phone"
+				}
+			]
+		}
+	]
+}

@@ -52,7 +52,7 @@ export default class Format {
 		const fixedInput = String( input == null ? "" : input ).trim();
 
 		if ( fixedInput.length === 0 ) {
-			return { result: "" };
+			return { output: "" };
 		}
 
 		if ( /[^0-9.]/.test( fixedInput ) ) {
@@ -80,6 +80,73 @@ export default class Format {
 
 		return {
 			output: bytes.join( "." ),
+		};
+	}
+
+	/**
+	 * Validates if input contains well-formed mail address.
+	 *
+	 * @param {string} input textual input to be validated
+	 * @param {boolean} acceptPartial set true to accept partial input
+	 * @param {object} options refers to object selecting optional customizations to format checking
+	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
+	 */
+	static mail( input, acceptPartial = false, options = {} ) { // eslint-disable-line no-unused-vars
+		const fixedInput = String( input == null ? "" : input ).trim();
+
+		if ( fixedInput.length === 0 ) {
+			return { output: "" };
+		}
+
+		if ( /^[.@+]|^[^@]*\+.*\+|^[^@]*\.\.|@.*@|\s|@.+\.\.|@\.|@.*[=%+]/.test( fixedInput ) ) {
+			return {
+				errors: ["@FORMATS.MAIL.INVALID_FORMAT"],
+			};
+		}
+
+		if ( !acceptPartial ) {
+			if ( !/^[^@=\s]+@(?:[^.=+%@\s]+\.)+[a-z]{2,32}$/.test( fixedInput ) ) {
+				return {
+					errors: ["@FORMATS.MAIL.INVALID_FORMAT"],
+				};
+			}
+		}
+
+		return {
+			output: fixedInput,
+		};
+	}
+
+	/**
+	 * Validates if input contains well-formed phone number.
+	 *
+	 * @param {string} input textual input to be validated
+	 * @param {boolean} acceptPartial set true to accept partial input
+	 * @param {object} options refers to object selecting optional customizations to format checking
+	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
+	 */
+	static phone( input, acceptPartial = false, options = {} ) { // eslint-disable-line no-unused-vars
+		const fixedInput = String( input == null ? "" : input ).replace( /\s+/g, "" );
+
+		if ( fixedInput.length === 0 ) {
+			return { output: "" };
+		}
+
+		const invalidCharacters = fixedInput.replace( /[\d)(+.-]/g, "" );
+		if ( invalidCharacters.length > 0 ) {
+			return {
+				errors: ["@FORMATS.PHONE.INVALID_CHARACTER"],
+			};
+		}
+
+		if ( /^.+\+|([)(+.-]){2}/.test( fixedInput ) ) {
+			return {
+				errors: ["@FORMATS.PHONE.INVALID_FORMAT"],
+			};
+		}
+
+		return {
+			output: fixedInput,
 		};
 	}
 }

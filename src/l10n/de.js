@@ -57,6 +57,13 @@ export default function() {
 				INVALID_SIZE: "Eine IPv4-Adresse besteht aus vier durch einzelne Punkte getrennten Zahlen.",
 				INVALID_VALUE: "In einer IPv4-Adresse sind nur Zahlen im Bereich 0 bis 255 zulässig.",
 			},
+			MAIL: {
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige E-Mail-Adresse.",
+			},
+			PHONE: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer Telefonnummer unzulässig sind.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige Telefonnummer.",
+			},
 		},
 	};
 }
