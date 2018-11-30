@@ -614,7 +614,7 @@ export default class FormSequenceModel {
 				if ( currentIndex >= processors.length ) {
 					resolve( data );
 				} else {
-					processors[currentIndex].process( data, this )
+					Promise.resolve( processors[currentIndex].process( data, this ) )
 						.then( processed => {
 							_process( processors, currentIndex + 1, processed );
 						} )
