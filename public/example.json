@@ -59,6 +59,19 @@
           "size": "5-63"
         },
         {
+          "name": "profilePicture",
+          "label": {
+            "en": "Profile Picture",
+            "ANY": "Profilbild"
+          },
+          "type": "upload",
+          "mimeType": "application/json",
+          "amount": "1-1",
+          "visible": true,
+          "required": "=!empty(lastName)",
+          "size": "5-63"
+        },
+        {
           "name": "noLabel",
           "label": {
             "en": "no options",

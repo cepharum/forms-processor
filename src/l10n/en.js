@@ -44,6 +44,7 @@ export default function() {
 			TOO_SHORT: "Provided information is too short.",
 			TOO_LONG: "Provided information is too long.",
 			MISSING_SELECTION: "Selecting option is required.",
+			WRONG_TYPE: "You provided the wrong type,",
 		},
 		BUTTONS: {
 			PREVIOUS: "Back",

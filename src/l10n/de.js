@@ -44,6 +44,7 @@ export default function() {
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
 			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
+			WRONG_TYPE: "Ihre Eingabe hat den falschen Typ",
 		},
 		BUTTONS: {
 			PREVIOUS: "Zurück",
