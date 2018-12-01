@@ -36,6 +36,7 @@ const AllLetters = MajorLetters + MinorLetters;
 const AllDigits = "0123456789";
 const AllHexDigits = "0123456789ABCDEFabcdef";
 const AllSpecials = ",.-;:_#+*?=)(/&%$§\"!<>[]{}^`´'~|";
+const AllAlphanumerics = AllLetters + AllDigits;
 
 const IsDecimalDigit = /^[0-9]$/i;
 const IsHexLetter = /^[a-f]$/i;
@@ -162,6 +163,74 @@ describe( "Utility class Pattern", () => {
 			AllHexDigits.split( "" )
 				.forEach( char => {
 					compiled[0].regexp.test( char ).should.be.equal( !IsDecimalDigit.test( char ) );
+					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
+				} );
+
+			AllSpecials.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.false();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+		} );
+
+		it( "accepts functional character 'W' for case-insensitively matching any latin letter or digit to be formatted uppercase", () => {
+			const compiled = Pattern.compilePattern( "W" );
+
+			compiled.should.be.an.Array();
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "W" );
+			compiled[0].should.be.an.Object().which.has.property( "regexp" );
+			compiled[0].should.be.an.Object().which.has.property( "format" );
+			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
+
+			AllLetters.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
+				} );
+
+			AllDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char.toUpperCase() );
+				} );
+
+			AllSpecials.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.false();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+		} );
+
+		it( "accepts functional character 'w' for case-insensitively matching any latin letter or digit to be formatted lowercase", () => {
+			const compiled = Pattern.compilePattern( "w" );
+
+			compiled.should.be.an.Array();
+			compiled[0].should.be.an.Object().which.has.property( "code" ).which.is.equal( "w" );
+			compiled[0].should.be.an.Object().which.has.property( "regexp" );
+			compiled[0].should.be.an.Object().which.has.property( "format" );
+			compiled[0].should.be.an.Object().which.has.property( "optional" ).which.is.false();
+
+			AllLetters.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
+				} );
+
+			AllDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
+					compiled[0].format( char ).should.be.equal( char );
+				} );
+
+			AllHexDigits.split( "" )
+				.forEach( char => {
+					compiled[0].regexp.test( char ).should.be.true();
 					compiled[0].format( char ).should.be.equal( char.toLowerCase() );
 				} );
 

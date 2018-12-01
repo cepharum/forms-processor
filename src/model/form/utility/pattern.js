@@ -46,6 +46,8 @@ export default class Pattern {
 			a: /^[a-z]$/i,
 			X: /^[0-9a-f]$/i,
 			x: /^[0-9a-f]$/i,
+			W: /^[0-9a-z]$/i,
+			w: /^[0-9a-z]$/i,
 			"#": /^[0-9]$/,
 		};
 	}
@@ -62,6 +64,8 @@ export default class Pattern {
 			a: ch => String( ch ).toLocaleLowerCase(),
 			X: ch => String( ch ).toLocaleUpperCase(),
 			x: ch => String( ch ).toLocaleLowerCase(),
+			W: ch => String( ch ).toLocaleUpperCase(),
+			w: ch => String( ch ).toLocaleLowerCase(),
 			"#": ch => String( parseInt( ch ) || 0 ),
 		};
 	}
