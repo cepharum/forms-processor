@@ -28,6 +28,7 @@
 
 import FormFieldAbstractModel from "./abstract";
 import Range from "../utility/range";
+import Data from "../../../service/data";
 
 /**
  * Manages single field of form representing data input.
@@ -62,6 +63,28 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				 * @readonly
 				 */
 				return { value: new Range( v ) };
+			},
+
+			button( v ) {
+				/**
+				 * Defines valid range of the amount of files allowed.
+				 *
+				 * @name FormFieldTextModel#size
+				 * @property {Range}
+				 * @readonly
+				 */
+				return { value: Data.normalizeToBoolean( v, true ) };
+			},
+
+			dropZone( v ) {
+				/**
+				 * Defines valid range of the amount of files allowed.
+				 *
+				 * @name FormFieldTextModel#size
+				 * @property {Range}
+				 * @readonly
+				 */
+				return { value: Data.normalizeToBoolean( v, true ) };
 			},
 
 			/**
@@ -101,7 +124,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 						:key="file.name + '_'+ file.lastModifiedDate" 
 						@remove="()=> remove(index)"/>
 					</div>
-					<div v-if="(dropZone !== false)" :class="['dropContainer', dragOverClass]"
+					<div v-if="dropZone" :class="['dropContainer', dragOverClass]"
 						v-on:dragover="e => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -129,7 +152,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 						<path d="M0,1l1,0l0,-1l1,0l0,1l1,0l0,1l-1,0l0,1l-1,0l0,-1l-1,0l0,-1Z"/>
 					</svg>
 					</div>
-					<button title="">
+					<button title="" v-if="button">
 						{{uploadLabel}}
 						<input 
 							type="file"
@@ -160,6 +183,16 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				uploadLabel: {
 					get() {
 						return uploadLabel;
+					}
+				},
+				button: {
+					get(){
+						return button;
+					}
+				},
+				dropZone: {
+					get(){
+						return dropZone;
 					}
 				}
 			},
