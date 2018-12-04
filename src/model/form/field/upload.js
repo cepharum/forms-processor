@@ -44,7 +44,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			size( v ) {
 				/**
-				 * Defines valid range of a value's length.
+				 * Defines valid range of the combined size of all provided files.
 				 *
 				 * @name FormFieldTextModel#size
 				 * @property {Range}
@@ -55,7 +55,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 			amount( v ) {
 				/**
-				 * Defines valid range of a value's length.
+				 * Defines valid range of the amount of files allowed.
 				 *
 				 * @name FormFieldTextModel#size
 				 * @property {Range}
@@ -64,30 +64,20 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				return { value: new Range( v ) };
 			},
 
-			mimeType( definitionValue ) {
-				/**
-				 * requires mime Types
-				 *
-				 * @name FormFieldCheckBoxModel#multiple
-				 * @property boolean
-				 * @readonly
-				 */
-				return {
-					value: definitionValue,
-				};
-			},
+			/**
+			 * Generates property descriptor exposing options to choose from in
+			 * list control.
+			 *
+			 * @param {*} definitionValue value of property provided in definition of field
+			 * @param {string} definitionName name of property provided in definition of field
+			 * @param {object<string,*>} definitions all properties of qualified definition of field
+			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
+			 * @this {FormFieldSelectModel}
+			 */
+			uploadLabel( definitionValue, definitionName, definitions ) {
+				const localizedValue = definitionValue ? this.selectLocalization( definitionValue ) : "Add File";
 
-			label( definitionValue ) {
-				/**
-				 * Indicates whether user might select multiple options or not.
-				 *
-				 * @name FormFieldCheckBoxModel#multiple
-				 * @property boolean
-				 * @readonly
-				 */
-				return {
-					value: definitionValue,
-				};
+				return this.createGetter( localizedValue, definitionName );
 			},
 
 			...customProperties,
@@ -102,32 +92,87 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
-
+		const { form: { readValue, writeValue }, qualifiedName, mimeType, uploadLabel, button, dropZone } = that;
 		return {
 			template: `
 				<span class="upload">
-					<input 
-						type="file"
-						multiple
-						:id="name"
-						:name="name"
-						v-on:change="fileSelected"/>
+					<div class="files">
+						<preview v-for="(file, index) of files" :file="file"
+						:key="file.name + '_'+ file.lastModifiedDate" 
+						@remove="()=> remove(index)"/>
+					</div>
+					<div v-if="(dropZone !== false)" :class="['dropContainer', dragOverClass]"
+						v-on:dragover="e => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'copy';
+                            if(this.dragOverClass !== 'dragOver') this.dragOverClass = 'dragOver';
+                        }"
+                        v-on:dragenter="e => {
+                            if(this.dragOverClass !== 'dragOver') this.dragOverClass = 'dragOver';
+                        }"
+                        v-on:dragleave="e=> {
+                            this.dragOverClass = '';
+                        }"
+                        v-on:dragend="e=> {
+                            this.dragOverClass = '';
+                        }"
+                        v-on:drop="e => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            this.dragOverClass = '';
+                            const files = e.dataTransfer.files;
+                            selectedCallback(files);
+                        }"
+					>
+					<svg width="auto" height="4rem" viewBox="0 0 3 3" version="1.1" xmlns="http://www.w3.org/2000/svg">
+						<path d="M0,1l1,0l0,-1l1,0l0,1l1,0l0,1l-1,0l0,1l-1,0l0,-1l-1,0l0,-1Z"/>
+					</svg>
+					</div>
+					<button title="">
+						{{uploadLabel}}
+						<input 
+							type="file"
+							multiple
+							:id="name"
+							:name="name"
+							:accept="mimeType"
+							@change="fileSelected"/>
+					</button>
 				</span>
 			`,
 			data: () => {
 				return {
-					files: [],
+					dragOverClass: "",
+					files: readValue( qualifiedName ) || [],
 					name: qualifiedName,
 				};
 			},
+			components: {
+				preview: that.previewComponent,
+			},
 			computed: {
+				mimeType: {
+					get() {
+						return mimeType;
+					}
+				},
+				uploadLabel: {
+					get() {
+						return uploadLabel;
+					}
+				}
 			},
 			methods: {
+				remove( index ) {
+					this.files.splice( index, 1 );
+					writeValue( qualifiedName, this.files );
+				},
 				fileSelected( e ) {
 					if ( this.selectedCallback ) {
 						if ( e.target.files ) {
 							this.selectedCallback( e.target.files );
+							e.target.value = "";
 						} else {
 							this.selectedCallback( null );
 						}
@@ -139,9 +184,8 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					if ( !fileArray ) {
 						return;
 					}
-					this.files = [];
 					for( const entry of fileArray ) {
-						this.files.push(  that.normalizeValue( entry ) );
+						this.files.push( that.normalizeValue( entry ) );
 					}
 					writeValue( qualifiedName, this.files );
 				},
@@ -149,8 +193,28 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 		};
 	}
 
+	/**
+	 * renders a Preview of the uploaded Files
+	 * @return {{}} Vue Component that renders a preview for Files
+	 */
+	get previewComponent() {
+		return {
+			props: {
+				file: {
+					type: File,
+					required: true,
+				},
+			},
+			template: `
+				<span class="preview">
+					<span class="label">{{file.name}}</span> <span class="button" @click="()=>{this.$emit('remove')}">&times;</span>
+				</span>
+			`,
+		};
+	}
+
 	/** @inheritDoc */
-	normalizeValue( value = {} ) {
+	normalizeValue( value ) {
 		return value;
 	}
 
@@ -163,17 +227,32 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		if( value.some( el => el.type !== mimeType ) ) {
-			errors.push( "@VALIDATION.WRONG_TYPE" );
+		if( mimeType ) {
+			let requiredTyes = mimeType.split( "," );
+			requiredTyes = requiredTyes.map( e => e.trim() );
+			if( value.some( el => !requiredTyes.some( type => el.type === type ) ) ) {
+				errors.push( "@VALIDATION.WRONG_TYPE" );
+			}
 		}
 
-		if ( value.length ) {
-			if ( this.amount.isBelowRange( value.length ) ) {
+		const totalSize = value.reduce( ( a,b ) => a + Number( b.size ), 0 );
+		if( totalSize && this.size ) {
+			if ( this.size.isBelowRange( totalSize ) ) {
 				errors.push( "@VALIDATION.TOO_SHORT" );
 			}
 
-			if ( this.amount.isAboveRange( value.length ) ) {
+			if ( this.size.isAboveRange( totalSize ) ) {
 				errors.push( "@VALIDATION.TOO_LONG" );
+			}
+		}
+
+		if ( value.length && this.amount ) {
+			if ( this.amount.isBelowRange( value.length ) ) {
+				errors.push( "@VALIDATION.TOO_LITTLE" );
+			}
+
+			if ( this.amount.isAboveRange( value.length ) ) {
+				errors.push( "@VALIDATION.TOO_MANY" );
 			}
 		}
 		return errors;

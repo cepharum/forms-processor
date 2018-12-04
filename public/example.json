@@ -65,11 +65,9 @@
             "ANY": "Profilbild"
           },
           "type": "upload",
-          "mimeType": "application/json",
+          "mimeType": "application/json, application/pdf",
           "amount": "0-1",
-          "visible": true,
-          "required": "=!empty(lastName)",
-          "size": "5-63"
+          "size": "0-20000"
         },
         {
           "name": "noLabel",

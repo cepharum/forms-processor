@@ -43,6 +43,8 @@ export default function() {
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
+			TOO_MANY: "Sie haben zu viel gewählt.",
+			TOO_LITTLE: "Sie haben zu wenig gewählt",
 			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
 			WRONG_TYPE: "Ihre Eingabe hat den falschen Typ",
 		},
