@@ -139,9 +139,9 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					if ( !fileArray ) {
 						return;
 					}
-					for ( const entry of fileArray ) {
-						const normalized = that.normalizeValue( entry );
-						if( normalized ) this.files.push( normalized );
+					this.files = [];
+					for( const entry of fileArray ) {
+						this.files.push(  that.normalizeValue( entry ) );
 					}
 					writeValue( qualifiedName, this.files );
 				},
