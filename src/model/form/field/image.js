@@ -93,7 +93,7 @@ export default class image extends upload {
 				},
 			},
 			template: `
-				<component :is="previewMode" :file="file"></component>
+				<component :is="previewMode" :file="file" @remove="()=>{this.$emit('remove')}"></component>
 			`,
 			computed: {
 				previewMode() {

@@ -96,8 +96,11 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
 			 * @this {FormFieldSelectModel}
 			 */
-			uploadLabel( definitionValue, definitionName ) {
-				const localizedValue = definitionValue ? this.selectLocalization( definitionValue ) : "Add File";
+			uploadLabel( definitionValue = {
+				de: "Datei auswählen",
+				any: "Add File",
+			}, definitionName ) {
+				const localizedValue = this.selectLocalization( definitionValue );
 
 				return this.createGetter( localizedValue, definitionName );
 			},
@@ -123,7 +126,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 						:key="file.name + '_'+ file.lastModifiedDate" 
 						@remove="()=> remove(index)"/>
 					</div>
-					<div v-if="dropZone" :class="['dropContainer', dragOverClass]"
+					<div v-if="dropZone" class="dropContainer" :class="dragOverClass"
 						v-on:dragover="e => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -185,12 +188,12 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					}
 				},
 				button: {
-					get(){
+					get() {
 						return button;
 					}
 				},
 				dropZone: {
-					get(){
+					get() {
 						return dropZone;
 					}
 				}
