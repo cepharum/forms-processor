@@ -93,11 +93,10 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			 *
 			 * @param {*} definitionValue value of property provided in definition of field
 			 * @param {string} definitionName name of property provided in definition of field
-			 * @param {object<string,*>} definitions all properties of qualified definition of field
 			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
 			 * @this {FormFieldSelectModel}
 			 */
-			uploadLabel( definitionValue, definitionName, definitions ) {
+			uploadLabel( definitionValue, definitionName ) {
 				const localizedValue = definitionValue ? this.selectLocalization( definitionValue ) : "Add File";
 
 				return this.createGetter( localizedValue, definitionName );

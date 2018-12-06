@@ -32,6 +32,7 @@ import FormFieldTextModel from "./text";
 import FormFieldCheckBoxModel from "./checkbox";
 import FormFieldSelectModel from "./select";
 import FormFieldUploadModel from "./upload";
+import FormFieldImageModel from "./image";
 
 export default {
 	abstract: FormFieldAbstractModel,
@@ -42,5 +43,6 @@ export default {
 		radio: FormFieldCheckBoxModel,
 		select: FormFieldSelectModel,
 		upload: FormFieldUploadModel,
+		image: FormFieldImageModel,
 	},
 };

@@ -107,6 +107,25 @@
 			margin-bottom: 5px;
 			margin-left: -1rem;
 			.preview {
+			  &.image {
+				&.background{
+				  background-size: cover;
+				  background-position: center center;
+				  height: 5rem;
+				  width: 5rem;
+				}
+				&.foreground {
+				  img {
+					height: 5rem;
+					width: auto;
+				  }
+				}
+				background: #FFF;
+				justify-content: flex-end;
+				.button {
+				  border-left: none;
+				}
+			  }
 			  margin-top:  0.5rem;
 			  margin-left: 1rem;
 			  display: inline-flex;

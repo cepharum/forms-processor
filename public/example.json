@@ -64,8 +64,7 @@
             "en": "Profile Picture",
             "ANY": "Profilbild"
           },
-          "type": "upload",
-          "mimeType": "application/json, application/pdf",
+          "type": "image",
           "amount": "0-1",
           "size": "0-20000"
         },
