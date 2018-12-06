@@ -87,6 +87,17 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				return { value: Data.normalizeToBoolean( v, true ) };
 			},
 
+			multiple( v ) {
+				/**
+				 * Defines valid range of the amount of files allowed.
+				 *
+				 * @name FormFieldTextModel#size
+				 * @property {Range}
+				 * @readonly
+				 */
+				return { value: Data.normalizeToBoolean( v, true ) };
+			},
+
 			/**
 			 * Generates property descriptor exposing options to choose from in
 			 * list control.
@@ -117,7 +128,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, mimeType, uploadLabel, button, dropZone } = that;
+		const { form: { readValue, writeValue }, qualifiedName, mimeType, uploadLabel, button, dropZone, multiple } = that;
 		return {
 			template: `
 				<span class="upload">
@@ -150,7 +161,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
                             selectedCallback(files);
                         }"
 					>
-					<svg width="auto" height="4rem" viewBox="0 0 3 3" version="1.1" xmlns="http://www.w3.org/2000/svg">
+					<svg width="100%" height="4rem" viewBox="0 0 3 3" version="1.1" xmlns="http://www.w3.org/2000/svg">
 						<path d="M0,1l1,0l0,-1l1,0l0,1l1,0l0,1l-1,0l0,1l-1,0l0,-1l-1,0l0,-1Z"/>
 					</svg>
 					</div>
@@ -158,7 +169,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 						{{uploadLabel}}
 						<input 
 							type="file"
-							multiple
+							:multiple="multiple"
 							:id="name"
 							:name="name"
 							:accept="mimeType"
@@ -195,6 +206,11 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				dropZone: {
 					get() {
 						return dropZone;
+					}
+				},
+				multiple: {
+					get() {
+						return multiple;
 					}
 				}
 			},

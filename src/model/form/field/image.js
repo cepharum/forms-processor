@@ -27,8 +27,6 @@
  */
 
 import upload from "./upload";
-import Range from "../utility/range";
-import Data from "../../../service/data";
 
 /**
  * Manages single field of form representing image input.
@@ -65,11 +63,22 @@ export default class image extends upload {
 			 * @this {FormFieldSelectModel}
 			 */
 			previewMode( v = "foreground" ) {
+				const warning = `previewMode encountered, fallback to "foreground":`;
+				if( typeof v !== "string" ) {
+					console.warn( `typeWarning ${warning}`, v );
+					return {
+						value: "foreground",
+					};
+				}
 				let value = "foreground";
 				switch ( v.toLowerCase().trim() ) {
 					case "background" :
 						value = "background";
 						break;
+					case "foreground" :
+						break;
+					default :
+						console.warn( `invalid ${warning}`, v );
 				}
 				return { value };
 			},

@@ -1,0 +1,58 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"mode": {
+		"navigation": "dumb"
+	},
+	"sequence": [
+		{
+			"name": "step1",
+			"label": "First Page",
+			"fields": [
+				{
+					"name": "field1",
+					"label": "an image",
+					"required": true,
+				  	"dropZone": "no",
+				  	"type": "image"
+				},
+				{
+					"name": "field2",
+					"label": "wrong file type",
+				  	"dropZone": false,
+				  	"type": "image"
+				},
+				{
+					"name": "field3",
+					"label": "deleting an image",
+				  	"dropZone": "false",
+				  	"previewMode": "background",
+				  	"type": "image"
+				},
+			  	{
+					"name": "field4",
+					"label": "with dropZone, without button",
+				  	"button": "no",
+					"type": "image"
+				},
+			  	{
+					"name": "field5",
+					"label": "wrong display mode",
+				  	"button": "no",
+				  	"previewMode": "fghjk",
+					"type": "image"
+				},
+			  	{
+					"name": "field5",
+					"label": "wrong display mode",
+				  	"button": "no",
+				  	"previewMode": [],
+					"type": "image"
+				}
+			]
+		}
+	]
+}
