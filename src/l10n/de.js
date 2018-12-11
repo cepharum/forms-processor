@@ -60,6 +60,9 @@ export default function() {
 			MAIL: {
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige E-Mail-Adresse.",
 			},
+			DATE: {
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist kein gültiges Datum.",
+			},
 			PHONE: {
 				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer Telefonnummer unzulässig sind.",
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige Telefonnummer.",

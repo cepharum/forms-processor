@@ -60,6 +60,9 @@ export default function() {
 			MAIL: {
 				INVALID_FORMAT: "Your input does not look like a well-formed mail address.",
 			},
+			DATE: {
+				INVALID_FORMAT: "Your input does not look like a well-formed date.",
+			},
 			PHONE: {
 				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a phone number.",
 				INVALID_FORMAT: "Your input does not look like a well-formed phone number.",
