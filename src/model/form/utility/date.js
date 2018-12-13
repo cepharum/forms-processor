@@ -53,7 +53,7 @@ export default class DateProcessor {
 /**
  *  provides the utility to parse a Date for a given Format
  */
-class DateNormalizer {
+export class DateNormalizer {
 	/**
 	 * @param{string} format format that date should be parsed for
 	 * @param{boolean} acceptPartial set true to accept partial input
@@ -73,9 +73,9 @@ class DateNormalizer {
 		for ( let index = 0, length = keys.length; index < length; index++ ) {
 			patterns[keys[index]] = formatParser[index];
 		}
-		patterns.complete = new RegExp( formatParser.map( RegExp => `(${RegExp.source})` ).join( separator ) );
+		patterns.complete = new RegExp( "^" + formatParser.map( RegExp => `(${RegExp.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" );
 
-		Object.define( this, {
+		Object.assign( this, {
 			separator,
 			keys,
 			identifiers,
@@ -105,7 +105,7 @@ class DateNormalizer {
 					date.setDate( Number( part ) );
 					break;
 				case "month" :
-					date.setMonth( Number( part ) );
+					date.setMonth( Number( part ) - 1 );
 					break;
 				case "year" :
 					switch( identifier ) {
@@ -150,9 +150,8 @@ function extractSeparator( format ) {
 	for ( let index = 0, length = format.length; index < length; index++ ) {
 		const char = format.charAt( index );
 		if ( !isIdentifier( char ) ) {
-			if ( separator ) {
-				throw new Error( "invalid format provided: seperators not uniform" );
-
+			if ( separator && char !== separator ) {
+				throw new Error( "invalid format provided: separators not uniform" );
 			} else {
 				separator = char;
 			}
@@ -183,29 +182,29 @@ function isIdentifier( char ) {
 function getRegExpForIdentifier( string, acceptPartial = true ) {
 	switch ( string.toLowerCase() ) {
 		case "m" :
-			return /\d|0\d|1[0-2]/;
+			return /^\d|0\d|1[0-2]$/;
 		case "mm" :
 			if( acceptPartial ) {
 				return getRegExpForIdentifier( "m" );
 			}
-			return /0\d|1[0-2]/;
+			return /^0\d|1[0-2]$/;
 		case "d" :
-			return /\d|[0-2]\d|3[0-1]/;
+			return /^\d|[0-2]\d|3[0-1]$/;
 		case "dd" :
 			if( acceptPartial ) {
 				return getRegExpForIdentifier( "d" );
 			}
-			return /[0-2]\d|3[0-1]/;
+			return /^[0-2]\d|3[0-1]$/;
 		case "yy" :
 			if( acceptPartial ) {
-				return /\d|\d{1,2}/;
+				return /^\d|\d{1,2}$/;
 			}
-			return /\d{1,2}/;
+			return /^\d{2}$/;
 		case "yyyy" :
 			if( acceptPartial ) {
-				return new RegExp( getRegExpForIdentifier( "yy" ) + "|\\d{1,3}|\\d{1,4}" );
+				return new RegExp( `^${getRegExpForIdentifier( "yy" ).source}|\\d{1,3}|\\d{1,4}$` );
 			}
-			return /\d{1,4}/;
+			return /^\d{4}$/;
 		default :
 			throw new Error( "unexpected date format identifier" );
 	}
