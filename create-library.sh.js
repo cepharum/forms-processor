@@ -29,7 +29,7 @@
 const Shell = require( "shelljs" );
 
 const tag = process.env.CI_COMMIT_TAG;
-const version = tag ? tag.replace( /^v/, "" ) : ( require( "./package" ).version + "-alpha" );
+const version = tag ? tag.replace( /^v/, "" ) : require( "./package" ).version + "-alpha";
 
 Shell.cd( __dirname );
 

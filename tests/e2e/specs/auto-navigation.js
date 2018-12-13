@@ -3,10 +3,6 @@
 
 module.exports = {
 	"Navigation with fast-forward enabled": browser => {
-		const { Keys } = browser;
-
-		// console.log( Keys );
-
 		browser
 			.url( process.env.VUE_DEV_SERVER_URL + "#auto-navigation/example.json" )
 			.waitForElementVisible( ".form-name-step1", 5000 )

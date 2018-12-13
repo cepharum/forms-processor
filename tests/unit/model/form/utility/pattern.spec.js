@@ -36,7 +36,6 @@ const AllLetters = MajorLetters + MinorLetters;
 const AllDigits = "0123456789";
 const AllHexDigits = "0123456789ABCDEFabcdef";
 const AllSpecials = ",.-;:_#+*?=)(/&%$§\"!<>[]{}^`´'~|";
-const AllAlphanumerics = AllLetters + AllDigits;
 
 const IsDecimalDigit = /^[0-9]$/i;
 const IsHexLetter = /^[a-f]$/i;
