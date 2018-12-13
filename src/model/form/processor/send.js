@@ -44,7 +44,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 	constructor( definition ) {
 		super( definition );
 
-		const { url, method = "POST" } = definition;
+		const { url, method = "POST", pass = "data", onError = "fail" } = definition;
 
 		const _url = url.trim();
 		if ( typeof url !== "string" || !ptnProbableUrl.test( url ) ) {
@@ -59,6 +59,50 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 
 			default :
 				throw new TypeError( "Rejecting invalid HTTP method to use on sending input data." );
+		}
+
+		let _pass = ( pass == null ? "" : String( pass ) ).trim().toLowerCase();
+		switch ( _pass ) {
+			case "data" :
+			case "original" :
+			case "provided" :
+			case "input" :
+			case "sent" :
+				_pass = "sent";
+				break;
+
+			case "response" :
+			case "received" :
+				_pass = "received";
+				break;
+
+			case "all" :
+			case "both" :
+			case "merged" :
+				_pass = "merged";
+				break;
+
+			default :
+				throw new TypeError( "Rejecting invalid parameter on result returned from sending input data." );
+		}
+
+		let _errorMode = ( onError == null ? "" : String( onError ) ).trim().toLowerCase();
+		switch ( _errorMode ) {
+			case "fail" :
+				_errorMode = "fail";
+				break;
+
+			case "ignore" :
+				_errorMode = "ignore";
+				break;
+
+			default :
+				throw new TypeError( "Rejecting invalid parameter for handling error on sending input data." );
+		}
+
+
+		if ( _errorMode === "ignore" && _pass === "received" ) {
+			console.warn( "Configuration of processor sending input data might cause follow-up issues." ); // eslint-disable-line no-console
 		}
 
 
@@ -80,6 +124,25 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 			 * @readonly
 			 */
 			method: { value: _method },
+
+			/**
+			 * Provides mode selecting data set to be passed as result of this
+			 * processor.
+			 *
+			 * @name FormProcessorSendModel#pass
+			 * @property {string}
+			 * @readonly
+			 */
+			pass: { value: _pass },
+
+			/**
+			 * Provides mode on handling error response..
+			 *
+			 * @name FormProcessorSendModel#onError
+			 * @property {string}
+			 * @readonly
+			 */
+			onError: { value: _errorMode },
 		} );
 	}
 
@@ -119,19 +182,30 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 		} )
 			.then( response => {
 				if ( response.ok ) {
-					return data;
+					return response.json();
 				}
 
 				throw new Error( `Sending input data to ${url} responded on error.` );
 			} )
 			.catch( error => {
-				if ( this.definition.ignoreFailure ) {
+				if ( this.onError === "ignore" ) {
 					console.error( error ); // eslint-disable-line no-console
 
-					return data;
+					return null;
 				}
 
 				throw error;
+			} )
+			.then( received => {
+				switch ( this.pass ) {
+					case "sent" :
+					default :
+						return data;
+					case "received" :
+						return received;
+					case "merged" :
+						return { sent: data, received };
+				}
 			} );
 	}
 }
