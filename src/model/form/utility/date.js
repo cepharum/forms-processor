@@ -38,7 +38,7 @@ export default class DateProcessor {
 	 * @inheritDoc
 	 * @param{string} format dateFormat for example: yyyy-mm-dd
 	 */
-	constructor( format = "yyyy-mm-dd") {
+	constructor( format = "yyyy-mm-dd" ) {
 		this.normalizer = new DateNormalizer( format );
 	}
 
@@ -62,11 +62,38 @@ export default class DateProcessor {
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	validate( input, options = {} ) {
+	validate( input, { min, max, allowededDays } = {} ) {
 		if( !( input instanceof Date ) ) {
 			throw new TypeError( "Input needs to be a Date, use .normalize to normalize a String to Date" );
 		}
+		if( min ) {
+			const minDate = normalizeSelector( min );
+			if( input.getTime() % 8.64e+7 < minDate.getTime() % 8.64e+7 ) {
+				throw new Error( "input does not statisfy minDate" );
+			}
+		}
+		if( max ) {
+			const minDate = normalizeSelector( max );
+			if( input.getTime() % 8.64e+7 > minDate.getTime() % 8.64e+7 ) {
+				throw new Error( "input does not statisfy minDate" );
+			}
+		}
+	}
+}
 
+function normalizeSelector( selector ) {
+	if( /^-[0-9]+$/.test( selector ) ) {
+		const offset = Number( selector.replace( "-", "" ) );
+		const date = new Date();
+		date.setDate( date.getDate() - offset );
+		return date;
+	}
+
+	if( /^+[0-9]+$/.test( selector ) ) {
+		const offset = Number( selector.replace( "-", "" ) );
+		const date = new Date();
+		date.setDate( date.getDate() + offset );
+		return date;
 	}
 }
 

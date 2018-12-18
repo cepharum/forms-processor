@@ -51,14 +51,14 @@ describe( "Utility Class Date", () => {
 			it( "22-209-12, yy-mm-dd", () => ( () => new DateProcessor( "yy-mm-dd" ).normalize( "22-209-12" ) ).should.throw() );
 			it( "22-09-132, yy-mm-dd", () => ( () => new DateProcessor( "yy-mm-dd" ).normalize( "22-09-132" ) ).should.throw() );
 			it( "2022-09-12, yy-mm-dd", () => ( () => new DateProcessor( "yy-mm-dd" ).normalize( "2022-09-12" ) ).should.throw() );
-			it( "2022-09-12, yy-mm--dd", () => ( () => new DateProcessor( "yy-mm--dd" ).normalize( "2022-09-12" ) ).should.throw() );
-			it( "2022-09-12, yy-mmm-dd", () => ( () => new DateProcessor( "yy-mmm-dd" ).normalize( "2022-09-12" ) ).should.throw() );
-			it( "2022-09-12, yy-mm-ddd", () => ( () => new DateProcessor( "yy-mm-ddd" ).normalize( "2022-09-12" ) ).should.throw() );
-			it( "2022-09--12, yy-mm--dd", () => ( () => new DateProcessor( "yy-mm--dd" ).normalize( "2022-09--12" ) ).should.throw() );
+			it( "2022-09-12, yy-mm--dd", () => ( () => new DateProcessor( "yy-mm--dd" ) ).should.throw() );
+			it( "2022-09-12, yy-mmm-dd", () => ( () => new DateProcessor( "yy-mmm-dd" ) ).should.throw() );
+			it( "2022-09-12, yy-mm-ddd", () => ( () => new DateProcessor( "yy-mm-ddd" ) ).should.throw() );
 			it( "when the input does not match", () => {
 				( () => new DateProcessor( "yyyy-mm-dd" ).normalize( "22-09-20" , false ) ).should.throw();
 				( () => new DateProcessor( "yyyy-mm-dd" ).normalize( "2012-13-20" , false ) ).should.throw();
 				( () => new DateProcessor( "yyyy-mm-dd" ).normalize( "2012-12-34" , false ) ).should.throw();
+				( () => new DateProcessor( "yy-mm-dd" ).normalize( "22-09--12" ) ).should.throw();
 			} );
 		} );
 
