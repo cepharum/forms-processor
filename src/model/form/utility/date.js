@@ -35,18 +35,33 @@
  */
 export default class DateProcessor {
 	/**
-	 * validate a date for given format
+	 * normalize a date for given format
 	 * @param{string} input date to validate for given format
 	 * @param{string} format format to validate against
 	 * @param{boolean} acceptPartial set true to accept partial input
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	static normalize( input, format = "yyyy-mm-dd", acceptPartial = false, options = {} ) {
-		const Normalizer = new DateNormalizer( format, acceptPartial );
+	static normalize( input, format = "yyyy-mm-dd", acceptPartial, options = {} ) {
+		if( !this.cache || this.cache.format !== format ){
+			this.cache =  new DateNormalizer( format, acceptPartial );
+		}
 		return {
-			output: Normalizer.normalize( input, options ),
-		};
+			output: this.cache[format];
+		}
+	}
+
+	/**
+	 * normalize a date for given format
+	 * @param{Date} input date to validate for given format
+	 * @param{object} options refers to object selecting optional customizations to date checking
+	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
+	 */
+	validate( input, { earliestDate, latestDate, } ) {
+		if( !( input instanceof Date ) ) {
+			throw new TypeError( "Input needs to be a Date, use .normalize to normalize a String to Date" );
+		}
+
 	}
 }
 
@@ -58,26 +73,26 @@ export class DateNormalizer {
 	 * @param{string} format format that date should be parsed for
 	 * @param{boolean} acceptPartial set true to accept partial input
 	 */
-	constructor( format = "yyyy-mm-dd", acceptPartial ) {
-		const keys = [];
+	constructor( format = "yyyy-mm-dd", acceptPartial = false ) {
 		const separator = extractSeparator( format );
+		const parts = format.split( separator );
+		const patterns = {};
 
-		const identifiers = format.split( separator );
-
-		const formatParser = identifiers.map( identifier => {
-			keys.push( getKeyForIdentifier( identifier ) );
-			return getRegExpForIdentifier( identifier, acceptPartial );
+		const identifiers = parts.map( value => {
+			const regExp = getRegExpForIdentifier( value, acceptPartial );
+			const key = getKeyForIdentifier( value );
+			patterns[key] = regExp;
+			return {
+				regExp,
+				value,
+				key,
+			};
 		} );
 
-		const patterns = {};
-		for ( let index = 0, length = keys.length; index < length; index++ ) {
-			patterns[keys[index]] = formatParser[index];
-		}
-		patterns.complete = new RegExp( "^" + formatParser.map( RegExp => `(${RegExp.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" );
+		patterns.complete = new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" );
 
 		Object.assign( this, {
 			separator,
-			keys,
 			identifiers,
 			format,
 			patterns,
@@ -97,10 +112,9 @@ export class DateNormalizer {
 		}
 		const date = new Date;
 		for( let index = 0, length = parts.length; index < length; index++ ) {
-			const key = this.keys[index];
 			const part = parts[index];
 			const identifier = this.identifiers[index];
-			switch( key ) {
+			switch( identifier.key ) {
 				case "day" :
 					date.setDate( Number( part ) );
 					break;
@@ -108,7 +122,7 @@ export class DateNormalizer {
 					date.setMonth( Number( part ) - 1 );
 					break;
 				case "year" :
-					switch( identifier ) {
+					switch( identifier.value ) {
 						case "yy" : {
 							const currentYear = date.getFullYear();
 							const upperLimit = currentYear + yearBuffer;
