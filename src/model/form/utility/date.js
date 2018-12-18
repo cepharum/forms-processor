@@ -35,20 +35,25 @@
  */
 export default class DateProcessor {
 	/**
+	 * @inheritDoc
+	 * @param{string} format dateFormat for example: yyyy-mm-dd
+	 */
+	constructor( format = "yyyy-mm-dd") {
+		this.normalizer = new DateNormalizer( format );
+	}
+
+
+	/**
 	 * normalize a date for given format
 	 * @param{string} input date to validate for given format
-	 * @param{string} format format to validate against
 	 * @param{boolean} acceptPartial set true to accept partial input
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	static normalize( input, format = "yyyy-mm-dd", acceptPartial, options = {} ) {
-		if( !this.cache || this.cache.format !== format ){
-			this.cache =  new DateNormalizer( format, acceptPartial );
-		}
+	normalize( input, acceptPartial, options ) {
 		return {
-			output: this.cache[format];
-		}
+			output: this.normalizer.normalize( input, acceptPartial, options ),
+		};
 	}
 
 	/**
@@ -57,7 +62,7 @@ export default class DateProcessor {
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	validate( input, { earliestDate, latestDate, } ) {
+	validate( input, options = {} ) {
 		if( !( input instanceof Date ) ) {
 			throw new TypeError( "Input needs to be a Date, use .normalize to normalize a String to Date" );
 		}
@@ -71,25 +76,30 @@ export default class DateProcessor {
 export class DateNormalizer {
 	/**
 	 * @param{string} format format that date should be parsed for
-	 * @param{boolean} acceptPartial set true to accept partial input
 	 */
-	constructor( format = "yyyy-mm-dd", acceptPartial = false ) {
+	constructor( format = "yyyy-mm-dd" ) {
 		const separator = extractSeparator( format );
 		const parts = format.split( separator );
 		const patterns = {};
 
-		const identifiers = parts.map( value => {
-			const regExp = getRegExpForIdentifier( value, acceptPartial );
-			const key = getKeyForIdentifier( value );
+		const identifiers = parts.map( part => {
+			const key = getKeyForIdentifier( part );
+			const regExp = {
+				regular: getRegExpForIdentifier( part, false ),
+				acceptPartial: getRegExpForIdentifier( part, true ),
+			};
 			patterns[key] = regExp;
 			return {
-				regExp,
-				value,
+				regExp ,
+				value: part,
 				key,
 			};
 		} );
 
-		patterns.complete = new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" );
+		patterns.complete = {
+			regular: new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.regular.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" ),
+			acceptPartial: new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.acceptPartial.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" )
+		};
 
 		Object.assign( this, {
 			separator,
@@ -102,12 +112,14 @@ export class DateNormalizer {
 	/**
 	 * normalizes input that is in the given format to Date
 	 * @param{string} input input that obeys the given format
+	 * @param{boolean} acceptPartial set true to accept partial input
 	 * @param{number} yearBuffer if "yy" is the year format, this is added to current year to decide which century to use
 	 * @returns {Date} parsed date
 	 */
-	normalize( input, { yearBuffer = 0 } ) {
+	normalize( input, acceptPartial = false, { yearBuffer = 0 } = {} ) {
 		const parts = input.split( this.separator );
-		if( !this.patterns.complete.test( input ) ) {
+		const normalizer = acceptPartial ? "acceptPartial" : "regular";
+		if( !this.patterns.complete[normalizer].test( input ) ) {
 			throw new TypeError( "date input does not match format" );
 		}
 		const date = new Date;
