@@ -3,10 +3,6 @@
 
 module.exports = {
 	"Navigation without fast-forward enabled": browser => {
-		const { Keys } = browser;
-
-		// console.log( Keys );
-
 		browser
 			.url( process.env.VUE_DEV_SERVER_URL + "#dumb-navigation/example.json" )
 			.waitForElementVisible( ".form-name-step1", 5000 )
