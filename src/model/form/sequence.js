@@ -702,29 +702,6 @@ export default class FormSequenceModel {
 	}
 
 	/**
-	 * Fetches data record containing initial values of all defined fields.
-	 *
-	 * @returns {object<object<string,*>>} initial values of all fields per form
-	 */
-	getInitialData() {
-		const data = {};
-
-		this.forms.forEach( form => {
-			const formName = form.name;
-
-			data[formName] = {};
-
-			form.fields.forEach( field => {
-				if ( field.constructor.isInteractive ) {
-					data[formName][field.name] = field.normalizeValue( field.initial );
-				}
-			} );
-		} );
-
-		return data;
-	}
-
-	/**
 	 * Creates reverse map of dependencies list fields per field depending on
 	 * the latter and assigns the resulting list to either field with
 	 * dependencies.
