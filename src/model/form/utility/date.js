@@ -81,20 +81,38 @@ export default class DateProcessor {
 	}
 }
 
+/**
+ * normalizes a selector to a Date
+ * @param{string} selector Date selector
+ * @return {Date} normalized Date
+ */
 function normalizeSelector( selector ) {
+	const date = new Date();
+	if( selector === "now" ) {
+		return new Date();
+	}
 	if( /^-[0-9]+$/.test( selector ) ) {
 		const offset = Number( selector.replace( "-", "" ) );
-		const date = new Date();
 		date.setDate( date.getDate() - offset );
 		return date;
 	}
 
 	if( /^+[0-9]+$/.test( selector ) ) {
 		const offset = Number( selector.replace( "-", "" ) );
-		const date = new Date();
 		date.setDate( date.getDate() + offset );
 		return date;
 	}
+	if( /^-[0-9]+BD$/.test( selector ) ) {
+		const offset = Number( selector.replace( "-", "" ) );
+		const day = date.getDay();
+		if( offset <= day ) {
+			date.setDate( date.getDate() - offset );
+		} else {
+			const
+		}
+		return date;
+	}
+	throw new Error( "Selector does not match" );
 }
 
 /**
