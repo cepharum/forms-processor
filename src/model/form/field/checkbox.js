@@ -124,6 +124,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		const initial = super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
+
 		return initial;
 	}
 
@@ -159,12 +160,12 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				},
 				model: {
 					get() {
-						return that.normalizeValue( this.value );
+						return this.value;
 					},
 					set( newValue ) {
 						reactiveFieldInfo.pristine = false;
 
-						const normalized = that.normalizeValue( newValue );
+						const { value: normalized } = that.normalizeValue( newValue );
 
 						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
 							writeValue( qualifiedName, normalized );
@@ -196,17 +197,19 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	normalizeValue( value ) {
 		const options = this.options;
-		const isRadio = this.type === "radio" && this.options && this.options.length > 1;
-		const handlesArrayOfValues = !isRadio && options && options.length > 1;
+		const multiOptions = options && options.length > 1;
+		const isRadio = this.type === "radio" && multiOptions;
+		const handlesArrayOfValues = !isRadio && multiOptions;
 
 		const mapped = handlesArrayOfValues ? value : value ? isRadio ? [value] : [options[0].value] : [];
-		const extracted = Options.extractOptions( mapped, options );
 
-		if ( this.multiple ) {
-			return extracted;
-		}
+		const values = Options.extractOptions( mapped, options );
+		const labels = Options.extractOptions( mapped, options, true );
 
-		return Array.isArray( extracted ) ? extracted[0] || null : extracted;
+		return {
+			value: this.multiple ? values : values[0] || null,
+			formattedValue: this.multiple ? labels : labels[0] || null,
+		};
 	}
 
 	/** @inheritDoc */
