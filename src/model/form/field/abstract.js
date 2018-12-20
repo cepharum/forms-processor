@@ -745,15 +745,24 @@ export default class FormFieldAbstractModel {
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const initialValue = this.normalizeValue( this.initial );
+		const normalized = this.normalizeValue( this.initial );
+		let formattedValue, value;
+
+		if ( normalized && typeof normalized === "object" && ( normalized.hasOwnProperty( "value" ) || normalized.hasOwnProperty( "formattedValue" ) ) ) {
+			formattedValue = normalized.formattedValue || normalized.value;
+			value = normalized.value || normalized.formattedValue;
+		} else {
+			value = formattedValue = normalized;
+		}
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.value = initialValue;
+		reactiveFieldInfo.value = value;
+		reactiveFieldInfo.formattedValue = formattedValue;
 
-		return initialValue;
+		return value;
 	}
 
 	/**
