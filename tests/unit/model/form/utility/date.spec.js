@@ -65,44 +65,55 @@ describe( "Utility Class Date", () => {
 		describe( "parses date with format 'yyyy-mm-dd'", () => {
 			const date = new DateProcessor( "yyyy-mm-dd" ).normalize( "2012-09-12" ).output;
 			it( "is instance of Date", () => {
-				date.should.be.instanceof( Date );
+				date.value.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {
-				date.getDate().should.be.eql( 12 );
+				date.value.getDate().should.be.eql( 12 );
 			} );
 			it( "has the right month", () => {
-				date.getMonth().should.be.eql( 8 );
+				date.value.getMonth().should.be.eql( 8 );
 			} );
 			it( "has the right year", () => {
-				date.getFullYear().should.be.eql( 2012 );
+				date.value.getFullYear().should.be.eql( 2012 );
+			} );
+		} );
+
+		describe( "parses date with format 'yyyy-mm-dd'", () => {
+			const date = new DateProcessor( "yyyy-mm-dd" ).normalize( "20", true ).output;
+			it( "is instance of Date", () => {
+				date.value.should.be.instanceof( Date );
+			} );
+			it( "has the right year", () => {
+				date.value.getFullYear().should.be.eql( 20 );
 			} );
 		} );
 
 		describe( "parses date with format 'yy-mm-dd'", () => {
-			const date = new DateProcessor( "yy-mm-dd" ).normalize( "12-09-12" ).output;
+			const processor = new DateProcessor( "yy-mm-dd" );
+			const date = processor.normalize( "12-09-12" ).output;
 			it( "is instance of Date", () => {
-				date.should.be.instanceof( Date );
+				date.value.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {
-				date.getDate().should.be.eql( 12 );
+				date.value.getDate().should.be.eql( 12 );
 			} );
 			it( "has the right month", () => {
-				date.getMonth().should.be.eql( 8 );
+				date.value.getMonth().should.be.eql( 8 );
 			} );
 			it( "has the right year", () => {
-				date.getFullYear().should.be.eql( 2012 );
+				date.value.getFullYear().should.be.eql( 2012 );
 			} );
-			const date2 = new DateProcessor( "yy-mm-dd" ).normalize( "22-09-12" ).output;
+			const date2 = processor.normalize( "22-09-12" ).output;
 			it( "has the right year", () => {
-				date2.getFullYear().should.be.eql( 1922 );
+				date2.value.getFullYear().should.be.eql( 1922 );
 			} );
-			const date3 = new DateProcessor( "yy-mm-dd" ).normalize( "22-09-12" , false, { yearBuffer: 20 } ).output;
+			const date3 = processor.normalize( "22-09-12" , false, { yearBuffer: 20 } ).output;
 			it( "handles year buffer right if year is in buffer", () => {
-				date3.getFullYear().should.be.eql( 2022 );
+				date3.value.getFullYear().should.be.eql( 2022 );
 			} );
-			const date4 = new DateProcessor( "yy-mm-dd" ).normalize( "70-09-12" , false, { yearBuffer: 20 } ).output;
+			const date4 = processor.normalize( "70-09-12" , false, { yearBuffer: 20 } ).output;
 			it( "handles year buffer right if year is not in buffer", () => {
-				date4.getFullYear().should.be.eql( 1970 );
+				date4.value.getFullYear().should.be.eql( 1970 );
 			} );
 		} );
 	} );

@@ -31,11 +31,13 @@ import FormFieldInfoModel from "./info";
 import FormFieldTextModel from "./text";
 import FormFieldCheckBoxModel from "./checkbox";
 import FormFieldSelectModel from "./select";
+import FormFieldDateModel from "./date";
 
 export default {
 	abstract: FormFieldAbstractModel,
 	map: {
 		info: FormFieldInfoModel,
+		date: FormFieldDateModel,
 		text: FormFieldTextModel,
 		checkbox: FormFieldCheckBoxModel,
 		radio: FormFieldCheckBoxModel,

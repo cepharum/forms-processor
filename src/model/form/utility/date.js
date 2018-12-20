@@ -40,20 +40,18 @@ export default class DateProcessor {
 	 */
 	constructor( format = "yyyy-mm-dd" ) {
 		this.normalizer = new DateNormalizer( format );
+		this.format = format;
 	}
 
 
 	/**
 	 * normalize a date for given format
 	 * @param{string} input date to validate for given format
-	 * @param{boolean} acceptPartial set true to accept partial input
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	normalize( input, acceptPartial, options ) {
-		return {
-			output: this.normalizer.normalize( input, acceptPartial, options ),
-		};
+	normalize( input, options ) {
+		return this.normalizer.normalize( input, options );
 	}
 
 	/**
@@ -67,53 +65,52 @@ export default class DateProcessor {
 			throw new TypeError( "Input needs to be a Date, use .normalize to normalize a String to Date" );
 		}
 		if( min ) {
-			const minDate = normalizeSelector( min );
+			const minDate = this.normalizeSelector( min );
 			if( input.getTime() % 8.64e+7 < minDate.getTime() % 8.64e+7 ) {
-				throw new Error( "input does not statisfy minDate" );
+				throw new Error( "input does not satisfy minDate" );
 			}
 		}
 		if( max ) {
-			const minDate = normalizeSelector( max );
+			const minDate = this.normalizeSelector( max );
 			if( input.getTime() % 8.64e+7 > minDate.getTime() % 8.64e+7 ) {
-				throw new Error( "input does not statisfy minDate" );
+				throw new Error( "input does not satisfy minDate" );
 			}
 		}
 	}
-}
 
-/**
- * normalizes a selector to a Date
- * @param{string} selector Date selector
- * @return {Date} normalized Date
- */
-function normalizeSelector( selector ) {
-	const date = new Date();
-	if( selector === "now" ) {
-		return new Date();
-	}
-	if( /^-[0-9]+$/.test( selector ) ) {
-		const offset = Number( selector.replace( "-", "" ) );
-		date.setDate( date.getDate() - offset );
-		return date;
-	}
-
-	if( /^+[0-9]+$/.test( selector ) ) {
-		const offset = Number( selector.replace( "-", "" ) );
-		date.setDate( date.getDate() + offset );
-		return date;
-	}
-	if( /^-[0-9]+BD$/.test( selector ) ) {
-		const offset = Number( selector.replace( "-", "" ) );
-		const day = date.getDay();
-		if( offset <= day ) {
-			date.setDate( date.getDate() - offset );
-		} else {
-			const
+	/**
+	 * normalizes a selector to a Date
+	 * @param{string} selector Date selector
+	 * @return {Date} normalized Date
+	 */
+	normalizeSelector( selector ) {
+		const date = new Date();
+		if( selector === "now" ) {
+			return new Date();
 		}
-		return date;
+		if( /^-[0-9]+$/.test( selector ) ) {
+			const offset = Number( selector.replace( "-", "" ) );
+			date.setDate( date.getDate() - offset );
+			return date;
+		}
+
+		if( /^\+[0-9]+$/.test( selector ) ) {
+			const offset = Number( selector.replace( "-", "" ) );
+			date.setDate( date.getDate() + offset );
+			return date;
+		}
+		// if( /^-[0-9]+BD$/.test( selector ) ) {
+		// 	const offset = Number( selector.replace( "-", "" ) );
+		// 	const day = date.getDay();
+		// 	if( offset <= day ) {
+		// 		date.setDate( date.getDate() - offset );
+		// 	}
+		// 	return date;
+		// }
+		throw new Error( "Selector does not match" );
 	}
-	throw new Error( "Selector does not match" );
 }
+
 
 /**
  *  provides the utility to parse a Date for a given Format
@@ -141,17 +138,28 @@ export class DateNormalizer {
 			};
 		} );
 
+		const length = identifiers.length;
+		const acceptPartialArray = new Array( length * 3 );
+		for( let index = 0, leftOffset = 0, rightOffset = acceptPartialArray.length - 1; index < length; index ++ ) {
+			const identifier = identifiers[index];
+			acceptPartialArray[leftOffset] = "(?:";
+			leftOffset++;
+			acceptPartialArray[leftOffset] = identifier.regExp.regular.source.slice( 1, -1 );
+			leftOffset++;
+			acceptPartialArray[rightOffset] = ")?";
+			rightOffset--;
+		}
+
 		patterns.complete = {
 			regular: new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.regular.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" ),
-			acceptPartial: new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.acceptPartial.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" )
+			acceptPartial: new RegExp( acceptPartialArray.join( "" ) ),
 		};
 
-		Object.assign( this, {
-			separator,
-			identifiers,
-			format,
-			patterns,
-		} );
+
+		this.separator = separator;
+		this.identifiers = identifiers;
+		this.format = format;
+		this.patterns = patterns;
 	}
 
 	/**
@@ -161,50 +169,60 @@ export class DateNormalizer {
 	 * @param{number} yearBuffer if "yy" is the year format, this is added to current year to decide which century to use
 	 * @returns {Date} parsed date
 	 */
-	normalize( input, acceptPartial = false, { yearBuffer = 0 } = {} ) {
-		const parts = input.split( this.separator );
-		const normalizer = acceptPartial ? "acceptPartial" : "regular";
-		if( !this.patterns.complete[normalizer].test( input ) ) {
-			throw new TypeError( "date input does not match format" );
+	normalize( input = "", { yearBuffer = 0 } = {} ) {
+		let value = null;
+		if( input ) {
+			value = NaN;
 		}
-		const date = new Date;
-		for( let index = 0, length = parts.length; index < length; index++ ) {
-			const part = parts[index];
-			const identifier = this.identifiers[index];
-			switch( identifier.key ) {
-				case "day" :
-					date.setDate( Number( part ) );
-					break;
-				case "month" :
-					date.setMonth( Number( part ) - 1 );
-					break;
-				case "year" :
-					switch( identifier.value ) {
-						case "yy" : {
-							const currentYear = date.getFullYear();
-							const upperLimit = currentYear + yearBuffer;
-							const lastTwoDigits = upperLimit % 100;
-							const overFlow = upperLimit - lastTwoDigits;
-							const year = Number( part );
-							if( lastTwoDigits >= year ) {
-								date.setFullYear( year + overFlow );
-							} else {
-								date.setFullYear( year + overFlow - 100 );
+		const formattedInput = input.trim();
+		const parts = formattedInput.split( this.separator );
+		const isValid = this.patterns.complete.acceptPartial.test( formattedInput );
+		const formattedValue = isValid ? formattedInput : false;
+		const isParsable = this.patterns.complete.regular.test( formattedInput ) || parts.length !== this.identifiers.length;
+		if( isParsable ) {
+			const date = new Date;
+			for( let index = 0, length = parts.length; index < length; index++ ) {
+				const part = parts[index];
+				const identifier = this.identifiers[index];
+				switch( identifier.key ) {
+					case "day" :
+						date.setDate( Number( part ) );
+						break;
+					case "month" :
+						date.setMonth( Number( part ) - 1 );
+						break;
+					case "year" :
+						switch( identifier.value ) {
+							case "yy" : {
+								const currentYear = date.getFullYear();
+								const upperLimit = currentYear + yearBuffer;
+								const lastTwoDigits = upperLimit % 100;
+								const overFlow = upperLimit - lastTwoDigits;
+								const year = Number( part );
+								if( lastTwoDigits >= year ) {
+									date.setFullYear( year + overFlow );
+								} else {
+									date.setFullYear( year + overFlow - 100 );
+								}
+								break;
 							}
-							break;
+							case "yyyy" :
+								date.setFullYear( Number( part ) );
+								break;
+							default :
+								throw new TypeError( "invalid format detected" );
 						}
-						case "yyyy" :
-							date.setFullYear( Number( part ) );
-							break;
-						default :
-							throw new TypeError( "invalid format detected" );
-					}
-					break;
-				default :
-					throw new TypeError( "invalid input detected" );
+						break;
+					default :
+						throw new TypeError( "invalid input detected" );
+				}
 			}
+			value = date;
 		}
-		return date;
+		return {
+			formattedValue,
+			value
+		};
 	}
 }
 

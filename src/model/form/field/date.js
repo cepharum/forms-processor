@@ -27,6 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import DateProcessor from "../utility/date";
+import Data from "../../../service/data";
 
 /**
  * Implements field type that provides date based utility
@@ -55,7 +57,91 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				}
 				return this.createGetter( definitionValue, definitionName );
 			},
+
+			/**
+			 * Generates property descriptor exposing format the date should have.
+			 *
+			 * @param {*} definitionValue value of property provided in definition of field
+			 * @param {string} definitionName name of property provided in definition of field
+			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
+			 * @this {FormFieldSelectModel}
+			 */
+			options( definitionValue, definitionName ) {
+				return this.createGetter( definitionValue, definitionName );
+			},
+
 			...customProperties
 		} );
+
+		this.processor = new DateProcessor( this.format );
 	}
+
+	/** @inheritDoc */
+	static get isInteractive() {
+		return true;
+	}
+
+	/** @inheritDoc */
+	normalizeValue( input, options = {} ) {
+		if( this.format !== this.processor.format ) {
+			this.processor = new DateProcessor( this.format, this.options );
+		}
+		return this.processor.normalize( input );
+	}
+
+	/** @inheritDoc */
+	renderFieldComponent( reactiveFieldInfo ) {
+		const that = this;
+		const { form: { readValue, writeValue }, qualifiedName, multiple } = that;
+
+		return {
+			template: `
+				<input v-model="formattedValue">
+			`,
+			data: () => {
+				return {
+					value: readValue( qualifiedName ),
+				};
+			},
+			computed: {
+				options() {
+					return reactiveFieldInfo.options;
+				},
+				model: {
+					get() {
+						return that.normalizeValue( this.value );
+					},
+					set( newValue ) {
+						reactiveFieldInfo.pristine = false;
+
+						const normalized = that.normalizeValue( newValue );
+
+						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
+							writeValue( qualifiedName, normalized );
+							this.value = normalized;
+						}
+					},
+				},
+				multiple() {
+					return multiple && ( this.options && this.options.length > 1 );
+				},
+			},
+		};
+	}
+
+	/** @inheritDoc */
+	validate( live ) {
+		const errors = super.validate();
+
+		const formattedValue = String( this.formattedValue == null ? "" : this.formattedValue ).trim();
+
+		if ( this.required && ! formattedValue.length ) {
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		}
+
+		if()
+
+		return [ ...errors, ...dateErrors ];
+	}
+
 }
