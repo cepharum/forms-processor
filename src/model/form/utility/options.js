@@ -256,9 +256,10 @@ export default class Options {
 	 *
 	 * @param {*|Array} values one or more values to be filtered
 	 * @param {LabelledOptionsList} normalizedOptions processed list of defined options
-	 * @return {*} excerpt of of first list containing values also listed in second list, only
+	 * @param {boolean} extractLabels set true to extract labels of valid options instead of values
+	 * @return {Array<*>} excerpt of first list containing values also listed in second list, only
 	 */
-	static extractOptions( values, normalizedOptions ) {
+	static extractOptions( values, normalizedOptions, extractLabels = false ) {
 		const numOptions = normalizedOptions.length;
 
 		const rawValues = Array.isArray( values ) ? values : values == null ? [] : [values];
@@ -267,21 +268,26 @@ export default class Options {
 		const extracted = new Array( numRaw );
 		let write = 0;
 
+		const valueToOption = new Map();
+		for ( let i = 0; i < numOptions; i++ ) {
+			const option = normalizedOptions[i];
+
+			if ( !valueToOption.has( option.value ) ) {
+				valueToOption.set( option.value, option );
+			}
+		}
+
 		for ( let i = 0; i < numRaw; i++ ) {
 			const item = rawValues[i];
 
-			for ( let j = 0; j < numOptions; j++ ) {
-				const option = normalizedOptions[j].value;
-
-				if ( item === option || item === String( option ) ) {
-					extracted[write++] = option;
-					break;
-				}
+			const option = valueToOption.get( item ) || valueToOption.get( String( item ) );
+			if ( option != null ) {
+				extracted[write++] = extractLabels ? option.label : option.value;
 			}
 		}
 
 		extracted.splice( write );
 
-		return normalizedOptions.length === 1 ? extracted[0] || null : extracted;
+		return extracted;
 	}
 }
