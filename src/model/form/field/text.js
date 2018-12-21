@@ -81,33 +81,41 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			fixedValue = Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
 		}
 
-		return fixedValue;
+		return {
+			value: fixedValue,
+			formattedValue: fixedValue,
+		};
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
+		const { form: { writeValue }, qualifiedName } = that;
+
+		let lastValue = null;
 
 		return {
 			render( createElement ) {
 				return createElement( "input", {
 					domProps: {
 						type: "text",
-						value: readValue( qualifiedName ),
+						value: reactiveFieldInfo.formattedValue,
 					},
 					on: {
 						input: event => {
+							const { value: input, selectionStart } = event.target;
+
+							const length = input.length;
 							const options = {
-								removing: event.target.value.length < ( ( this.value == null ? 0 : this.value.length ) || 0 ),
+								removing: lastValue != null && length < lastValue.length,
+								at: selectionStart,
 							};
 
-							const value = that.normalizeValue( event.target.value, options );
+							const { value, formattedValue } = that.normalizeValue( input, options );
 
-							event.target.value = value;
+							event.target.value = lastValue = formattedValue;
 
 							if ( value === this.value ) {
-								event.target.value = value;
 								return;
 							}
 
@@ -116,6 +124,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 							writeValue( qualifiedName, value );
 							reactiveFieldInfo.value = value;
+							reactiveFieldInfo.formattedValue = formattedValue;
 
 							this.$emit( "input", value );
 							this.$parent.$emit( "input", value ); // FIXME is this required due to $emit always forwarded to "parent"

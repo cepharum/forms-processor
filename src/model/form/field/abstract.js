@@ -745,15 +745,7 @@ export default class FormFieldAbstractModel {
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const normalized = this.normalizeValue( this.initial );
-		let formattedValue, value;
-
-		if ( normalized && typeof normalized === "object" && ( normalized.hasOwnProperty( "value" ) || normalized.hasOwnProperty( "formattedValue" ) ) ) {
-			formattedValue = normalized.formattedValue || normalized.value;
-			value = normalized.value || normalized.formattedValue;
-		} else {
-			value = formattedValue = normalized;
-		}
+		const { value, formattedValue } = this.normalizeValue( this.initial );
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
@@ -935,7 +927,10 @@ export default class FormFieldAbstractModel {
 			},
 			beforeMount() {
 				if ( that.pristine ) {
-					reactiveFieldInfo.value = that.normalizeValue( that.initial );
+					const { value, formattedValue } = that.normalizeValue( that.initial );
+
+					reactiveFieldInfo.value = value;
+					reactiveFieldInfo.formattedValue = formattedValue;
 				}
 
 				this.$on( "input", () => {
@@ -1010,7 +1005,7 @@ export default class FormFieldAbstractModel {
 	 * @returns {*} normalized value
 	 */
 	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
-		return value;
+		return { value, formattedValue: value };
 	}
 
 	/**
