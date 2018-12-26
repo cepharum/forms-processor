@@ -75,15 +75,23 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
+		let formattedValue = fixedValue;
 
 		const pattern = this.pattern;
 		if ( pattern ) {
-			fixedValue = Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
+			const { valuable, formatted } = Pattern.parse( fixedValue, pattern, {
+				keepTrailingLiterals: !options.removing,
+				cursorPosition: options.at,
+			} );
+
+			fixedValue = valuable.value;
+			formattedValue = formatted.value;
+			options.at = formatted.cursor;
 		}
 
 		return {
 			value: fixedValue,
-			formattedValue: fixedValue,
+			formattedValue,
 		};
 	}
 
@@ -114,6 +122,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							const { value, formattedValue } = that.normalizeValue( input, options );
 
 							event.target.value = lastValue = formattedValue;
+							event.target.setSelectionRange( options.at, options.at );
 
 							if ( value === this.value ) {
 								return;
