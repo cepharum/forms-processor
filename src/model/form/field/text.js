@@ -75,39 +75,56 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
+		let formattedValue = fixedValue;
 
 		const pattern = this.pattern;
 		if ( pattern ) {
-			fixedValue = Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
+			const { valuable, formatted } = Pattern.parse( fixedValue, pattern, {
+				keepTrailingLiterals: !options.removing,
+				cursorPosition: options.at,
+			} );
+
+			fixedValue = valuable.value;
+			formattedValue = formatted.value;
+			options.at = formatted.cursor;
 		}
 
-		return fixedValue;
+		return {
+			value: fixedValue,
+			formattedValue,
+		};
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName } = that;
+		const { form: { writeValue }, qualifiedName } = that;
+
+		let lastValue = null;
 
 		return {
 			render( createElement ) {
 				return createElement( "input", {
 					domProps: {
 						type: "text",
-						value: readValue( qualifiedName ),
+						value: reactiveFieldInfo.formattedValue,
 					},
 					on: {
 						input: event => {
+							const { value: input, selectionStart } = event.target;
+
+							const length = input.length;
 							const options = {
-								removing: event.target.value.length < ( ( this.value == null ? 0 : this.value.length ) || 0 ),
+								removing: lastValue != null && length < lastValue.length,
+								at: selectionStart,
 							};
 
-							const value = that.normalizeValue( event.target.value, options );
+							const { value, formattedValue } = that.normalizeValue( input, options );
 
-							event.target.value = value;
+							event.target.value = lastValue = formattedValue;
+							event.target.setSelectionRange( options.at, options.at );
 
 							if ( value === this.value ) {
-								event.target.value = value;
 								return;
 							}
 
@@ -116,6 +133,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 							writeValue( qualifiedName, value );
 							reactiveFieldInfo.value = value;
+							reactiveFieldInfo.formattedValue = formattedValue;
 
 							this.$emit( "input", value );
 							this.$parent.$emit( "input", value ); // FIXME is this required due to $emit always forwarded to "parent"

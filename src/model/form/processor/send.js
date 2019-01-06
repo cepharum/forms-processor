@@ -159,7 +159,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 			return Promise.reject( new TypeError( "Rejecting invalid input data to be sent." ) );
 		}
 
-		const url = this.url.replace( /{([^}]+)}/, ( all, code ) => {
+		const url = this.url.replace( /{([^}]+)}/g, ( all, code ) => {
 			switch ( code.trim().toLowerCase() ) {
 				case "id" :
 					return sequence.id;

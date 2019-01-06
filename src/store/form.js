@@ -128,7 +128,7 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ) );
+					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ).value );
 				}
 
 				if ( added ) {
