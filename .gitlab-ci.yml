@@ -12,6 +12,7 @@ build:library:
 
 test:
   stage: test
+  image: node:8
   before_script:
   - npm ci
   script:
