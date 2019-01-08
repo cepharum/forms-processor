@@ -188,10 +188,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		if ( this.required ) {
 			if ( value instanceof Array ) {
 				if ( !value.length ) {
-					errors.push( "@VALIDATION.MISSING_SELECTED" );
+					errors.push( "@VALIDATION.MISSING_SELECTION" );
 				}
 			} else if ( !value ) {
-				errors.push( "@VALIDATION.MISSING_SELECTED" );
+				errors.push( "@VALIDATION.MISSING_SELECTION" );
 			}
 		}
 
