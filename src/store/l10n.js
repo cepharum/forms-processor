@@ -30,9 +30,11 @@ import { normalizeLocale } from "@/service/utility/l10n";
 
 export default {
 	namespaced: true,
-	state: {
-		locale: null,
-		translations: {},
+	state() {
+		return {
+			locale: null,
+			translations: {},
+		};
 	},
 	actions: {
 		select( { commit }, locale = null ) {

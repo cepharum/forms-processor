@@ -39,13 +39,15 @@ let nextId = 1;
 
 export default {
 	namespaced: true,
-	state: {
-		id: null,
-		definition: {},
-		input: {},
-		model: null,
-		localStore: false,
-		result: {},
+	state() {
+		return {
+			id: null,
+			definition: {},
+			input: {},
+			model: null,
+			localStore: false,
+			result: {},
+		};
 	},
 	actions: {
 		/**

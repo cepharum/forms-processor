@@ -6,9 +6,7 @@ import API from "./api";
 import Store from "./store";
 import "./directives";
 
-Vue.config.productionTip = false;
-
-const generator = ( element, options = {} ) => {
+export default new API( ( element, options = {} ) => {
 	const store = Store();
 
 	return new Vue( {
@@ -18,8 +16,4 @@ const generator = ( element, options = {} ) => {
 		template: "<App/>",
 		form: options,
 	} );
-};
-
-const api = new API( generator );
-
-export default api;
+} );
