@@ -204,6 +204,25 @@ export default class FormsAPI {
 	}
 
 	/**
+	 * Drops previously created and cached forms processor component.
+	 *
+	 * @param {Component} component previously registered component to be dropped
+	 * @returns {void}
+	 */
+	drop( component ) {
+		if ( component ) {
+			const list = this._registry.components;
+
+			for ( let i = 0; i < list.length; i++ ) {
+				const listedForm = list[i];
+				if ( listedForm === component ) {
+					list.splice( i--, 1 );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Searches list of registered form components for the one attached to
 	 * provided element of current document.
 	 *
