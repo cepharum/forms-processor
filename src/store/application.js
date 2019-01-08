@@ -29,8 +29,10 @@
 
 export default {
 	namespaced: false,
-	state: {
-		view: null,
+	state() {
+		return {
+			view: null,
+		};
 	},
 	actions: {
 		switchView( { commit, state, getters }, view ) {
