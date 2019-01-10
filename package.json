@@ -14,6 +14,7 @@
     "test:e2e:served": "cross-env NODE_ENV=development vue-cli-service test:e2e --url=http://localhost:8080"
   },
   "dependencies": {
+    "markdown-it": "^8.4.2",
     "simple-terms": "^0.0.2",
     "vue": "^2.5.17",
     "vuex": "^3.0.1"
