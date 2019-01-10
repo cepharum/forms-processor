@@ -556,11 +556,30 @@ export default class FormFieldAbstractModel {
 		 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
+			const customFunctions = {
+				lookup( fieldValue, fieldName, fieldProperty ) {
+					const fieldKey = fieldName.toLowerCase();
+					const field = form.sequence.fields[fieldKey];
+					const map = field[fieldProperty];
+					if( Array.isArray( map ) ) {
+						for ( let index = 0, length = map.length; index < length; index++ ) {
+							const entry = map[index];
+							if( entry.value === fieldValue ) {
+								return entry.label;
+							}
+						}
+					}
+					if( typeof map === "object" ) {
+						return map.label;
+					}
+					return map;
+				}
+			};
 			const trimmedValue = value == null ? "" : String( value ).trim();
 			if ( trimmedValue.charAt( 0 ) === "=" ) {
 				// whole value contains term
 				// -> deliver evaluator
-				const term = new Processor( trimmedValue.slice( 1 ), {}, termCache, resolveVariableName );
+				const term = new Processor( trimmedValue.slice( 1 ), customFunctions , termCache, resolveVariableName );
 				terms.push( term );
 
 				return { get: () => {
@@ -585,7 +604,7 @@ export default class FormFieldAbstractModel {
 				const slice = slices[i];
 				const match = slice.match( ptnBinding );
 				if ( match ) { // eslint-disable-line max-depth
-					const term = new Processor( slice.slice( 2, -2 ), {}, termCache, resolveVariableName );
+					const term = new Processor( slice.slice( 2, -2 ), customFunctions, termCache, resolveVariableName );
 					terms.push( term );
 					slices[i] = term;
 					isDynamic = true;

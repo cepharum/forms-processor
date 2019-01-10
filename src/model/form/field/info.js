@@ -39,17 +39,22 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 		const that = this;
 
 		return {
-			template: `<span class="static-info" v-html="text"></span>`,
+			template: `<span class="static-info" v-html="renderedText"></span>`,
 			data() {
 				return {
-					text: md.render( that.text ),
+					text: that.text,
 				};
+			},
+			computed: {
+				renderedText() {
+					return md.render( this.text );
+				}
 			},
 			methods: {
 				updateOnDataChanged() {
 					this.text = that.text;
 				},
-			},
+			}
 		};
 	}
 }
