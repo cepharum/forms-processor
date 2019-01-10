@@ -49,7 +49,7 @@ export default class Markdown {
 		const preset = presets[presetName];
 		const key = preset ? presetName : "default";
 		if( !cache[key] ) {
-			cache[key] = new MarkdownIt( preset || "default" );
+			cache[key] = new MarkdownIt( preset || presets.default );
 		}
 		return cache[key];
 	}
