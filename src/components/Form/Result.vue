@@ -6,6 +6,7 @@
 </template>
 <script>
 import Markdown from "../../model/form/utility/markdown";
+const md = Markdown.getRenderer();
 export default {
 	name: "FormError",
 	computed: {
@@ -16,7 +17,7 @@ export default {
 			return this.$store.getters["form/resultIsError"];
 		},
 		message() {
-			return Markdown.toHtml( this.$store.getters["form/resultMessage"] );
+			return md.render( this.$store.getters["form/resultMessage"] );
 		},
 	},
 	beforeMount() {
