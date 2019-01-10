@@ -139,18 +139,21 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					<span class="option" :class="{checked:isSet(item.value)}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
-							:id="isRadio || multiple ? name + '.' + index : name"
+							:id="!isRadio && multiple ? name + '.' + index : name"
 							:name="name"
 							:value="item.value"
-							v-model="model"
+							:checked="isSet(item.value)"
+							@change="adjust( $event.target.checked, item.value )"
 						/>
-						<label v-if="item.label" :for="isRadio || multiple ? name + '.' + index : name">{{item.label}}</label>
+
+						<label :for="isRadio || multiple ? name + '.' + index : name" 
+							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</span>
 			`,
-			data: () => {
+			data() {
 				return {
-					value: readValue( qualifiedName ),
+					value: that.normalizeValue( readValue( qualifiedName ) ).value,
 					name: qualifiedName,
 				};
 			},
@@ -158,26 +161,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				options() {
 					return reactiveFieldInfo.options;
 				},
-				model: {
-					get() {
-						return this.value;
-					},
-					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
-
-						const { value: normalized } = that.normalizeValue( newValue );
-
-						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							writeValue( qualifiedName, normalized );
-							this.value = normalized;
-						}
-					},
-				},
 				multiple() {
 					return multiple && ( this.options && this.options.length > 1 );
 				},
 				isRadio() {
-					return type === "radio" && this.options && this.options.length > 1;
+					return type === "radio" && !multiple && this.options && this.options.length > 1;
 				},
 			},
 			methods: {
@@ -190,25 +178,49 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 					return current === value;
 				},
+				adjust( added, newValue ) {
+					reactiveFieldInfo.pristine = false;
+
+					const { value } = this;
+
+					if ( Array.isArray( value ) ) {
+						if ( added ) {
+							if ( value.indexOf( newValue ) < 0 ) {
+								value.push( newValue );
+								writeValue( qualifiedName, value );
+							}
+						} else {
+							const index = value.indexOf( newValue );
+							if ( index > -1 ) {
+								value.splice( index, 1 );
+								writeValue( qualifiedName, value );
+							}
+						}
+					} else if ( added ) {
+						this.value = newValue;
+						writeValue( qualifiedName, newValue );
+					} else {
+						this.value = null;
+						writeValue( qualifiedName, null );
+					}
+				},
 			},
 		};
 	}
 
 	/** @inheritDoc */
 	normalizeValue( value ) {
-		const options = this.options;
-		const multiOptions = options && options.length > 1;
-		const isRadio = this.type === "radio" && multiOptions;
-		const handlesArrayOfValues = !isRadio && multiOptions;
+		const { multiple, options } = this;
+		const actualMultiple = multiple && options && options.length > 1;
 
-		const mapped = handlesArrayOfValues ? value : value ? isRadio ? [value] : [options[0].value] : [];
+		const mapped = Array.isArray( value ) ? value.slice( 0, multiple ? 1 : value.length ) : value == null ? [] : [value];
 
 		const values = Options.extractOptions( mapped, options );
 		const labels = Options.extractOptions( mapped, options, true );
 
 		return {
-			value: this.multiple ? values : values[0] || null,
-			formattedValue: this.multiple ? labels : labels[0] || null,
+			value: actualMultiple ? values : values.length > 0 ? values[0] : null,
+			formattedValue: actualMultiple ? labels : labels.length > 0 ? labels[0] : null,
 		};
 	}
 
@@ -222,7 +234,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				if ( !value.length ) {
 					errors.push( "@VALIDATION.MISSING_REQUIRED" );
 				}
-			} else if ( !value ) {
+			} else if ( value == null ) {
 				errors.push( "@VALIDATION.MISSING_REQUIRED" );
 			}
 		}
