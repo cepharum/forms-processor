@@ -26,35 +26,31 @@
  * @author: cepharum
  */
 
-import FormFieldAbstractModel from "./abstract";
-import Markdown from "../utility/markdown";
-const md = Markdown.getRenderer();
+import MarkdownIt from "markdown-it";
+
+const presets = {
+	default: {
+		html: false,
+	}
+};
+
+const cache = {};
 
 /**
- * Manages single field of form representing non-editable text display.
+ * provides a Markdown Renderer and Presets
  */
-export default class FormFieldInfoModel extends FormFieldAbstractModel {
-	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
-		const that = this;
-
-		return {
-			template: `<span class="static-info" v-html="renderedText"></span>`,
-			data() {
-				return {
-					text: that.text,
-				};
-			},
-			computed: {
-				renderedText() {
-					return md.render( this.text );
-				}
-			},
-			methods: {
-				updateOnDataChanged() {
-					this.text = that.text;
-				},
-			}
-		};
+export default class Markdown {
+	/**
+	 * returns cached markDownRenderer for a given preset
+	 * @param {string} presetName name of a preset
+	 * @returns {{}} markdown renderer
+	 */
+	static getRenderer( presetName = "default" ) {
+		const preset = presets[presetName];
+		const key = preset ? presetName : "default";
+		if( !cache[key] ) {
+			cache[key] = new MarkdownIt( preset || presets.default );
+		}
+		return cache[key];
 	}
 }

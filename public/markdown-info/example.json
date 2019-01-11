@@ -1,0 +1,36 @@
+{
+  "processors": [
+	{
+	  "url": "/"
+	}
+  ],
+  "sequence": [
+	{
+	  "name": "markdownInfo",
+	  "label": "Markdown in an info Field",
+	  "fields": [
+		{
+		  "name": "selector",
+		  "label": "option selector",
+		  "type":"radio",
+		  "options": [
+			{
+			  "value": 1,
+			  "label": "eins"
+			},
+			{
+			  "value": 2,
+			  "label": "zwei"
+			}
+		  ]
+		},
+		{
+		  "name": "someField",
+		  "label": "Some Field",
+		  "type": "info",
+		  "text": "# This is an h1 tag \n ## This is an h2 tag \n ###### This is an h6 tag \n *This text will be italic* \n _This will also be italic_  \n **This text will be bold**  \n __This will also be bold__  \n _You **can** combine them_  \n you choose option {{markdownInfo.selector}} with label {{lookup(markdownInfo.selector, 'markdownInfo.selector', 'options')}}"
+		}
+	  ]
+	}
+  ]
+}
