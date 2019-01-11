@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "markdown-it": "^8.4.2",
-    "simple-terms": "^0.0.3",
+    "simple-terms": "^0.0.4",
     "vue": "^2.5.17",
     "vuex": "^3.0.1"
   },
