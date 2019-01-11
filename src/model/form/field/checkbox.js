@@ -135,7 +135,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 		return {
 			template: `
-				<span class="checkbox options" :class="multiple ? 'multi' : 'single'">
+				<span class="checkbox options" :class="{'multi-select':multiple, 'single-select':!multiple, multi:options.length>1, single:options.length<2}">
 					<span class="option" :class="{checked:isSet(item.value)}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
