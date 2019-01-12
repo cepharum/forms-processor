@@ -33,6 +33,7 @@ import FormProcessorMapModel from "./map";
 export default {
 	abstract: FormProcessorAbstractModel,
 	map: {
+		// maps type name used in a forms' definition into the proper processor model
 		send: FormProcessorSendModel,
 		map: FormProcessorMapModel,
 	},
