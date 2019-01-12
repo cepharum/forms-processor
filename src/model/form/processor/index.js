@@ -28,10 +28,12 @@
 
 import FormProcessorAbstractModel from "./abstract";
 import FormProcessorSendModel from "./send";
+import FormProcessorMapModel from "./map";
 
 export default {
 	abstract: FormProcessorAbstractModel,
 	map: {
 		send: FormProcessorSendModel,
+		map: FormProcessorMapModel,
 	},
 };

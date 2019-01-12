@@ -31,6 +31,7 @@ import { Processor } from "simple-terms";
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
+import CompileTerm from "../utility/process";
 
 const termCache = new Map();
 
@@ -44,13 +45,6 @@ const defaultProperties = {
 	visible: "true",
 	type: "text",
 };
-
-/**
- * Matches definition of a binding occurring in a property's value.
- *
- * @type {RegExp}
- */
-const ptnBinding = /({{[^}]+}})/;
 
 /**
  * Lists reserved names of properties that mustn't be commonly processed
@@ -575,58 +569,34 @@ export default class FormFieldAbstractModel {
 					return map;
 				}
 			};
-			const trimmedValue = value == null ? "" : String( value ).trim();
-			if ( trimmedValue.charAt( 0 ) === "=" ) {
-				// whole value contains term
-				// -> deliver evaluator
-				const term = new Processor( trimmedValue.slice( 1 ), customFunctions , termCache, resolveVariableName );
-				terms.push( term );
 
-				return { get: () => {
-					const computed = term.evaluate( form.data );
-					const normalized = normalizer ? normalizer( computed ) : computed;
 
-					if ( data ) {
-						data[key] = normalized;
+			const compiled = CompileTerm.compileString( value, customFunctions, termCache, resolveVariableName );
+
+			if ( Array.isArray( compiled ) ) {
+				// value is _containing_ one or more computable terms
+				const numSlices = compiled.length;
+
+				for ( let i = 0; i < numSlices; i++ ) {
+					const slice = compiled[i];
+
+					if ( typeof slice === "object" ) {
+						terms.push( slice );
 					}
-
-					return normalized;
-				} };
-			}
-
-
-			// test if value contains bindings (terms wrapped in double curly braces)
-			const slices = trimmedValue.split( ptnBinding );
-			const numSlices = slices.length;
-			let isDynamic = false;
-
-			for ( let i = 0; i < numSlices; i++ ) { // eslint-disable-line max-depth
-				const slice = slices[i];
-				const match = slice.match( ptnBinding );
-				if ( match ) { // eslint-disable-line max-depth
-					const term = new Processor( slice.slice( 2, -2 ), customFunctions, termCache, resolveVariableName );
-					terms.push( term );
-					slices[i] = term;
-					isDynamic = true;
 				}
-			}
 
-			if ( isDynamic ) {
-				// got value containing bindings
-				// -> deliver evaluator
 				return { get: () => {
 					const rendered = new Array( numSlices );
 
 					for ( let i = 0; i < numSlices; i++ ) {
-						const slice = slices[i];
+						const slice = compiled[i];
 
-						if ( slice instanceof Processor ) {
+						if ( typeof slice === "object" ) {
 							rendered[i] = slice.evaluate( form.data );
 						} else {
 							rendered[i] = slice;
 						}
 					}
-
 
 					const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
 
@@ -638,7 +608,23 @@ export default class FormFieldAbstractModel {
 				} };
 			}
 
+			if ( typeof compiled === "object" && compiled ) {
+				// value completely consists of a sole term's source
+				terms.push( compiled );
 
+				return { get: () => {
+					const computed = compiled.evaluate( form.data );
+					const normalized = normalizer ? normalizer( computed ) : computed;
+
+					if ( data ) {
+						data[key] = normalized;
+					}
+
+					return normalized;
+				} };
+			}
+
+			// value doesn't contain any computable term
 			// got static value
 			// -> deliver normalized value
 			const normalized = normalizer ? normalizer( value ) : value;
