@@ -26,8 +26,6 @@
  * @author: cepharum
  */
 
-import { Processor } from "simple-terms";
-
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
