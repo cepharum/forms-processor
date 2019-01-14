@@ -81,7 +81,7 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 
 	/** @inheritDoc */
 	process( data, sequence ) { // eslint-disable-line no-unused-vars
-		return Promise.resolve( this.constructor._applyMap( this.map, Object.assign( data, sequence ? { $form: sequence.data } : null ) ) );
+		return Promise.resolve( this.constructor._applyMap( this.map, Object.assign( data, sequence ? { _form: sequence.data } : null ) ) );
 	}
 
 	/**
