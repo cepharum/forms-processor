@@ -48,9 +48,11 @@ export default class Markdown {
 	static getRenderer( presetName = "default" ) {
 		const preset = presets[presetName];
 		const key = preset ? presetName : "default";
+
 		if( !cache[key] ) {
 			cache[key] = new MarkdownIt( preset || presets.default );
 		}
+
 		return cache[key];
 	}
 }
