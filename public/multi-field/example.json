@@ -1,0 +1,32 @@
+{
+  "processors": [
+	{
+	  "url": "/"
+	}
+  ],
+  "sequence": [
+	{
+	  "name": "multiForm",
+	  "label": "MultiForm",
+	  "fields": [
+		{
+		  "name": "multi",
+		  "label": "multi",
+		  "type": "multi",
+		  "initialSize": 1,
+		  "fields": [
+			{
+			  "name": "name",
+			  "label": "text"
+			}
+		  ]
+		},
+		{
+		  "name": "field 2",
+		  "label": "field 2",
+		  "type": "text"
+		}
+	  ]
+	}
+  ]
+}

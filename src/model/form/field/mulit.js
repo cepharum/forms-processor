@@ -43,15 +43,25 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
-				if( !Array.isArray( v ) || v.some( entry => !form.sequence.fields.hasOwnProperty( entry.type ) ) ) {
+				let value = v;
+				if( !Array.isArray( v ) ) {
+					value = [v];
+				}
+				if( value.some( entry => typeof entry !== "object" ) ) {
+					throw new Error( "provided invalid field description" );
+				}
+				if( value.some( entry => !form.sequence.registry.fields.hasOwnProperty( entry.type || "text" ) )
+				) {
 					throw new Error( "provided field of unknown type" );
 				}
-				return{ value: v };
+				return{ value };
 			},
 
 			initialSize( v ) {
-				if( isNaN( v ) ) {
-					throw new Error( "provided field of unknown type" );
+				if( v ) {
+					if( isNaN( v ) ) {
+						throw new Error( "provided NaN as initialSize " );
+					}
 				}
 				return { value: Number( v ) };
 			},
@@ -88,23 +98,38 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		const { form: { writeValue }, qualifiedName } = that;
 
 		return {
-			template: "",
+			render( createElement ) {
+				const components = this.items.map( entry => {
+					return createElement( entry.field.component );
+				} );
+				return createElement( "div", {}, [ ...components, createElement( "button", { domProps: {
+					onclick: this.add,
+				} }, "Add" ) ] );
+			},
+			mounted() {
+				const { initialSize } = that;
+				for( let index = 0; index < initialSize; index ++ ) {
+					this.add();
+				}
+			},
 			methods: {
 				add() {
 					const numOfItems = this.items.length;
-					const numOfFields = this.fields.length;
-					const field = this.fields[numOfItems % numOfFields];
-					const sequence = this.form.sequence;
-					const Manager = sequence.fields[field.type];
+					const numOfFields = that.fields.length;
+					const field = that.fields[numOfItems % numOfFields];
+					const form = that.form;
+					const Manager = form.sequence.registry.fields[field.type || "text"];
 					const reactiveFieldInfo = {};
 					this.items.push( {
-						field: new Manager( this, sequence, field, numOfItems, reactiveFieldInfo ),
+						field: new Manager( form, field, numOfItems, reactiveFieldInfo ),
 						reactiveFieldInfo
 					} );
 				}
 			},
-			data: {
-				items: [],
+			data() {
+				return {
+					items: [],
+				};
 			}
 		};
 	}
