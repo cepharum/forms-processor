@@ -40,8 +40,9 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	 * @param {object} definition definition of field
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			size( v ) {
 				/**
@@ -64,6 +65,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 */
 				return { value: v == null ? null : Pattern.compilePattern( v ) };
 			},
+			...customProperties,
 		} );
 	}
 
