@@ -31,7 +31,7 @@ import FormFieldInfoModel from "./info";
 import FormFieldTextModel from "./text";
 import FormFieldCheckBoxModel from "./checkbox";
 import FormFieldSelectModel from "./select";
-import FormFieldMultiModel from "./mulit";
+import FormFieldMultiModel from "./multi";
 
 export default {
 	abstract: FormFieldAbstractModel,

@@ -95,7 +95,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent() {
 		const that = this;
-		const { form: { writeValue }, qualifiedName } = that;
+		const { form: { writeValue, readValue }, qualifiedName } = that;
 
 		return {
 			render( createElement ) {
@@ -114,15 +114,29 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			},
 			methods: {
 				add() {
+					const component = this;
 					const numOfItems = this.items.length;
 					const numOfFields = that.fields.length;
-					const field = that.fields[numOfItems % numOfFields];
-					const form = that.form;
-					const Manager = form.sequence.registry.fields[field.type || "text"];
+					const field = Object.assign( {},that.fields[numOfItems % numOfFields],{ name: String( numOfItems ) } );
+					const form = Object.assign( {},that.form,{
+						readValue( key ) {
+							readValue( qualifiedName );
+							const index = key.split( "." )[1];
+							return component.items[index].value;
+						},
+						writeValue( key, value ) {
+							const index = key.split( "." )[1];
+							component.items[index].value = value;
+							writeValue( qualifiedName, component.items.map( item => item.value ) );
+						},
+						name: "multi",
+					} );
+					const Manager = that.form.sequence.registry.fields[field.type || "text"];
 					const reactiveFieldInfo = {};
 					this.items.push( {
+						reactiveFieldInfo,
 						field: new Manager( form, field, numOfItems, reactiveFieldInfo ),
-						reactiveFieldInfo
+						value: null,
 					} );
 				}
 			},
