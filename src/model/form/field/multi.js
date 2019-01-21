@@ -108,16 +108,14 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	validate( live ) {
 		const errors = super.validate();
-
-		const value = this.value;
-		console.log(value);
+		const fields = this.items.map( entry => entry.field );
+		const value = this.items.map( entry => entry.value );
 
 		if ( this.required && !value.length ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		console.log(value.length, this.amount.isBelowRange( value.length ), this.amount.isAboveRange( value.length ))
-		if( value.length || value.length === 0  ) {
+		if( value.length || value.length === 0 ) {
 			if ( this.amount.isBelowRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_FEW" );
 			}
@@ -126,7 +124,16 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				errors.push( "@VALIDATION.TOO_MANY" );
 			}
 		}
-		if( errors.length ) console.error( errors );
+
+		for( const entry of fields ) {
+			const subErrrors = entry.validate();
+			if( subErrrors && subErrrors.length ) {
+				for( const error of subErrrors ) {
+					errors.push( error );
+				}
+			}
+		}
+
 		return errors;
 	}
 
@@ -138,10 +145,10 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		return {
 			render( createElement ) {
 				const components = this.items.map( ( entry, index ) => {
-					return createElement( "div", {}, [
+					return createElement( "div", { class: "multi" }, [
 						createElement( entry.field.component ),
 						createElement( "button", { domProps: {
-							onclick: () => this.remove(index),
+							onclick: () => this.remove( index ),
 						} }, "-" )
 					] );
 				} );
@@ -156,9 +163,8 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				}
 			},
 			methods: {
-				remove(index){
-					this.items.splice(index, 1);
-					that.value = this.value;
+				remove( index ) {
+					this.items.splice( index, 1 );
 				},
 				add() {
 					const numOfItems = this.items.length;
@@ -177,7 +183,6 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 							reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
 							reactiveFieldInfo.pristine = false;
 							this.$emit( "input", this.value );
-							that.value = this.value;
 							this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
 						},
 						name: this.name,
@@ -192,8 +197,11 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				}
 			},
 			data() {
+				if( !that.items ) {
+					that.items = [];
+				}
 				return {
-					items: [],
+					items: that.items,
 				};
 			},
 			computed: {

@@ -18,7 +18,8 @@
 		  "fields": [
 			{
 			  "name": "name",
-			  "label": "text"
+			  "label": "text",
+			  "required": true
 			}
 		  ]
 		},
