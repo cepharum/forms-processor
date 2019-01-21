@@ -43,7 +43,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
-		console.log( { form, definition, fieldIndex, reactiveFieldInfo, customProperties } );
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			size( v ) {
 				/**
@@ -76,7 +75,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	normalizeValue( value, options = {} ) {
+	normalizeValue( value, options = {} ){
 		let fixedValue = value == null ? "" : String( value );
 		let formattedValue = fixedValue;
 

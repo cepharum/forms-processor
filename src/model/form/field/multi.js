@@ -32,7 +32,7 @@ import Range from "../utility/range";
 /**
  * Manages multiple fields of form representing text input.
  */
-export default class FormFieldTextModel extends FormFieldAbstractModel {
+export default class FormFieldMultiModel extends FormFieldAbstractModel {
 	/**
 	 * @param {FormModel} form reference on form this field belongs to
 	 * @param {object} definition definition of field
@@ -93,18 +93,61 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent() {
+	initializeReactive( reactiveFieldInfo ) {
+		const initial = super.initializeReactive( reactiveFieldInfo );
+
+		reactiveFieldInfo.options = this.options;
+		return initial;
+	}
+
+	/** @inheritDoc */
+	static get isInteractive() {
+		return true;
+	}
+
+	/** @inheritDoc */
+	validate( live ) {
+		const errors = super.validate();
+
+		const value = this.value;
+		console.log(value);
+
+		if ( this.required && !value.length ) {
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		}
+
+		console.log(value.length, this.amount.isBelowRange( value.length ), this.amount.isAboveRange( value.length ))
+		if( value.length || value.length === 0  ) {
+			if ( this.amount.isBelowRange( value.length ) ) {
+				errors.push( "@VALIDATION.TOO_FEW" );
+			}
+
+			if ( this.amount.isAboveRange( value.length ) ) {
+				errors.push( "@VALIDATION.TOO_MANY" );
+			}
+		}
+		if( errors.length ) console.error( errors );
+		return errors;
+	}
+
+	/** @inheritDoc */
+	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { form: { writeValue, readValue }, qualifiedName } = that;
 
 		return {
 			render( createElement ) {
-				const components = this.items.map( entry => {
-					return createElement( entry.field.component );
+				const components = this.items.map( ( entry, index ) => {
+					return createElement( "div", {}, [
+						createElement( entry.field.component ),
+						createElement( "button", { domProps: {
+							onclick: () => this.remove(index),
+						} }, "-" )
+					] );
 				} );
 				return createElement( "div", {}, [ ...components, createElement( "button", { domProps: {
 					onclick: this.add,
-				} }, "Add" ) ] );
+				} }, "+" ) ] );
 			},
 			mounted() {
 				const { initialSize } = that;
@@ -113,29 +156,37 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 			},
 			methods: {
+				remove(index){
+					this.items.splice(index, 1);
+					that.value = this.value;
+				},
 				add() {
-					const component = this;
 					const numOfItems = this.items.length;
 					const numOfFields = that.fields.length;
 					const field = Object.assign( {},that.fields[numOfItems % numOfFields],{ name: String( numOfItems ) } );
 					const form = Object.assign( {},that.form,{
-						readValue( key ) {
+						readValue: key => {
 							readValue( qualifiedName );
 							const index = key.split( "." )[1];
-							return component.items[index].value;
+							return this.items[index].value;
 						},
-						writeValue( key, value ) {
+						writeValue: ( key, value ) => {
 							const index = key.split( "." )[1];
-							component.items[index].value = value;
-							writeValue( qualifiedName, component.items.map( item => item.value ) );
+							this.items[index].value = value;
+							writeValue( qualifiedName, this.value );
+							reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
+							reactiveFieldInfo.pristine = false;
+							this.$emit( "input", this.value );
+							that.value = this.value;
+							this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
 						},
-						name: "multi",
+						name: this.name,
 					} );
 					const Manager = that.form.sequence.registry.fields[field.type || "text"];
-					const reactiveFieldInfo = {};
+					const newReactiveFieldInfo = {};
 					this.items.push( {
-						reactiveFieldInfo,
-						field: new Manager( form, field, numOfItems, reactiveFieldInfo ),
+						reactiveFieldInfo: newReactiveFieldInfo,
+						field: new Manager( form, field, numOfItems, newReactiveFieldInfo ),
 						value: null,
 					} );
 				}
@@ -144,6 +195,11 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				return {
 					items: [],
 				};
+			},
+			computed: {
+				value() {
+					return this.items.map( entry => entry.value );
+				},
 			}
 		};
 	}
