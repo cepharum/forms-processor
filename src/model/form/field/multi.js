@@ -78,6 +78,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 			},
 			...customProperties,
 		} );
+		this.items = [];
 	}
 
 	/** @inheritDoc */
@@ -145,16 +146,26 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		return {
 			render( createElement ) {
 				const components = this.items.map( ( entry, index ) => {
-					return createElement( "div", { class: "multi" }, [
-						createElement( entry.field.component ),
-						createElement( "button", { domProps: {
-							onclick: () => this.remove( index ),
-						} }, "-" )
-					] );
+					const children = [createElement( entry.field.component ),];
+					if( this.removeEnabled ) {
+						children.push( createElement( "button", {
+							domProps: {
+								onclick: () => this.remove( index ),
+							},
+							class: "submit"
+						}, "-" ) );
+					}
+					return createElement( "div", { class: "multi-field-container" }, children );
 				} );
-				return createElement( "div", {}, [ ...components, createElement( "button", { domProps: {
-					onclick: this.add,
-				} }, "+" ) ] );
+				return createElement( "div", {}, [ ...components,
+					createElement( "div", { class: "multi-control" }, [createElement( "button", {
+						domProps: {
+							onclick: this.add,
+							disabled: !this.addEnabled,
+						},
+						class: this.addEnabled ? "" : "disabled",
+					}, "+" )] )
+				] );
 			},
 			mounted() {
 				const { initialSize } = that;
@@ -164,36 +175,41 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 			},
 			methods: {
 				remove( index ) {
-					this.items.splice( index, 1 );
+					if( this.removeEnabled ) {
+						this.items.splice( index, 1 );
+					}
 				},
 				add() {
-					const numOfItems = this.items.length;
-					const numOfFields = that.fields.length;
-					const field = Object.assign( {},that.fields[numOfItems % numOfFields],{ name: String( numOfItems ) } );
-					const form = Object.assign( {},that.form,{
-						readValue: key => {
-							readValue( qualifiedName );
-							const index = key.split( "." )[1];
-							return this.items[index].value;
-						},
-						writeValue: ( key, value ) => {
-							const index = key.split( "." )[1];
-							this.items[index].value = value;
-							writeValue( qualifiedName, this.value );
-							reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
-							reactiveFieldInfo.pristine = false;
-							this.$emit( "input", this.value );
-							this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
-						},
-						name: this.name,
-					} );
-					const Manager = that.form.sequence.registry.fields[field.type || "text"];
-					const newReactiveFieldInfo = {};
-					this.items.push( {
-						reactiveFieldInfo: newReactiveFieldInfo,
-						field: new Manager( form, field, numOfItems, newReactiveFieldInfo ),
-						value: null,
-					} );
+					if( this.addEnabled ) {
+						const numOfItems = this.items.length;
+						const numOfFields = that.fields.length;
+						const field = Object.assign( {},that.fields[numOfItems % numOfFields],{ name: String( numOfItems ) } );
+						const form = Object.assign( {},that.form,{
+							readValue: key => {
+								readValue( qualifiedName );
+								const index = key.split( "." )[1];
+								return this.items[index].value;
+							},
+							writeValue: ( key, value ) => {
+								const index = key.split( "." )[1];
+								this.items[index].value = value;
+								writeValue( qualifiedName, this.value );
+								reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
+								reactiveFieldInfo.pristine = false;
+								this.$emit( "input", this.value );
+								this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
+							},
+							name: this.name,
+						} );
+						const Manager = that.form.sequence.registry.fields[field.type || "text"];
+						const newReactiveFieldInfo = {};
+						this.items.push( {
+							reactiveFieldInfo: newReactiveFieldInfo,
+							field: new Manager( form, field, numOfItems, newReactiveFieldInfo ),
+							value: null,
+						} );
+					}
+
 				}
 			},
 			data() {
@@ -208,6 +224,12 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				value() {
 					return this.items.map( entry => entry.value );
 				},
+				removeEnabled() {
+					return this.items.length > 1;
+				},
+				addEnabled() {
+					return !that.amount.isAboveRange( this.items.length + 1 );
+				}
 			}
 		};
 	}
