@@ -21,8 +21,8 @@
 		  }
 		},
 		{
-		  "name": "multiSelect",
-		  "label": "multiSelect",
+		  "name": "multiCheckbox",
+		  "label": "multiCheckbox",
 		  "type": "multi",
 		  "amount": "1-3",
 		  "fields": {
@@ -33,8 +33,8 @@
 		  }
 		},
 		{
-		  "name": "multiCheckbox",
-		  "label": "multiCheckbox",
+		  "name": "multiSelect",
+		  "label": "multiSelect",
 		  "type": "multi",
 		  "amount": "1-3",
 		  "fields": {

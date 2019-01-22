@@ -108,7 +108,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	validate( live ) {
-		const errors = super.validate();
+		const errors = super.validate( live );
 		const fields = this.items.map( entry => entry.field );
 		const value = this.items.map( entry => entry.value );
 
@@ -127,7 +127,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		}
 
 		for( const entry of fields ) {
-			const subErrrors = entry.validate();
+			const subErrrors = entry.validate( live );
 			if( subErrrors && subErrrors.length ) {
 				for( const error of subErrrors ) {
 					errors.push( error );
@@ -153,14 +153,14 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 								onclick: () => this.remove( index ),
 								disabled: !this.removeEnabled,
 							},
-							class: this.removeEnabled ? "" : "disabled",
+							class: `remove ${this.removeEnabled ? "enabled" : "disabled"}`,
 						}, "-" ),
 						createElement( "button", {
 							domProps: {
 								onclick: () => this.add( index + 1 ),
 								disabled: !this.addEnabled,
 							},
-							class: this.addEnabled ? "" : "disabled",
+							class: `add ${this.addEnabled ? "enabled" : "disabled"}`,
 						}, "+" )
 					] );
 				} );
