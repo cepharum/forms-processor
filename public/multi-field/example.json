@@ -1,0 +1,53 @@
+{
+  "processors": [
+	{
+	  "url": "/"
+	}
+  ],
+  "sequence": [
+	{
+	  "name": "multiForm",
+	  "label": "MultiForm",
+	  "fields": [
+		{
+		  "name": "multiText",
+		  "label": "multiText",
+		  "type": "multi",
+		  "amount": "1-3",
+		  "fields": {
+			"name": "name",
+			"label": "text",
+			"required": true
+		  }
+		},
+		{
+		  "name": "multiCheckbox",
+		  "label": "multiCheckbox",
+		  "type": "multi",
+		  "amount": "1-3",
+		  "fields": {
+			"name": "checkbox",
+			"label": "checkbox",
+			"type": "checkbox",
+			"required": true
+		  }
+		},
+		{
+		  "name": "multiSelect",
+		  "label": "multiSelect",
+		  "type": "multi",
+		  "amount": "1-3",
+		  "fields": {
+			"name": "select",
+			"label": "select",
+			"type": "select",
+			"options": [
+			  "1","2","3"
+			],
+			"required": true
+		  }
+		}
+	  ]
+	}
+  ]
+}

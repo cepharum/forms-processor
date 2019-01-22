@@ -43,6 +43,8 @@ export default function() {
 			MISSING_REQUIRED: "This information is required.",
 			TOO_SHORT: "Provided information is too short.",
 			TOO_LONG: "Provided information is too long.",
+			TOO_FEW: "Provided not enough informations",
+			TOO_MANY: "Provided to many informations",
 			MISSING_SELECTION: "Selecting option is required.",
 		},
 		BUTTONS: {
@@ -50,6 +52,8 @@ export default function() {
 			NEXT: "Next",
 			CONTINUE: "Continue",
 			SUBMIT: "Submit",
+			ADD: "Add",
+			REMOVE: "Remove",
 		},
 		FORMATS: {
 			IP4: {
