@@ -44,20 +44,20 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				let value = v;
-				if( !Array.isArray( v ) ) {
-					value = [v];
+				if( Array.isArray( v ) ) {
+					[value] = v;
 				}
-				if( value.some( entry => typeof entry !== "object" ) ) {
+				if( typeof value !== "object" ) {
 					throw new Error( "provided invalid field description" );
 				}
-				if( value.some( entry => !form.sequence.registry.fields.hasOwnProperty( entry.type || "text" ) )
+				if( !form.sequence.registry.fields.hasOwnProperty( value.type || "text" )
 				) {
 					throw new Error( "provided field of unknown type" );
 				}
 				return{ value };
 			},
 
-			initialSize( v ) {
+			initialSize( v = 1 ) {
 				if( v ) {
 					if( isNaN( v ) ) {
 						throw new Error( "provided NaN as initialSize " );
@@ -146,26 +146,25 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		return {
 			render( createElement ) {
 				const components = this.items.map( ( entry, index ) => {
-					const children = [createElement( entry.field.component ),];
-					if( this.removeEnabled ) {
-						children.push( createElement( "button", {
+					return createElement( "div", { class: "multi-field-container" }, [
+						createElement( entry.field.component ),
+						createElement( "button", {
 							domProps: {
 								onclick: () => this.remove( index ),
+								disabled: !this.removeEnabled,
 							},
-							class: "submit"
-						}, "-" ) );
-					}
-					return createElement( "div", { class: "multi-field-container" }, children );
+							class: this.removeEnabled ? "" : "disabled",
+						}, "-" ),
+						createElement( "button", {
+							domProps: {
+								onclick: () => this.add( index + 1 ),
+								disabled: !this.addEnabled,
+							},
+							class: this.addEnabled ? "" : "disabled",
+						}, "+" )
+					] );
 				} );
-				return createElement( "div", {}, [ ...components,
-					createElement( "div", { class: "multi-control" }, [createElement( "button", {
-						domProps: {
-							onclick: this.add,
-							disabled: !this.addEnabled,
-						},
-						class: this.addEnabled ? "" : "disabled",
-					}, "+" )] )
-				] );
+				return createElement( "div", {}, components );
 			},
 			mounted() {
 				const { initialSize } = that;
@@ -178,36 +177,50 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 					if( this.removeEnabled ) {
 						this.items.splice( index, 1 );
 					}
+					writeValue( qualifiedName, this.items );
 				},
-				add() {
+				add( index ) {
 					if( this.addEnabled ) {
 						const numOfItems = this.items.length;
-						const numOfFields = that.fields.length;
-						const field = Object.assign( {},that.fields[numOfItems % numOfFields],{ name: String( numOfItems ) } );
+						const mostRecentItem = this.items[numOfItems - 1];
+						let mostRecentName = -1;
+						if( mostRecentItem ) mostRecentName = Number( mostRecentItem.field.name );
+						const field = Object.assign( {},that.fields,{
+							name: String( mostRecentName + 1 ),
+						} );
 						const form = Object.assign( {},that.form,{
 							readValue: key => {
 								readValue( qualifiedName );
-								const index = key.split( "." )[1];
-								return this.items[index].value;
+								const item = this.items.find( entry => {
+									return entry.field.qualifiedName === key;
+								} );
+								return item.value;
 							},
 							writeValue: ( key, value ) => {
-								const index = key.split( "." )[1];
-								this.items[index].value = value;
+								const item = this.items.find( entry => {
+									return entry.field.qualifiedName === key;
+								} );
+								item.value = value;
 								writeValue( qualifiedName, this.value );
 								reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
 								reactiveFieldInfo.pristine = false;
 								this.$emit( "input", this.value );
 								this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
 							},
-							name: this.name,
+							name: qualifiedName,
 						} );
 						const Manager = that.form.sequence.registry.fields[field.type || "text"];
 						const newReactiveFieldInfo = {};
-						this.items.push( {
+						const item = {
 							reactiveFieldInfo: newReactiveFieldInfo,
 							field: new Manager( form, field, numOfItems, newReactiveFieldInfo ),
 							value: null,
-						} );
+						};
+						if( index || index === 0 ) {
+							this.items.splice( index, 0, item );
+						} else {
+							this.items.push( item );
+						}
 					}
 
 				}

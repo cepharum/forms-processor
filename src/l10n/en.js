@@ -52,6 +52,8 @@ export default function() {
 			NEXT: "Next",
 			CONTINUE: "Continue",
 			SUBMIT: "Submit",
+			ADD: "Add",
+			REMOVE: "Remove",
 		},
 		FORMATS: {
 			IP4: {
