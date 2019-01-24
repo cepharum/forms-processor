@@ -68,6 +68,12 @@ export default function() {
 				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a phone number.",
 				INVALID_FORMAT: "Your input does not look like a well-formed phone number.",
 			},
+			IBAN: {
+				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed IBAN.",
+				INVALID_COUNTRY_CODE: "The Country Code of your IBAN is invalid.",
+				INVALID_FORMAT: "Your input does not look like a well-formed IBAN.",
+				INVALID: "Your input is not a valid IBAN.",
+			},
 		},
 	};
 }
