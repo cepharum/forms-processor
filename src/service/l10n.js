@@ -105,7 +105,7 @@ export default class Localization {
 	 * @returns {string|*} localized or provided value
 	 */
 	static selectLocalized( value, desiredLocale ) {
-		if ( typeof value === "object" && value ) {
+		if ( typeof value === "object" && value && !Array.isArray( value ) ) {
 			const locales = Object.keys( value );
 			let wildcard = null;
 			let fallback = null;

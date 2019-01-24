@@ -30,6 +30,7 @@ import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
 import CompileTerm from "../utility/process";
+import { Processor } from "simple-terms";
 
 const termCache = new Map();
 
@@ -572,41 +573,46 @@ export default class FormFieldAbstractModel {
 			const compiled = CompileTerm.compileString( value, customFunctions, termCache, resolveVariableName );
 
 			if ( Array.isArray( compiled ) ) {
-				// value is _containing_ one or more computable terms
+				// value _might contain_ one or more computable terms
 				const numSlices = compiled.length;
+				let hasTerm = false;
 
 				for ( let i = 0; i < numSlices; i++ ) {
 					const slice = compiled[i];
 
-					if ( typeof slice === "object" ) {
+					if ( slice instanceof Processor ) {
 						terms.push( slice );
+						hasTerm = true;
 					}
 				}
 
-				return { get: () => {
-					const rendered = new Array( numSlices );
+				if ( hasTerm ) {
+					// value _is containing_ one or more computable terms
+					return { get: () => {
+						const rendered = new Array( numSlices );
 
-					for ( let i = 0; i < numSlices; i++ ) {
-						const slice = compiled[i];
+						for ( let i = 0; i < numSlices; i++ ) {
+							const slice = compiled[i];
 
-						if ( typeof slice === "object" ) {
-							rendered[i] = slice.evaluate( form.data );
-						} else {
-							rendered[i] = slice;
+							if ( typeof slice === "object" ) {
+								rendered[i] = slice.evaluate( form.data );
+							} else {
+								rendered[i] = slice;
+							}
 						}
-					}
 
-					const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
+						const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
 
-					if ( data ) {
-						data[key] = computed;
-					}
+						if ( data ) {
+							data[key] = computed;
+						}
 
-					return computed;
-				} };
+						return computed;
+					} };
+				}
 			}
 
-			if ( typeof compiled === "object" && compiled ) {
+			if ( compiled instanceof Processor ) {
 				// value completely consists of a sole term's source
 				terms.push( compiled );
 

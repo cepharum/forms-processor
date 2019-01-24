@@ -75,7 +75,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	normalizeValue( value, options = {} ){
+	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
 		let formattedValue = fixedValue;
 
@@ -172,7 +172,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			format = String( format ).trim().toLowerCase();
 
 			if ( typeof Format[format] === "function" ) {
-				const result = Format[format]( value, Boolean( live ), this );
+				const result = Format[format]( value, Boolean( live ), this, { countryCodes: this.countryCodes } );
 				if ( result.errors ) {
 					errors.splice( errors.length, 0, ...result.errors );
 				}
