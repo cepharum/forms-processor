@@ -148,6 +148,5 @@ describe( "Utility class Pattern", () => {
 			} );
 
 		} );
-
 	} );
 } );
