@@ -360,4 +360,61 @@ export default class Format {
 			output: fixedInput,
 		};
 	}
+
+	/**
+	 * Validates if input contains well-formed IBAN.
+	 *
+	 * @param {string} input textual input to be validated
+	 * @param {boolean} acceptPartial set true to accept partial input
+	 * @param {object} options refers to object selecting optional customizations to format checking
+	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
+	 */
+	static bic( input, acceptPartial = false, { countryCodes = [] } = {} ) { // eslint-disable-line no-unused-vars
+		const regEx = /^([a-z]{4})([a-z]{2})([2-9a-z][a-np-z0-9])([0-9a-wy-z][0-9a-z]{2}|x{0,3})$/i;
+		const partial = /^([a-z]{0,6}|[a-z]{6}(([2-9a-z]|[2-9a-z][a-np-z0-9])?|[2-9a-z][a-np-z0-9]([0-9a-wy-z][0-9a-z]{0,2}|xx{0,2})?))$/i;
+		const length = input.length;
+
+		if( length > 11 ) {
+			return {
+				errors: ["@VALIDATION.TOO_LONG"]
+			};
+		}
+
+		const countryCode = input.slice( 4,6 ).toUpperCase();
+
+		if( countryCodes.length && !countryCodes.some( entry => entry.toUpperCase() === countryCode ) ) {
+			return {
+				errors: ["@FORMATS.BIC.INVALID_COUNTRY_CODE"],
+			};
+		}
+
+		if ( acceptPartial ) {
+			if ( !partial.test( input ) ) {
+				if( length === 11 && length === 8 ) {
+					return {
+						errors: ["@FORMATS.BIC.INVALID_FORMAT"],
+					};
+				}
+				return {
+					errors: ["@FORMATS.BIC.INVALID_CHARACTER"],
+				};
+
+			}
+		} else {
+			if( length < 8 || ( length > 8 && length < 11 ) ) {
+				return {
+					errors: ["@VALIDATION.TOO_SHORT"]
+				};
+			}
+			if ( !regEx.test( input ) ) {
+				return {
+					errors: ["@FORMATS.BIC.INVALID_FORMAT"],
+				};
+			}
+		}
+
+		return {
+			output: input,
+		};
+	}
 }

@@ -74,6 +74,12 @@ export default function() {
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
 				INVALID: "Die eingegebene IBAN ist ungültig.",
 			},
+			BIC: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzälassiges Land.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
+				INVALID: "Die eingegebene IBAN ist ungültig.",
+			},
 		},
 	};
 }
