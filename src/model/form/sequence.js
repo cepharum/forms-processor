@@ -53,14 +53,14 @@ export default class FormSequenceModel {
 		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
 			forms: new Array( numDefinedForms ),
-			currentIndex: 0,
+			currentIndex: Math.min( numDefinedForms - 1, 0 ),
 		};
 
-		if ( typeof id !== "string" ) {
+		if ( !id || typeof id !== "string" ) {
 			throw new TypeError( "Invalid ID of sequence of forms." );
 		}
 
-		if ( typeof name !== "string" ) {
+		if ( !name || typeof name !== "string" ) {
 			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
@@ -475,6 +475,38 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Finds field using provided callback to detect desired field.
+	 *
+	 * @param {function(field:AbstractFieldModel):boolean} callback detects if provided field is the desired one
+	 * @param {boolean} getName set true to get found field's name instead of its manager
+	 * @return {?(AbstractFieldModel|string)} manager or name of found field, null if not found
+	 */
+	findField( callback, getName = false ) {
+		if ( typeof callback !== "function" ) {
+			throw new TypeError( "invalid callback for detecting field" );
+		}
+
+		const forms = this.forms;
+		const numForms = forms.length;
+
+		for ( let i = 0; i < numForms; i++ ) {
+			const form = forms[i];
+			const fields = form.fields;
+			const numFields = fields.length;
+
+			for ( let j = 0; j < numFields; j++ ) {
+				const field = fields[j];
+
+				if ( callback( field ) ) {
+					return getName ? field.qualifiedName : field;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Qualifies section of configuration customizing operation modes of forms
 	 * processor.
 	 *
@@ -699,29 +731,6 @@ export default class FormSequenceModel {
 		} );
 
 		return formsData;
-	}
-
-	/**
-	 * Fetches data record containing initial values of all defined fields.
-	 *
-	 * @returns {object<object<string,*>>} initial values of all fields per form
-	 */
-	getInitialData() {
-		const data = {};
-
-		this.forms.forEach( form => {
-			const formName = form.name;
-
-			data[formName] = {};
-
-			form.fields.forEach( field => {
-				if ( field.constructor.isInteractive ) {
-					data[formName][field.name] = field.normalizeValue( field.initial );
-				}
-			} );
-		} );
-
-		return data;
 	}
 
 	/**

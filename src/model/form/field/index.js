@@ -33,6 +33,7 @@ import FormFieldCheckBoxModel from "./checkbox";
 import FormFieldSelectModel from "./select";
 import FormFieldUploadModel from "./upload";
 import FormFieldImageModel from "./image";
+import FormFieldMultiModel from "./multi";
 
 export default {
 	abstract: FormFieldAbstractModel,
@@ -42,6 +43,7 @@ export default {
 		checkbox: FormFieldCheckBoxModel,
 		radio: FormFieldCheckBoxModel,
 		select: FormFieldSelectModel,
+		multi: FormFieldMultiModel,
 		upload: FormFieldUploadModel,
 		image: FormFieldImageModel,
 	},

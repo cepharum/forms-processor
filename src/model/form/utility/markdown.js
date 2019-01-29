@@ -26,13 +26,33 @@
  * @author: cepharum
  */
 
-module.exports = {
-	runtimeCompiler: true,
-	productionSourceMap: false,
-	publicPath: "",
-	configureWebpack: {
-		output: {
-			libraryExport: "default",
-		},
-	},
+import MarkdownIt from "markdown-it";
+
+const presets = {
+	default: {
+		html: false,
+	}
 };
+
+const cache = {};
+
+/**
+ * provides a Markdown Renderer and Presets
+ */
+export default class Markdown {
+	/**
+	 * returns cached markDownRenderer for a given preset
+	 * @param {string} presetName name of a preset
+	 * @returns {{}} markdown renderer
+	 */
+	static getRenderer( presetName = "default" ) {
+		const preset = presets[presetName];
+		const key = preset ? presetName : "default";
+
+		if( !cache[key] ) {
+			cache[key] = new MarkdownIt( preset || presets.default );
+		}
+
+		return cache[key];
+	}
+}

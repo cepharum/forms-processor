@@ -194,7 +194,7 @@
           "name": "ip",
           "label": "IPv4",
           "required": false,
-          "pattern": "#??.#??.#??.#??",
+          "pattern": "#???.#???.#???.#???",
           "format": "IPv4"
         }
       ]

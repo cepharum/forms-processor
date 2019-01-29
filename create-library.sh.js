@@ -29,14 +29,14 @@
 const Shell = require( "shelljs" );
 
 const tag = process.env.CI_COMMIT_TAG;
-const version = tag ? tag.replace( /^v/, "" ) : ( require( "./package" ).version + "-alpha" );
+const version = tag ? tag.replace( /^v/, "" ) : require( "./package" ).version + "-alpha";
 
 Shell.cd( __dirname );
 
 Shell.exec( "npm run build-library" );
 
-Shell.rm( "-rf", "forms-processor/" );
 Shell.mkdir( "-p", "forms-processor" );
+Shell.rm( "-rf", "forms-processor/*" );
 
 Shell.cp( "dist/FormsProcessor.umd.min.*", "build/README.md", "build/package.json", "build/index.js", "forms-processor/" );
 Shell.cp( "dist/FormsProcessor.css", "forms-processor/style.css" );

@@ -27,6 +27,8 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import Markdown from "../utility/markdown";
+const md = Markdown.getRenderer();
 
 /**
  * Manages single field of form representing non-editable text display.
@@ -37,17 +39,22 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 		const that = this;
 
 		return {
-			template: `<span class="static-info">{{ text }}</span>`,
+			template: `<span class="static-info" v-html="renderedText"></span>`,
 			data() {
 				return {
 					text: that.text,
 				};
 			},
+			computed: {
+				renderedText() {
+					return md.render( this.text );
+				}
+			},
 			methods: {
 				updateOnDataChanged() {
 					this.text = that.text;
 				},
-			},
+			}
 		};
 	}
 }

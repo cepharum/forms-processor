@@ -43,6 +43,8 @@ export default function() {
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
+			TOO_FEW: "Zu wenig Angaben getätigt",
+			TOO_MANY: "Zu viele Angaben getätigt",
 			TOO_MANY: "Ihre Angabe enthält zu viele Elemente",
 			TOO_LITTLE: "Ihre Angabe enthält nicht genug Elemente",
 			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
@@ -53,6 +55,8 @@ export default function() {
 			NEXT: "Weiter",
 			CONTINUE: "Fortfahren",
 			SUBMIT: "Absenden",
+			ADD: "Hinzufügen",
+			REMOVE: "Löschen",
 		},
 		FORMATS: {
 			IP4: {
@@ -66,6 +70,18 @@ export default function() {
 			PHONE: {
 				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer Telefonnummer unzulässig sind.",
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige Telefonnummer.",
+			},
+			IBAN: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzälassiges Land.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
+				INVALID: "Die eingegebene IBAN ist ungültig.",
+			},
+			BIC: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzälassiges Land.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
+				INVALID: "Die eingegebene IBAN ist ungültig.",
 			},
 		},
 	};

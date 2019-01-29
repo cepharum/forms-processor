@@ -171,6 +171,19 @@
 
 		}
 
+
+	  	&.type-multi {
+		  .multi-field-container {
+			display: flex;
+			padding-bottom: 5px;
+			.field {
+			  width: 100%;
+			}
+		  }
+		}
+
+
+
 		&.type-info > .widget {
 			border: 1px solid transparent;
 			padding: 0.2em 0.5em;

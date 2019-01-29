@@ -147,12 +147,12 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				},
 				model: {
 					get() {
-						return that.normalizeValue( this.value );
+						return this.value;
 					},
 					set( newValue ) {
 						reactiveFieldInfo.pristine = false;
 
-						const normalized = that.normalizeValue( newValue );
+						const { value: normalized } = that.normalizeValue( newValue );
 
 						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
 							writeValue( qualifiedName, normalized );
@@ -169,13 +169,15 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	normalizeValue( value ) {
-		const extracted = Options.extractOptions( value, this.options );
+		const options = this.options;
 
-		if ( this.multiple ) {
-			return extracted;
-		}
+		const values = Options.extractOptions( value, options );
+		const labels = Options.extractOptions( value, options, true );
 
-		return Array.isArray( extracted ) ? extracted[0] || null : extracted;
+		return {
+			value: this.multiple ? values : values[0] || null,
+			formattedValue: this.multiple ? labels : labels[0] || null
+		};
 	}
 
 	/** @inheritDoc */
@@ -186,10 +188,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		if ( this.required ) {
 			if ( value instanceof Array ) {
 				if ( !value.length ) {
-					errors.push( "@VALIDATION.MISSING_SELECTED" );
+					errors.push( "@VALIDATION.MISSING_SELECTION" );
 				}
 			} else if ( !value ) {
-				errors.push( "@VALIDATION.MISSING_SELECTED" );
+				errors.push( "@VALIDATION.MISSING_SELECTION" );
 			}
 		}
 

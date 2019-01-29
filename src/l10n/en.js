@@ -44,7 +44,8 @@ export default function() {
 			TOO_SHORT: "Provided information is too short.",
 			TOO_LONG: "Provided information is too long.",
 			TOO_MANY: "Provided selection contains to many objects",
-			TOO_LITTLE: "Provided selection contains not enough objects",
+			TOO_FEW: "Provided not enough informations",
+			TOO_MANY: "Provided to many informations",
 			MISSING_SELECTION: "Selecting option is required.",
 			WRONG_TYPE: "You provided the wrong type,",
 		},
@@ -53,6 +54,8 @@ export default function() {
 			NEXT: "Next",
 			CONTINUE: "Continue",
 			SUBMIT: "Submit",
+			ADD: "Add",
+			REMOVE: "Remove",
 		},
 		FORMATS: {
 			IP4: {
@@ -66,6 +69,18 @@ export default function() {
 			PHONE: {
 				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a phone number.",
 				INVALID_FORMAT: "Your input does not look like a well-formed phone number.",
+			},
+			IBAN: {
+				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed IBAN.",
+				INVALID_COUNTRY_CODE: "The Country Code of your IBAN is invalid.",
+				INVALID_FORMAT: "Your input does not look like a well-formed IBAN.",
+				INVALID: "Your input is not a valid IBAN.",
+			},
+			BIC: {
+				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed BIC.",
+				INVALID_COUNTRY_CODE: "The Country Code of your BIC is invalid.",
+				INVALID_FORMAT: "Your input does not look like a well-formed BIC.",
+				INVALID: "Your input is not a valid BIC.",
 			},
 		},
 	};

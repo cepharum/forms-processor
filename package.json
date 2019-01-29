@@ -1,7 +1,7 @@
 {
   "name": "forms-processor",
   "description": "processes description of forms in browsers",
-  "version": "0.1.9",
+  "version": "0.1.14",
   "license": "MIT",
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -14,25 +14,26 @@
     "test:e2e:served": "cross-env NODE_ENV=development vue-cli-service test:e2e --url=http://localhost:8080"
   },
   "dependencies": {
-    "simple-terms": "^0.0.2",
-    "vue": "^2.5.17",
+    "markdown-it": "^8.4.2",
+    "simple-terms": "^0.0.5",
+    "vue": "^2.5.22",
     "vuex": "^3.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.5",
-    "@vue/cli-plugin-e2e-nightwatch": "^3.0.5",
-    "@vue/cli-plugin-eslint": "^3.0.5",
-    "@vue/cli-plugin-unit-mocha": "^3.0.5",
-    "@vue/cli-service": "^3.0.5",
-    "@vue/test-utils": "^1.0.0-beta.20",
+    "@vue/cli-plugin-babel": "^3.3.0",
+    "@vue/cli-plugin-e2e-nightwatch": "^3.3.0",
+    "@vue/cli-plugin-eslint": "^3.3.0",
+    "@vue/cli-plugin-unit-mocha": "^3.3.0",
+    "@vue/cli-service": "^3.3.0",
+    "@vue/test-utils": "^1.0.0-beta.28",
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",
     "eslint-config-cepharum": "^1.0.8",
     "eslint-plugin-promise": "^4.0.1",
-    "node-sass": "^4.9.0",
+    "node-sass": "^4.11.0",
     "sass-loader": "^7.0.1",
     "shelljs": "^0.8.3",
     "should": "^13.2.3",
-    "vue-template-compiler": "^2.5.17"
+    "vue-template-compiler": "^2.5.22"
   }
 }

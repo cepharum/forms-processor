@@ -26,11 +26,11 @@
  * @author: cepharum
  */
 
-import { Processor } from "simple-terms";
-
 import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
+import CompileTerm from "../utility/process";
+import { Processor } from "simple-terms";
 
 const termCache = new Map();
 
@@ -44,13 +44,6 @@ const defaultProperties = {
 	visible: "true",
 	type: "text",
 };
-
-/**
- * Matches definition of a binding occurring in a property's value.
- *
- * @type {RegExp}
- */
-const ptnBinding = /({{[^}]+}})/;
 
 /**
  * Lists reserved names of properties that mustn't be commonly processed
@@ -556,15 +549,75 @@ export default class FormFieldAbstractModel {
 		 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
-			const trimmedValue = value == null ? "" : String( value ).trim();
-			if ( trimmedValue.charAt( 0 ) === "=" ) {
-				// whole value contains term
-				// -> deliver evaluator
-				const term = new Processor( trimmedValue.slice( 1 ), {}, termCache, resolveVariableName );
-				terms.push( term );
+			const customFunctions = {
+				lookup( fieldValue, fieldName, fieldProperty ) {
+					const fieldKey = fieldName.toLowerCase();
+					const field = form.sequence.fields[fieldKey];
+					const map = field[fieldProperty];
+					if( Array.isArray( map ) ) {
+						for ( let index = 0, length = map.length; index < length; index++ ) {
+							const entry = map[index];
+							if( entry.value === fieldValue ) {
+								return entry.label;
+							}
+						}
+					}
+					if( typeof map === "object" ) {
+						return map.label;
+					}
+					return map;
+				}
+			};
+
+
+			const compiled = CompileTerm.compileString( value, customFunctions, termCache, resolveVariableName );
+
+			if ( Array.isArray( compiled ) ) {
+				// value _might contain_ one or more computable terms
+				const numSlices = compiled.length;
+				let hasTerm = false;
+
+				for ( let i = 0; i < numSlices; i++ ) {
+					const slice = compiled[i];
+
+					if ( slice instanceof Processor ) {
+						terms.push( slice );
+						hasTerm = true;
+					}
+				}
+
+				if ( hasTerm ) {
+					// value _is containing_ one or more computable terms
+					return { get: () => {
+						const rendered = new Array( numSlices );
+
+						for ( let i = 0; i < numSlices; i++ ) {
+							const slice = compiled[i];
+
+							if ( typeof slice === "object" ) {
+								rendered[i] = slice.evaluate( form.data );
+							} else {
+								rendered[i] = slice;
+							}
+						}
+
+						const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
+
+						if ( data ) {
+							data[key] = computed;
+						}
+
+						return computed;
+					} };
+				}
+			}
+
+			if ( compiled instanceof Processor ) {
+				// value completely consists of a sole term's source
+				terms.push( compiled );
 
 				return { get: () => {
-					const computed = term.evaluate( form.data );
+					const computed = compiled.evaluate( form.data );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {
@@ -575,51 +628,7 @@ export default class FormFieldAbstractModel {
 				} };
 			}
 
-
-			// test if value contains bindings (terms wrapped in double curly braces)
-			const slices = trimmedValue.split( ptnBinding );
-			const numSlices = slices.length;
-			let isDynamic = false;
-
-			for ( let i = 0; i < numSlices; i++ ) { // eslint-disable-line max-depth
-				const slice = slices[i];
-				const match = slice.match( ptnBinding );
-				if ( match ) { // eslint-disable-line max-depth
-					const term = new Processor( slice.slice( 2, -2 ), {}, termCache, resolveVariableName );
-					terms.push( term );
-					slices[i] = term;
-					isDynamic = true;
-				}
-			}
-
-			if ( isDynamic ) {
-				// got value containing bindings
-				// -> deliver evaluator
-				return { get: () => {
-					const rendered = new Array( numSlices );
-
-					for ( let i = 0; i < numSlices; i++ ) {
-						const slice = slices[i];
-
-						if ( slice instanceof Processor ) {
-							rendered[i] = slice.evaluate( form.data );
-						} else {
-							rendered[i] = slice;
-						}
-					}
-
-
-					const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
-
-					if ( data ) {
-						data[key] = computed;
-					}
-
-					return computed;
-				} };
-			}
-
-
+			// value doesn't contain any computable term
 			// got static value
 			// -> deliver normalized value
 			const normalized = normalizer ? normalizer( value ) : value;
@@ -745,15 +754,16 @@ export default class FormFieldAbstractModel {
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const initialValue = this.normalizeValue( this.initial );
+		const { value, formattedValue } = this.normalizeValue( this.initial );
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.value = initialValue;
+		reactiveFieldInfo.value = value;
+		reactiveFieldInfo.formattedValue = formattedValue;
 
-		return initialValue;
+		return value;
 	}
 
 	/**
@@ -926,7 +936,10 @@ export default class FormFieldAbstractModel {
 			},
 			beforeMount() {
 				if ( that.pristine ) {
-					reactiveFieldInfo.value = that.normalizeValue( that.initial );
+					const { value, formattedValue } = that.normalizeValue( that.initial );
+
+					reactiveFieldInfo.value = value;
+					reactiveFieldInfo.formattedValue = formattedValue;
 				}
 
 				this.$on( "input", () => {
@@ -1001,7 +1014,7 @@ export default class FormFieldAbstractModel {
 	 * @returns {*} normalized value
 	 */
 	normalizeValue( value, options = {} ) { // eslint-disable-line no-unused-vars
-		return value;
+		return { value, formattedValue: value };
 	}
 
 	/**

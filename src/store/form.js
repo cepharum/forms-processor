@@ -39,13 +39,15 @@ let nextId = 1;
 
 export default {
 	namespaced: true,
-	state: {
-		id: null,
-		definition: {},
-		input: {},
-		model: null,
-		localStore: false,
-		result: {},
+	state() {
+		return {
+			id: null,
+			definition: {},
+			input: {},
+			model: null,
+			localStore: false,
+			result: {},
+		};
 	},
 	actions: {
 		/**
@@ -128,7 +130,7 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ) );
+					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ).value );
 				}
 
 				if ( added ) {
