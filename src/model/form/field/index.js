@@ -32,7 +32,6 @@ import FormFieldTextModel from "./text";
 import FormFieldCheckBoxModel from "./checkbox";
 import FormFieldSelectModel from "./select";
 import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
 
 export default {
 	abstract: FormFieldAbstractModel,
@@ -43,6 +42,5 @@ export default {
 		radio: FormFieldCheckBoxModel,
 		select: FormFieldSelectModel,
 		multi: FormFieldMultiModel,
-		group: FormFieldGroupModel,
 	},
 };
