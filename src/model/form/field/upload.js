@@ -236,7 +236,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 						return;
 					}
 					for( const entry of fileArray ) {
-						this.files.push( that.normalizeValue( entry ) );
+						this.files.push( that.normalizeValue( entry ).value );
 					}
 					writeValue( qualifiedName, this.files );
 				},
@@ -266,7 +266,10 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	normalizeValue( value ) {
-		return value;
+		return {
+			value,
+			formattedValue: value,
+		};
 	}
 
 	/** @inheritDoc */
