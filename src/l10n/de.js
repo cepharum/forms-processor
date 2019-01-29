@@ -44,7 +44,6 @@ export default function() {
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
 			TOO_FEW: "Zu wenig Angaben getätigt",
-			TOO_MANY: "Zu viele Angaben getätigt",
 			TOO_MANY: "Ihre Angabe enthält zu viele Elemente",
 			TOO_LITTLE: "Ihre Angabe enthält nicht genug Elemente",
 			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",

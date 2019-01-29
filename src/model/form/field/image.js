@@ -63,9 +63,9 @@ export default class image extends upload {
 			 * @this {FormFieldSelectModel}
 			 */
 			previewMode( v = "foreground" ) {
-				const warning = `previewMode encountered, fallback to "foreground":`;
+				// const warning = `previewMode encountered, fallback to "foreground":`;
 				if( typeof v !== "string" ) {
-					console.warn( `typeWarning ${warning}`, v );
+				    //	console.warn( `typeWarning ${warning}`, v );
 					return {
 						value: "foreground",
 					};
@@ -78,7 +78,7 @@ export default class image extends upload {
 					case "foreground" :
 						break;
 					default :
-						console.warn( `invalid ${warning}`, v );
+						// console.warn( `invalid ${warning}`, v );
 				}
 				return { value };
 			},
