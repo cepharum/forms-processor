@@ -27,7 +27,13 @@
 					"name": "phone",
 					"label": "Phone Number",
 					"format": "phone"
-				}
+				},
+			  	{
+					"name": "IBAN",
+					"label": "IBAN",
+				  	"countryCodes": ["de", "al"],
+					"format": "iban"
+				  }
 			]
 		}
 	]
