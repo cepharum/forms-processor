@@ -41,6 +41,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
+		console.log( "this.",form );
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				let value = v;
@@ -183,31 +184,37 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 					if( this.addEnabled ) {
 						const numOfItems = this.items.length;
 						const mostRecentItem = this.items[numOfItems - 1];
-						let mostRecentName = -1;
-						if( mostRecentItem ) mostRecentName = Number( mostRecentItem.field.name );
+						const mostRecentName = mostRecentItem ? Number( mostRecentItem.field.name ) : -1;
 						const field = Object.assign( {},that.fields,{
 							name: String( mostRecentName + 1 ),
 						} );
-						const form = Object.assign( {},that.form,{
-							readValue: key => {
-								readValue( qualifiedName );
-								const item = this.items.find( entry => {
-									return entry.field.qualifiedName === key;
-								} );
-								return item.value;
+						const form = Object.create( that.form );
+						Object.defineProperties( form, {
+							readValue: {
+								value: key => {
+									readValue( qualifiedName );
+									const item = this.items.find( entry => {
+										return entry.field.qualifiedName === key;
+									} );
+									return item.value;
+								}
 							},
-							writeValue: ( key, value ) => {
-								const item = this.items.find( entry => {
-									return entry.field.qualifiedName === key;
-								} );
-								item.value = value;
-								writeValue( qualifiedName, this.value );
-								reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
-								reactiveFieldInfo.pristine = false;
-								this.$emit( "input", this.value );
-								this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
+							writeValue: {
+								value: ( key, value ) => {
+									const item = this.items.find( entry => {
+										return entry.field.qualifiedName === key;
+									} );
+									item.value = value;
+									writeValue( qualifiedName, this.value );
+									reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
+									reactiveFieldInfo.pristine = false;
+									this.$emit( "input", this.value );
+									this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"
+								}
 							},
-							name: qualifiedName,
+							name: {
+								value: qualifiedName,
+							}
 						} );
 						const Manager = that.form.sequence.registry.fields[field.type || "text"];
 						const newReactiveFieldInfo = {};
