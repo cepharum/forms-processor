@@ -74,6 +74,12 @@ export default function() {
 				INVALID_FORMAT: "Your input does not look like a well-formed IBAN.",
 				INVALID: "Your input is not a valid IBAN.",
 			},
+			BIC: {
+				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed BIC.",
+				INVALID_COUNTRY_CODE: "The Country Code of your BIC is invalid.",
+				INVALID_FORMAT: "Your input does not look like a well-formed BIC.",
+				INVALID: "Your input is not a valid BIC.",
+			},
 		},
 	};
 }

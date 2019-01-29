@@ -84,4 +84,70 @@ describe( "Utility class Pattern", () => {
 		} );
 
 	} );
+
+	describe( "exposes method bic() which", () => {
+		it( "is a function", () => {
+			Format.bic.should.be.Function();
+		} );
+
+		it( "accepts 'BELADEBEXXX'", () => {
+			const result = Format.bic( "BELADEBEXXX" );
+			Should( result.errors ).be.undefined();
+			Should( result.output ).be.equal( "BELADEBEXXX" );
+		} );
+
+		it( "accepts 'BELADEBE without trailing XXX'", () => {
+			const result = Format.bic( "BELADEBE" );
+			Should( result.errors ).be.undefined();
+			Should( result.output ).be.equal( "BELADEBE" );
+		} );
+
+
+		it( "denies 'BELABEBEXXX' if only 'DE' is allowed and countryCode is case insensitive", () => {
+			const result = Format.bic( "BELABEBEXXX" , null, { countryCodes: ["de"] } );
+			Should( result.errors ).be.eql( ["@FORMATS.BIC.INVALID_COUNTRY_CODE"] );
+			Should( result.output ).be.undefined();
+		} );
+
+		it( "denies to short input", () => {
+			const result = Format.bic( "BELABEBEX" );
+			Should( result.errors ).be.eql( ["@VALIDATION.TOO_SHORT"] );
+			Should( result.output ).be.undefined();
+		} );
+
+		it( "allows to short input if live", () => {
+			const result = Format.bic( "BELABEBEX" , true );
+			Should( result.errors ).be.undefined();
+			Should( result.output ).be.eql( "BELABEBEX" );
+		} );
+
+		it( "denies to long input", () => {
+			const result = Format.bic( "BELADEBEXXXX" );
+			Should( result.errors ).be.eql( ["@VALIDATION.TOO_LONG"] );
+			Should( result.output ).be.undefined();
+		} );
+
+		it( "denies malformed input", () => {
+			describe( "only XXX as last 3", () => {
+				const result = Format.bic( "BELADEBEX11" );
+				Should( result.errors ).be.eql( ["@FORMATS.BIC.INVALID_FORMAT"] );
+				Should( result.output ).be.undefined();
+			} );
+
+			describe( "only 1X as LL", () => {
+				const result = Format.bic( "BELA1EBEXXX" );
+				Should( result.errors ).be.eql( ["@FORMATS.BIC.INVALID_FORMAT"] );
+				Should( result.output ).be.undefined();
+			} );
+
+
+			describe( "only XO as LL", () => {
+				const result = Format.bic( "BELAXXBOXXX" );
+				Should( result.errors ).be.eql( ["@FORMATS.BIC.INVALID_FORMAT"] );
+				Should( result.output ).be.undefined();
+			} );
+
+		} );
+
+	} );
 } );
