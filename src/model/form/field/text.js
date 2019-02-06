@@ -30,6 +30,7 @@ import FormFieldAbstractModel from "./abstract";
 import Range from "../utility/range";
 import Pattern from "../utility/pattern";
 import Format from "../utility/format";
+import Data from "../../../service/data";
 
 /**
  * Manages single field of form representing text input.
@@ -55,6 +56,30 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				return { value: new Range( v ) };
 			},
 
+			upperCase( v ) {
+				/**
+				 * Configures field to convert all input to upper-case letters
+				 * if applicable.
+				 *
+				 * @name FormFieldTextModel#upperCase
+				 * @property {boolean}
+				 * @readonly
+				 */
+				return { value: Data.normalizeToBoolean( v ) };
+			},
+
+			lowerCase( v ) {
+				/**
+				 * Configures field to convert all input to lower-case letters
+				 * if applicable.
+				 *
+				 * @name FormFieldTextModel#lowerCase
+				 * @property {boolean}
+				 * @readonly
+				 */
+				return { value: Data.normalizeToBoolean( v ) };
+			},
+
 			pattern( v ) {
 				/**
 				 * Exposes compiled pattern optionally defined on field.
@@ -77,6 +102,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
+
+		if ( this.upperCase ) {
+			fixedValue = fixedValue.toLocaleUpperCase();
+		} else if ( this.lowerCase ) {
+			fixedValue = fixedValue.toLocaleLowerCase();
+		}
+
 		let formattedValue = fixedValue;
 
 		const pattern = this.pattern;

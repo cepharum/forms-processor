@@ -14,8 +14,18 @@
 					"label": "Free Input"
 				},
 				{
-					"name": "free",
-					"label": "Free Input",
+					"name": "freeLower",
+					"label": "Free Lower-Case",
+					"lowerCase": true
+				},
+				{
+					"name": "freeUpper",
+					"label": "Free Upper-Case",
+					"upperCase": true
+				},
+				{
+					"name": "ipv4",
+					"label": "IPv4",
 					"format": "ipv4"
 				},
 				{
@@ -31,6 +41,7 @@
 				{
 					"name": "iban",
 					"label": "IBAN",
+					"upperCase": 1,
 					"countryCodes": [
 						"de",
 						"al"
@@ -40,6 +51,7 @@
 				{
 					"name": "bic",
 					"label": "BIC",
+					"upperCase": "yes",
 					"countryCodes": [
 						"de",
 						"al"
