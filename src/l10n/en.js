@@ -46,6 +46,7 @@ export default function() {
 			TOO_FEW: "Provided not enough informations",
 			TOO_MANY: "Provided to many informations",
 			MISSING_SELECTION: "Selecting option is required.",
+			WRONG_TYPE: "You provided the wrong type,",
 		},
 		BUTTONS: {
 			PREVIOUS: "Back",
@@ -69,16 +70,15 @@ export default function() {
 				INVALID_FORMAT: "Your input does not look like a well-formed phone number.",
 			},
 			IBAN: {
-				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed IBAN.",
-				INVALID_COUNTRY_CODE: "The Country Code of your IBAN is invalid.",
-				INVALID_FORMAT: "Your input does not look like a well-formed IBAN.",
-				INVALID: "Your input is not a valid IBAN.",
+				INVALID_CHARACTER: "Your input contains characters that aren't valid in an IBAN.",
+				INVALID_COUNTRY_CODE: "This IBAN is addressing an invalid country.",
+				INVALID_FORMAT: "Your input does comply with the form of an IBAN.",
+				CHECKSUM_FAILED: "Checksum test failed. Double-check for probable typo, please!",
 			},
 			BIC: {
 				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a well-formed BIC.",
-				INVALID_COUNTRY_CODE: "The Country Code of your BIC is invalid.",
+				INVALID_COUNTRY_CODE: "The country code of your BIC is invalid.",
 				INVALID_FORMAT: "Your input does not look like a well-formed BIC.",
-				INVALID: "Your input is not a valid BIC.",
 			},
 		},
 	};

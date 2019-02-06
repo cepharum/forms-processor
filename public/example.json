@@ -59,6 +59,16 @@
           "size": "5-63"
         },
         {
+          "name": "profilePicture",
+          "label": {
+            "en": "Profile Picture",
+            "ANY": "Profilbild"
+          },
+          "type": "image",
+          "amount": "0-1",
+          "size": "0-20000"
+        },
+        {
           "name": "noLabel",
           "label": {
             "en": "no options",
