@@ -103,10 +103,17 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
 
+		const originalLength = fixedValue.length;
+		const cursorAtEnd = options.at === originalLength;
+
 		if ( this.upperCase ) {
 			fixedValue = fixedValue.toLocaleUpperCase();
 		} else if ( this.lowerCase ) {
 			fixedValue = fixedValue.toLocaleLowerCase();
+		}
+
+		if ( fixedValue.length !== originalLength && cursorAtEnd ) {
+			options.at += fixedValue.length - originalLength;
 		}
 
 		let formattedValue = fixedValue;
