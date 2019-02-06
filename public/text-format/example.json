@@ -28,12 +28,24 @@
 					"label": "Phone Number",
 					"format": "phone"
 				},
-			  	{
-					"name": "IBAN",
+				{
+					"name": "iban",
 					"label": "IBAN",
-				  	"countryCodes": ["de", "al"],
+					"countryCodes": [
+						"de",
+						"al"
+					],
 					"format": "iban"
-				  }
+				},
+				{
+					"name": "bic",
+					"label": "BIC",
+					"countryCodes": [
+						"de",
+						"al"
+					],
+					"format": "bic"
+				}
 			]
 		}
 	]

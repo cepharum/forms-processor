@@ -38,99 +38,99 @@
  * @type {object<string,number>}
  */
 const countryCodeMap = {
-	EG:	27,
-	AL:	28,
-	DZ:	24,
-	AD:	24,
-	AO:	25,
-	AZ:	28,
-	BH:	22,
-	BE:	16,
-	BJ:	28,
-	BA:	20,
-	BR:	29,
-	VG:	24,
-	BG:	22,
-	BF:	27,
-	BI:	16,
-	CR:	22,
-	CI:	28,
-	DK:	18,
-	DE:	22,
-	DO:	28,
-	SV:	28,
-	EE:	20,
-	FO:	18,
-	FI:	18,
-	FR:	27,
-	GA:	27,
-	GE:	22,
-	GI:	23,
-	GR:	27,
-	GL:	18,
-	GT:	28,
-	IQ:	23,
-	IR:	26,
-	IE:	22,
-	IS:	26,
-	IL:	23,
-	IT:	27,
-	JO:	30,
-	CM:	27,
-	CV:	25,
-	KZ:	20,
-	QA:	29,
-	CG:	27,
-	XK:	20,
-	HR:	21,
-	KW:	30,
-	LV:	21,
-	LB:	28,
-	LI:	21,
-	LT:	20,
-	LU:	20,
-	MG:	27,
-	ML:	28,
-	MT:	31,
-	MR:	27,
-	MU:	30,
-	MK:	19,
-	MD:	24,
-	MC:	27,
-	ME:	22,
-	MZ:	25,
-	NL:	18,
-	NO:	15,
-	AT:	20,
-	TL:	23,
-	PK:	24,
-	PS:	29,
-	PL:	28,
-	PT:	25,
-	RO:	24,
-	SM:	27,
-	ST:	25,
-	SA:	24,
-	SE:	24,
-	CH:	21,
-	SN:	28,
-	RS:	22,
-	SC:	31,
-	SK:	24,
-	SI:	19,
-	ES:	24,
-	LC:	32,
-	CZ:	24,
-	TN:	24,
-	TR:	26,
-	UA:	29,
-	HU:	28,
-	VA:	22,
-	AE:	23,
-	GB:	22,
-	BY:	28,
-	CY:	28,
-	CF:	27,
+	EG: 27,
+	AL: 28,
+	DZ: 24,
+	AD: 24,
+	AO: 25,
+	AZ: 28,
+	BH: 22,
+	BE: 16,
+	BJ: 28,
+	BA: 20,
+	BR: 29,
+	VG: 24,
+	BG: 22,
+	BF: 27,
+	BI: 16,
+	CR: 22,
+	CI: 28,
+	DK: 18,
+	DE: 22,
+	DO: 28,
+	SV: 28,
+	EE: 20,
+	FO: 18,
+	FI: 18,
+	FR: 27,
+	GA: 27,
+	GE: 22,
+	GI: 23,
+	GR: 27,
+	GL: 18,
+	GT: 28,
+	IQ: 23,
+	IR: 26,
+	IE: 22,
+	IS: 26,
+	IL: 23,
+	IT: 27,
+	JO: 30,
+	CM: 27,
+	CV: 25,
+	KZ: 20,
+	QA: 29,
+	CG: 27,
+	XK: 20,
+	HR: 21,
+	KW: 30,
+	LV: 21,
+	LB: 28,
+	LI: 21,
+	LT: 20,
+	LU: 20,
+	MG: 27,
+	ML: 28,
+	MT: 31,
+	MR: 27,
+	MU: 30,
+	MK: 19,
+	MD: 24,
+	MC: 27,
+	ME: 22,
+	MZ: 25,
+	NL: 18,
+	NO: 15,
+	AT: 20,
+	TL: 23,
+	PK: 24,
+	PS: 29,
+	PL: 28,
+	PT: 25,
+	RO: 24,
+	SM: 27,
+	ST: 25,
+	SA: 24,
+	SE: 24,
+	CH: 21,
+	SN: 28,
+	RS: 22,
+	SC: 31,
+	SK: 24,
+	SI: 19,
+	ES: 24,
+	LC: 32,
+	CZ: 24,
+	TN: 24,
+	TR: 26,
+	UA: 29,
+	HU: 28,
+	VA: 22,
+	AE: 23,
+	GB: 22,
+	BY: 28,
+	CY: 28,
+	CF: 27,
 };
 
 
@@ -267,8 +267,7 @@ export default class Format {
 			return { output: "" };
 		}
 
-		const invalidCharacters = fixedInput.replace( /[\dA-Z]/g, "" );
-		if ( invalidCharacters.length > 0 ) {
+		if ( /[^\dA-Z]/.test( fixedInput ) ) {
 			return {
 				errors: ["@FORMATS.IBAN.INVALID_CHARACTER"],
 			};
@@ -281,45 +280,55 @@ export default class Format {
 			};
 		}
 
-		const checkSum = result[2].slice( 0,2 );
-		const BBAN = result[2].slice( 2 );
+		if ( !result[1] ) {
+			if ( acceptPartial ) {
+				return { output: fixedInput };
+			}
+
+			return {
+				errors: ["@FORMATS.IBAN.INVALID_FORMAT"],
+			};
+		}
+
+
+		const checkSum = result[2].slice( 0, 2 );
+		const bban = result[2].slice( 2 );
 		const countryCode = result[1];
 
-		if( countryCodes.length && !countryCodes.some( entry => {
+		if ( countryCodes.length && !countryCodes.some( entry => {
 			return entry.toUpperCase() === countryCode;
 		} ) ) {
-			return{
+			return {
 				errors: ["@FORMATS.IBAN.INVALID_COUNTRY_CODE"],
 			};
 		}
 
 		const validLength = countryCodeMap[countryCode];
 
-		if( fixedInput.length < validLength ) {
-			if( acceptPartial ) {
-				return {
-					output: fixedInput,
-				};
+		if ( fixedInput.length < validLength ) {
+			if ( acceptPartial ) {
+				return { output: fixedInput };
 			}
+
 			return {
 				errors: ["@VALIDATION.TOO_SHORT"]
 			};
 
 		}
 
-		if( fixedInput.length > validLength ) {
+		if ( fixedInput.length > validLength ) {
 			return {
 				errors: ["@VALIDATION.TOO_LONG"]
 			};
 		}
 
-		const formattedIBAN = BBAN + countryCode + checkSum;
-		const splittedIban = formattedIBAN.split( "" );
+		const formattedIBAN = bban + countryCode + checkSum;
+		const splitIban = formattedIBAN.split( "" );
 
 		let bigInt = "";
 
-		for ( let index = 0, length = splittedIban.length; index < length; index++ ) {
-			const ch = splittedIban[index];
+		for ( let index = 0, length = splitIban.length; index < length; index++ ) {
+			const ch = splitIban[index];
 			switch ( ch ) {
 				case "0" :
 				case "1" :
@@ -340,20 +349,20 @@ export default class Format {
 
 		let modulo = "";
 
-		while( bigInt.length ) {
+		while ( bigInt.length ) {
 			modulo += bigInt.charAt( 0 );
-		    bigInt = bigInt.slice( 1 );
+			bigInt = bigInt.slice( 1 );
 
-		    const value = Number( modulo );
-		    if( value >= 97 ) {
-			    modulo = "";
+			const value = Number( modulo );
+			if ( value >= 97 ) {
+				modulo = "";
 				bigInt = String( value % 97 ) + bigInt;
-		    }
+			}
 		}
 
-		if( modulo !== "1" ) {
+		if ( modulo !== "1" ) {
 			return {
-				errors: ["@FORMATS.IBAN.INVALID"],
+				errors: ["@FORMATS.IBAN.CHECKSUM_FAILED"],
 			};
 		}
 
@@ -371,27 +380,31 @@ export default class Format {
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
 	static bic( input, acceptPartial = false, { countryCodes = [] } = {} ) { // eslint-disable-line no-unused-vars
+		const fixedInput = input == null ? "" : String( input ).trim().toUpperCase();
+
 		const regEx = /^([a-z]{4})([a-z]{2})([2-9a-z][a-np-z0-9])([0-9a-wy-z][0-9a-z]{2}|x{0,3})$/i;
 		const partial = /^([a-z]{0,6}|[a-z]{6}(([2-9a-z]|[2-9a-z][a-np-z0-9])?|[2-9a-z][a-np-z0-9]([0-9a-wy-z][0-9a-z]{0,2}|xx{0,2})?))$/i;
-		const length = input.length;
+		const length = fixedInput.length;
 
-		if( length > 11 ) {
+		if ( length > 11 ) {
 			return {
 				errors: ["@VALIDATION.TOO_LONG"]
 			};
 		}
 
-		const countryCode = input.slice( 4,6 ).toUpperCase();
+		if ( length >= 6 ) {
+			const countryCode = fixedInput.slice( 4, 6 ).toUpperCase();
 
-		if( countryCodes.length && !countryCodes.some( entry => entry.toUpperCase() === countryCode ) ) {
-			return {
-				errors: ["@FORMATS.BIC.INVALID_COUNTRY_CODE"],
-			};
+			if ( countryCodes.length && !countryCodes.some( entry => entry.toUpperCase() === countryCode ) ) {
+				return {
+					errors: ["@FORMATS.BIC.INVALID_COUNTRY_CODE"],
+				};
+			}
 		}
 
 		if ( acceptPartial ) {
-			if ( !partial.test( input ) ) {
-				if( length === 11 && length === 8 ) {
+			if ( !partial.test( fixedInput ) ) {
+				if ( length === 11 && length === 8 ) {
 					return {
 						errors: ["@FORMATS.BIC.INVALID_FORMAT"],
 					};
@@ -402,12 +415,13 @@ export default class Format {
 
 			}
 		} else {
-			if( length < 8 || ( length > 8 && length < 11 ) ) {
+			if ( length !== 8 && length !== 11 ) {
 				return {
 					errors: ["@VALIDATION.TOO_SHORT"]
 				};
 			}
-			if ( !regEx.test( input ) ) {
+
+			if ( !regEx.test( fixedInput ) ) {
 				return {
 					errors: ["@FORMATS.BIC.INVALID_FORMAT"],
 				};
@@ -415,7 +429,7 @@ export default class Format {
 		}
 
 		return {
-			output: input,
+			output: fixedInput,
 		};
 	}
 }

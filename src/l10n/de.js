@@ -72,15 +72,14 @@ export default function() {
 			},
 			IBAN: {
 				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
-				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzälassiges Land.",
-				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
-				INVALID: "Die eingegebene IBAN ist ungültig.",
+				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzulässiges Land.",
+				INVALID_FORMAT: "Ihre Angabe entspricht nicht dem Format einer IBAN.",
+				CHECKSUM_FAILED: "Die Prüfsumme der IBAN ist falsch. Bitte prüfen Sie auf mögliche Tippfehler!",
 			},
 			BIC: {
-				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
-				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzälassiges Land.",
-				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige IBAN.",
-				INVALID: "Die eingegebene IBAN ist ungültig.",
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer BIC unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre BIC bestimmt ein unzulässiges Land.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige BIC.",
 			},
 		},
 	};
