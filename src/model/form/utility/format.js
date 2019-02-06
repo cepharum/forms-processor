@@ -33,8 +33,9 @@
  */
 
 /**
- * mas a country code to the length of the country specific IBAN format
- * @type {{EG: number, AL: number, DZ: number, AD: number, AO: number, AZ: number, BH: number, BE: number, BJ: number, BA: number, BR: number, VG: number, BG: number, BF: number, BI: number, CR: number, CI: number, DK: number, DE: number, DO: number, SV: number, EE: number, FO: number, FI: number, FR: number, GA: number, GE: number, GI: number, GR: number, GL: number, GT: number, IQ: number, IR: number, IE: number, IS: number, IL: number, IT: number, JO: number, CM: number, CV: number, KZ: number, QA: number, CG: number, XK: number, HR: number, KW: number, LV: number, LB: number, LI: number, LT: number, LU: number, MG: number, ML: number, MT: number, MR: number, MU: number, MK: number, MD: number, MC: number, ME: number, MZ: number, NL: number, NO: number, AT: number, TL: number, PK: number, PS: number, PL: number, PT: number, RO: number, SM: number, ST: number, SA: number, SE: number, CH: number, SN: number, RS: number, SC: number, SK: number, SI: number, ES: number, LC: number, CZ: number, TN: number, TR: number, UA: number, HU: number, VA: number, AE: number, GB: number, BY: number, CY: number, CF: number}}
+ * Maps a country's code into the length of the country-specific IBAN format.
+ *
+ * @type {object<string,number>}
  */
 const countryCodeMap = {
 	EG:	27,
