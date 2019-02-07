@@ -34,6 +34,7 @@ import FormFieldSelectModel from "./select";
 import FormFieldUploadModel from "./upload";
 import FormFieldImageModel from "./image";
 import FormFieldMultiModel from "./multi";
+import FormFieldGroupModel from "./group";
 
 export default {
 	abstract: FormFieldAbstractModel,
@@ -46,5 +47,6 @@ export default {
 		multi: FormFieldMultiModel,
 		upload: FormFieldUploadModel,
 		image: FormFieldImageModel,
+		group: FormFieldGroupModel,
 	},
 };
