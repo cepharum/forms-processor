@@ -101,9 +101,9 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 		const fields = this.fields.map( entry => entry.field );
 
 		for( const entry of fields ) {
-			const subErrrors = entry.validate( live );
-			if( subErrrors && subErrrors.length ) {
-				for( const error of subErrrors ) {
+			const subErrors = entry.validate( live );
+			if( subErrors && subErrors.length ) {
+				for( const error of subErrors ) {
 					errors.push( error );
 				}
 			}
@@ -113,9 +113,9 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
+	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		const that = this;
-		const { form: { writeValue, readValue }, qualifiedName, fields } = that;
+		const { fields } = that;
 
 		return {
 			render( createElement ) {
