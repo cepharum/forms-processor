@@ -101,7 +101,9 @@ A custom input data processor must overload this method:
 
 FormsProcessor has internationalization support built in. Internal fields use lookup trees providing translations for current locale. This method is provided to add custom overlays to extend or replace existing entries in a translation tree.
 
-> Translations are organized as "trees" by means of mapping some lookup string into a translation or into another object mapping from lookup strings into a translation or yet another object etc.
+::: tip Info
+Translations are organized as "trees" by means of mapping some lookup string into a translation or into another object mapping from lookup strings into a translation or yet another object etc.
+:::
 
 On rendering hints and errors on a field code might use `@` followed by a translation's name using dot notation syntax instead of some actual string to be used. Abstract field implementation will detect those strings and look up related translations for eventual use. On adding custom fields and processors you may use this syntax in combination with additional translations to utilize this localization support.
 
