@@ -475,6 +475,10 @@ export default class FormFieldAbstractModel {
 
 					reactiveFieldInfo.pristine = false;
 					reactiveFieldInfo.valid = null;
+
+					if ( container ) {
+						container.pristine = false;
+					}
 				},
 			},
 
