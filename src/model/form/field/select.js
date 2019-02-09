@@ -40,13 +40,8 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		return true;
 	}
 
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**
 			 * Generates property descriptor exposing options to choose from in
@@ -101,8 +96,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				return {
 					value: Data.normalizeToBoolean( definitionValue ),
 				};
-			}
-		} );
+			},
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */

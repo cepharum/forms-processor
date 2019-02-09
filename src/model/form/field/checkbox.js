@@ -41,12 +41,9 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	}
 
 	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 * @inheritDoc
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**
 			 * Generates property descriptor exposing options to choose from in
@@ -106,8 +103,10 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				return {
 					value: definitionValue == null ? qualifiedDefinition.type !== "radio" : Data.normalizeToBoolean( definitionValue ),
 				};
-			}
-		} );
+			},
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */

@@ -155,8 +155,9 @@ export default class FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
+	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {} ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		const { name } = definition;
 		if ( !name ) {
 			throw new TypeError( "Missing field name in definition." );
@@ -236,6 +237,15 @@ export default class FormFieldAbstractModel {
 				get: () => form.readValue( qualifiedName ),
 				set: value => form.writeValue( qualifiedName, value ),
 			} : { value: undefined },
+
+			/**
+			 * Exposes any field containing current one.
+			 *
+			 * @name FormFieldAbstractModel#container
+			 * @property {?FormFieldAbstractModel}
+			 * @readonly
+			 */
+			container: { value: container || null },
 		} );
 
 

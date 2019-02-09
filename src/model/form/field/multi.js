@@ -33,14 +33,8 @@ import Range from "../utility/range";
  * Manages multiple fields of form representing text input.
  */
 export default class FormFieldMultiModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				let value = v;
@@ -76,8 +70,10 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				 */
 				return { value: new Range( v ) };
 			},
+
 			...customProperties,
-		} );
+		}, container );
+
 		this.items = [];
 	}
 

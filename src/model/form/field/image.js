@@ -32,14 +32,8 @@ import upload from "./upload";
  * Manages single field of form representing image input.
  */
 export default class image extends upload {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties, ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 
 			/**
@@ -84,7 +78,7 @@ export default class image extends upload {
 			},
 
 			...customProperties,
-		} );
+		}, container );
 	}
 
 	/**

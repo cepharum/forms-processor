@@ -32,14 +32,8 @@ import FormFieldAbstractModel from "./abstract";
  * Manages multiple fields of form representing text input.
  */
 export default class FormFieldGroupModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				if ( !Array.isArray( v ) ) {
@@ -95,7 +89,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 			},
 
 			...customProperties,
-		} );
+		}, container );
 	}
 
 	/** @inheritDoc */
