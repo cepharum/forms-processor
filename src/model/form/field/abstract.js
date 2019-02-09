@@ -31,7 +31,6 @@ import L10n from "@/service/l10n";
 import Data from "@/service/data";
 import CompileTerm from "../utility/process";
 import { Processor } from "simple-terms";
-import Options from "../utility/options";
 
 const termCache = new Map();
 
