@@ -42,48 +42,56 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
-				if( !Array.isArray( v ) ) {
-					throw new Error( "fields attribute should be an array" );
+				if ( !Array.isArray( v ) ) {
+					throw new Error( "no such array of grouped fields" );
 				}
-				if( v.some( entry => typeof entry !== "object" ) ) {
-					throw new Error( "provided invalid field description" );
-				}
-				if( v.some( entry => !form.sequence.registry.fields.hasOwnProperty( entry.type || "text" ) )
-				) {
-					throw new Error( "provided field of unknown type" );
-				}
+
+				const fieldsRegistry = form.sequence.registry.fields;
+
 				const fields = v.map( ( field, index ) => {
+					if ( typeof field !== "object" ) {
+						throw new Error( "provided invalid field description" );
+					}
+
+					if ( !fieldsRegistry.hasOwnProperty( field.type || "text" ) ) {
+						throw new Error( "group of fields contains field of unknown type" );
+					}
+
 					const fieldForm = Object.create( form );
+
 					Object.defineProperties( fieldForm, {
 						readValue: {
-							value: () => {
-								return this.fields[index].value;
-							}
+							value: () => this.fields[index].value
 						},
 						writeValue: {
 							value: ( _, _value ) => {
 								this.fields[index].value = _value;
 								const value = this.fields.map( entry => entry.value );
+
 								form.writeValue( this.qualifiedName, value );
+
 								reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = value;
 								reactiveFieldInfo.pristine = false;
 							}
 						},
-						name: {
-							value: this.qualifiedName,
-						}
+						name: { value: this.qualifiedName },
 					} );
 
-					if( !field.name ) field.name = String( index );
-					const Manager = form.sequence.registry.fields[field.type || "text"];
+					if ( !field.name ) field.name = String( index );
+
+					const Manager = fieldsRegistry[field.type || "text"];
 					const fieldReactiveFieldInfo = {};
+
 					return {
 						reactiveFieldInfo: fieldReactiveFieldInfo,
-						field: new Manager( fieldForm, field, index, fieldReactiveFieldInfo ),
+						field: new Manager( fieldForm, Object.assign( {}, field, {
+							suppress: { errors: true },
+						} ), index, fieldReactiveFieldInfo ),
 						value: null,
 					};
 				} );
-				return{ value: fields };
+
+				return { value: fields };
 			},
 
 			...customProperties,
@@ -100,13 +108,8 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 		const errors = super.validate( live );
 		const fields = this.fields.map( entry => entry.field );
 
-		for( const entry of fields ) {
-			const subErrors = entry.validate( live );
-			if( subErrors && subErrors.length ) {
-				for( const error of subErrors ) {
-					errors.push( error );
-				}
-			}
+		for ( const entry of fields ) {
+			errors.splice( errors.length, 0, ...entry.validate( live ) );
 		}
 
 		return errors;
@@ -124,6 +127,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						createElement( entry.field.component ),
 					] );
 				} );
+
 				return createElement( "div", {}, components );
 			},
 		};
