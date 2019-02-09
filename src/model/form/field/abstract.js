@@ -31,6 +31,7 @@ import L10n from "@/service/l10n";
 import Data from "@/service/data";
 import CompileTerm from "../utility/process";
 import { Processor } from "simple-terms";
+import Options from "../utility/options";
 
 const termCache = new Map();
 
@@ -322,7 +323,14 @@ export default class FormFieldAbstractModel {
 									handleCustomProperty.call( this, descriptor, propertyValue, propertyName );
 								}
 							} else {
-								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+								switch ( propertyName ) {
+									case "suppress" :
+										break;
+
+									default :
+										propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+								}
+
 								if ( propertyValue != null ) {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
 										reactiveFieldInfo, v => this.constructor.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
@@ -879,7 +887,10 @@ export default class FormFieldAbstractModel {
 						this.label ? "with-label" : "without-label",
 						this.valid ? "valid" : "invalid"
 					].concat( classes );
-				}
+				},
+				showErrors() {
+					return !that.suppress || !that.suppress.errors;
+				},
 			},
 			template: `
 <div v-if="required || visible" :class="componentClasses">
@@ -889,7 +900,7 @@ export default class FormFieldAbstractModel {
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
-		<span class="errors" v-if="errors.length">
+		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
 	</span>
@@ -983,11 +994,36 @@ export default class FormFieldAbstractModel {
 	static normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
 		switch ( name ) {
 			case "classes" :
-				return typeof value === "string" ? value.trim().split( /\s*[,;]\s*/ ) : value;
+				return typeof value === "string" ? value.trim().split( /\s*[,;][,;\s]*/ ) : value;
 
 			case "label" :
 			case "hint" :
 				return String( value );
+
+			case "suppress" : {
+				let _value = value;
+
+				if ( typeof _value === "string" ) {
+					_value = _value.trim().split( /\s*,[,\s]*/ );
+				}
+
+				if ( Array.isArray( _value ) ) {
+					const object = {};
+					const numValues = _value.length;
+
+					for ( let i = 0; i < numValues; i++ ) {
+						const v = _value[i];
+
+						if ( v != null ) {
+							object[String( numValues[i] ).toLowerCase()] = true;
+						}
+					}
+
+					return object;
+				}
+
+				return value && typeof value == "object" ? value : {};
+			}
 
 			case "required" :
 			case "visible" :
