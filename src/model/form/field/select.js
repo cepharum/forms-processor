@@ -147,7 +147,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 						return this.value;
 					},
 					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
+						that.pristine = false;
 
 						const { value: normalized } = that.normalizeValue( newValue );
 

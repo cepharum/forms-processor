@@ -224,7 +224,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					}
 				},
 				selectedCallback( fileArray ) {
-					reactiveFieldInfo.pristine = false;
+					that.pristine = false;
 
 					if ( !fileArray ) {
 						return;
