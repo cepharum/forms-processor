@@ -178,7 +178,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					return current === value;
 				},
 				adjust( added, newValue ) {
-					that.pristine = false;
+					that.touch();
 
 					const { value } = this;
 

@@ -477,7 +477,7 @@ export default class FormFieldAbstractModel {
 					reactiveFieldInfo.valid = null;
 
 					if ( container ) {
-						container.pristine = false;
+						container.touch();
 					}
 				},
 			},
@@ -797,6 +797,20 @@ export default class FormFieldAbstractModel {
 	 */
 	selectLocalization( internationalizedValue ) {
 		return L10n.selectLocalized( internationalizedValue, this.form.locale );
+	}
+
+	/**
+	 * Marks current field touched.
+	 *
+	 * NOTE! This method should be preferred over adjusting property `pristine`
+	 *       so containers might observe pristine fields and derive its own
+	 *       state using some custom algorithm.
+	 *
+	 * @param {boolean} force set true to force setting any field _touched_ (e.g. on clicking button "Next")
+	 * @returns {void}
+	 */
+	touch( force = false ) { // eslint-disable-line no-unused-vars
+		this.pristine = false;
 	}
 
 	/**

@@ -147,7 +147,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 						return this.value;
 					},
 					set( newValue ) {
-						that.pristine = false;
+						that.touch();
 
 						const { value: normalized } = that.normalizeValue( newValue );
 

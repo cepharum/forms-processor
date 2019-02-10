@@ -204,7 +204,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 									writeValue( qualifiedName, this.value );
 									reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = this.value;
 
-									that.pristine = false;
+									that.touch();
 
 									this.$emit( "input", this.value );
 									this.$parent.$emit( "input", this.value ); // FIXME is this required due to $emit always forwarded to "parent"

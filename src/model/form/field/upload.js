@@ -120,7 +120,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
+	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		const that = this;
 		const { form: { readValue, writeValue }, qualifiedName, mimeType, uploadLabel, button, dropZone, multiple } = that;
 		return {
@@ -224,7 +224,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					}
 				},
 				selectedCallback( fileArray ) {
-					that.pristine = false;
+					that.touch();
 
 					if ( !fileArray ) {
 						return;

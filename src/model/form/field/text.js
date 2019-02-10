@@ -164,8 +164,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 								return;
 							}
 
-							this.value = value;
-							that.pristine = false;
+							that.touch();
 
 							writeValue( qualifiedName, value );
 							reactiveFieldInfo.value = value;

@@ -250,7 +250,7 @@ export default class FormModel {
 
 					const numFields = this.fields.length;
 					for ( let i = 0; i < numFields; i++ ) {
-						this.fields[i].pristine = false;
+						this.fields[i].touch( true );
 					}
 				},
 			},
