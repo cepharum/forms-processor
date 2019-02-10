@@ -24,10 +24,22 @@
 				transform: scale(1.5);
 				padding: 0 0.1em;
 			}
+
+			label:after {
+				content: ":\00a0";
+			}
 		}
 
-		&.with-label .label:after {
-			content: ":\00a0";
+		&.without-label {
+			> .label > label {
+				display: none;
+			}
+		}
+
+		&.type-group {
+			.field.without-label > .label {
+				display: none;
+			}
 		}
 
 		.widget {
@@ -56,6 +68,33 @@
 			font: inherit;
 			width: 100%;
 			box-sizing: border-box;
+		}
+
+		.align-right > input[type=text] {
+			text-align: right;
+		}
+
+		.with-prefix, .with-suffix {
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: center;
+			justify-content: stretch;
+
+			:not(.prefix):not(.suffix) {
+				flex: 1000 1 auto;
+			}
+
+			.prefix, .suffix {
+				flex: 1 0 auto;
+			}
+
+			.prefix {
+				margin-right: 0.5rem;
+			}
+
+			.suffix {
+				margin-left: 0.5rem;
+			}
 		}
 
 		.checkbox > .option {

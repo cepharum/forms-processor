@@ -39,7 +39,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-			size( v ) {
+			size( value, _, __, termHandler ) {
 				/**
 				 * Defines valid range of a value's length.
 				 *
@@ -47,10 +47,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {Range}
 				 * @readonly
 				 */
-				return { value: new Range( v ) };
+				return termHandler( value, rawValue => new Range( rawValue ) );
 			},
 
-			upperCase( v ) {
+			upperCase( value, _, __, termHandler ) {
 				/**
 				 * Configures field to convert all input to upper-case letters
 				 * if applicable.
@@ -59,10 +59,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {boolean}
 				 * @readonly
 				 */
-				return { value: Data.normalizeToBoolean( v ) };
+				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
 			},
 
-			lowerCase( v ) {
+			lowerCase( value, _, __, termHandler ) {
 				/**
 				 * Configures field to convert all input to lower-case letters
 				 * if applicable.
@@ -71,10 +71,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {boolean}
 				 * @readonly
 				 */
-				return { value: Data.normalizeToBoolean( v ) };
+				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
 			},
 
-			pattern( v ) {
+			pattern( value ) {
 				/**
 				 * Exposes compiled pattern optionally defined on field.
 				 *
@@ -82,7 +82,55 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?CompiledPattern}
 				 * @readonly
 				 */
-				return { value: v == null ? null : Pattern.compilePattern( v ) };
+				return { value: value == null ? null : Pattern.compilePattern( value ) };
+			},
+
+			align( value, _, __, termHandler ) {
+				/**
+				 * Defines some desired alignment for content of text field.
+				 *
+				 * @name FormFieldTextModel#align
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					const _value = rawValue == null ? null : String( rawValue ).trim().toLowerCase() || null;
+
+					switch ( _value ) {
+						case "right" :
+							return _value;
+
+						case "left" :
+						default :
+							return "left";
+					}
+				} );
+			},
+
+			prefix( value, _, __, termHandler ) {
+				/**
+				 * Defines some static text to appear in front of text field.
+				 *
+				 * @name FormFieldTextModel#prefix
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
+			},
+
+			suffix( value, _, __, termHandler ) {
+				/**
+				 * Defines some static text to appear next to the text field.
+				 *
+				 * @name FormFieldTextModel#suffix
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
 			},
 
 			...customProperties,
@@ -140,7 +188,21 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 		return {
 			render( createElement ) {
-				return createElement( "input", {
+				const elements = [];
+				const classes = [
+					"align-" + that.align,
+				];
+
+				if ( that.prefix == null ) {
+					classes.push( "without-prefix" );
+				} else {
+					classes.push( "with-prefix" );
+					elements.push( createElement( "span", {
+						class: "prefix",
+					}, that.prefix ) );
+				}
+
+				elements.push( createElement( "input", {
 					domProps: {
 						type: "text",
 						value: reactiveFieldInfo.formattedValue,
@@ -182,7 +244,18 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							this.$parent.$emit( "input", value );
 						},
 					},
-				} );
+				} ) );
+
+				if ( that.suffix == null ) {
+					classes.push( "without-suffix" );
+				} else {
+					classes.push( "with-suffix" );
+					elements.push( createElement( "span", {
+						class: "suffix",
+					}, that.suffix ) );
+				}
+
+				return createElement( "div", { class: classes, }, elements );
 			},
 			data: () => reactiveFieldInfo,
 		};
