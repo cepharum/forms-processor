@@ -45,6 +45,8 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 				const numFields = v.length;
 				const fields = new Array( numFields );
 
+				reactiveFieldInfo.group = new Array( numFields );
+
 				for ( let di = 0; di < numFields; di++ ) {
 					const fieldDefinition = v[di];
 
@@ -57,23 +59,61 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						throw new Error( "group of fields contains field of unknown type" );
 					}
 
+					reactiveFieldInfo.group[di] = {};
+
 					const fieldForm = Object.create( form );
 
 					Object.defineProperties( fieldForm, {
 						readValue: {
-							value: () => fields[di].value
+							value: name => {
+								const field = fields[di];
+
+								let localIndex = name === field.qualifiedName ? di : -1;
+								if ( localIndex < 0 ) {
+									for ( let i = 0; i < numFields; i++ ) {
+										if ( i !== di && name === fields[i].qualifiedName ) {
+											localIndex = i;
+											break;
+										}
+									}
+								}
+
+								if ( localIndex > -1 ) {
+									const values = form.readValue( this.qualifiedName );
+
+									return Array.isArray( values ) ? values[localIndex] : undefined;
+								}
+
+								return form.readValue( name );
+							}
 						},
 						writeValue: {
-							value: ( _, _value ) => {
-								if ( _value === fields[di].value ) {
-									fields[di].value = _value;
+							value: ( name, value ) => {
+								const field = fields[di];
 
+								let localIndex = name === field.qualifiedName ? di : -1;
+								if ( localIndex < 0 ) {
+									for ( let i = 0; i < numFields; i++ ) {
+										if ( i !== di && name === fields[i].qualifiedName ) {
+											localIndex = i;
+											break;
+										}
+									}
+								}
+
+								if ( localIndex > -1 ) {
 									const updatedValues = new Array( numFields );
 									for ( let i = 0; i < numFields; i++ ) {
-										updatedValues[i] = fields[i].value;
+										if ( i === localIndex ) {
+											updatedValues[i] = value;
+										} else {
+											updatedValues[i] = fields[i].value;
+										}
 									}
 
 									form.writeValue( this.qualifiedName, updatedValues );
+								} else {
+									form.writeValue( name, value );
 								}
 							}
 						},
@@ -82,19 +122,58 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 					if ( !fieldDefinition.name ) fieldDefinition.name = String( di );
 
-					const Manager = fieldsRegistry[fieldType];
-					const fieldReactiveFieldInfo = {};
-
-					fields[di] = {
-						reactiveFieldInfo: fieldReactiveFieldInfo,
-						field: new Manager( fieldForm, Object.assign( {}, fieldDefinition, {
-							suppress: { errors: true },
-						} ), di, fieldReactiveFieldInfo, null, this ),
-						value: null,
-					};
+					fields[di] = new fieldsRegistry[fieldType]( fieldForm, {
+						...fieldDefinition,
+						suppress: { errors: true },
+					}, di, reactiveFieldInfo.group[di], null, this );
 				}
 
 				return { value: fields };
+			},
+
+			drop( v ) {
+				/**
+				 * Configures whether grouping field is dropping its _pristine_
+				 * state eagerly or lazily.
+				 *
+				 * Eagerly dropping results in grouping field becoming _touched_
+				 * as soon as one of its containing fields got touched. In
+				 * opposition to that lazy dropping requires all contained
+				 * fields to be touched so the group gets marked touched as well.
+				 *
+				 * @name FormFieldGroupModel#drop
+				 * @property {{eager:boolean}}
+				 * @readonly
+				 */
+
+				const normalized = {
+					eager: true,
+				};
+
+				switch ( typeof v ) {
+					case "object" :
+						if ( Array.isArray( v ) ) {
+							normalized.eager = v.findIndex( e => String( e ).trim().toLowerCase() === "eager" ) > -1;
+						} else if ( v ) {
+							normalized.eager = Boolean( v.eager );
+						}
+						break;
+
+					case "string" :
+						switch ( v.trim().toLowerCase() ) {
+							case "eager" :
+							default :
+								normalized.eager = true;
+								break;
+
+							case "lazy" :
+								normalized.eager = false;
+								break;
+						}
+						break;
+				}
+
+				return { value: normalized };
 			},
 
 			...customProperties,
@@ -111,11 +190,19 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 		const { fields } = this;
 		const numFields = fields.length;
 		const errors = new Array( numFields + 1 );
+		let write = 0;
 
-		errors[0] = super.validate( live );
+		errors[write++] = super.validate( live );
+
 		for ( let i = 0; i < numFields; i++ ) {
-			errors[i + 1] = fields.field.validate( live );
+			const field = fields[i];
+
+			if ( !field.pristine ) {
+				errors[write++] = field.validate( live );
+			}
 		}
+
+		errors.splice( write );
 
 		return [].concat( ...errors );
 	}
@@ -129,7 +216,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 			render( createElement ) {
 				const components = fields.map( entry => {
 					return createElement( "div", { class: "multi-field-container" }, [
-						createElement( entry.field.component ),
+						createElement( entry.component ),
 					] );
 				} );
 
@@ -138,5 +225,32 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 		};
 	}
 
+	/**
+	 * Marks current field _touched_.
+	 *
+	 * Grouping fields are considered pristine unless all its containing fields
+	 * are marked touched.
+	 *
+	 * @param {boolean} force set true to force setting any field _touched_ (e.g. on clicking button "Next")
+	 * @returns {void}
+	 */
+	touch( force = false ) {
+		const { fields } = this;
+		const numFields = fields.length;
+		const lazyTouch = !this.drop.eager;
 
+		this.$data.valid = null;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			if ( force ) {
+				// NOTE! This might result in infinite regression if any
+				//       containing element forces touching of its container!
+				fields[i].touch( true );
+			} else if ( lazyTouch && fields[i].pristine ) {
+				return;
+			}
+		}
+
+		this.pristine = false;
+	}
 }
