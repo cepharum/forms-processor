@@ -912,16 +912,21 @@ export default class FormFieldAbstractModel {
 						this.required ? "mandatory" : "optional",
 						this.pristine ? "pristine" : "affected",
 						this.label ? "with-label" : "without-label",
-						this.valid ? "valid" : "invalid"
+						this.valid ? "valid" : "invalid",
+						this.showErrors ? "show-errors" : "suppress-errors",
+						this.showLabels ? "show-labels" : "suppress-labels",
 					].concat( classes );
 				},
 				showErrors() {
 					return !that.suppress || !that.suppress.errors;
 				},
+				showLabels() {
+					return !that.suppress || !that.suppress.labels;
+				},
 			},
 			template: `
 <div v-if="required || visible" :class="componentClasses">
-	<span class="label">
+	<span class="label" v-if="showLabels">
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
