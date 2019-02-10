@@ -1,37 +1,41 @@
 {
-  "processors": [
-	{
-	  "url": "/"
-	}
-  ],
-  "sequence": [
-	{
-	  "name": "GroupForm",
-	  "label": "GroupForm",
-	  "fields": [
+	"processors": [
 		{
-		  "name": "Group",
-		  "label": "Group",
-		  "type": "group",
-		  "fields": [
-			{
-			  "label": "text",
-			  "required": true
-			},{
-			  "label": "checkbox",
-			  "type": "checkbox",
-			  "required": true
-			},{
-			  "label": "select",
-			  "type": "select",
-			  "options": [
-				"1","2","3"
-			  ],
-			  "required": true
-			}
-		  ]
+			"url": "/"
 		}
-	  ]
-	}
-  ]
+	],
+	"sequence": [
+		{
+			"name": "GroupForm",
+			"label": "GroupForm",
+			"fields": [
+				{
+					"name": "Group",
+					"label": "Group",
+					"type": "group",
+					"fields": [
+						{
+							"label": "text",
+							"required": true
+						},
+						{
+							"label": "checkbox",
+							"type": "checkbox",
+							"required": true
+						},
+						{
+							"label": "select",
+							"type": "select",
+							"options": [
+								"1",
+								"2",
+								"3"
+							],
+							"required": true
+						}
+					]
+				}
+			]
+		}
+	]
 }

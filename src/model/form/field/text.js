@@ -166,12 +166,20 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 							that.touch();
 
+							// update value of field in central store
 							writeValue( qualifiedName, value );
-							reactiveFieldInfo.value = value;
-							reactiveFieldInfo.formattedValue = formattedValue;
 
+							// update reactive data
+							this.value = value;
+							this.formattedValue = formattedValue;
+
+							// re-emit in scope of this field's type-specific
+							// component (containing input element created here)
 							this.$emit( "input", value );
-							this.$parent.$emit( "input", value ); // FIXME is this required due to $emit always forwarded to "parent"
+
+							// re-emit in scope of this field's base component
+							// (e.g. containing its type-specific component)
+							this.$parent.$emit( "input", value );
 						},
 					},
 				} );
