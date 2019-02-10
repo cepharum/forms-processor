@@ -27,28 +27,22 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
-import FormFieldCheckBoxModel from "./checkbox";
-import FormFieldSelectModel from "./select";
-import FormFieldUploadModel from "./upload";
-import FormFieldImageModel from "./image";
-import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
-import FormFieldHiddenModel from "./hidden";
 
-export default {
-	abstract: FormFieldAbstractModel,
-	map: {
-		info: FormFieldInfoModel,
-		text: FormFieldTextModel,
-		checkbox: FormFieldCheckBoxModel,
-		radio: FormFieldCheckBoxModel,
-		select: FormFieldSelectModel,
-		multi: FormFieldMultiModel,
-		upload: FormFieldUploadModel,
-		image: FormFieldImageModel,
-		group: FormFieldGroupModel,
-		hidden: FormFieldHiddenModel,
-	},
-};
+/**
+ * Manages single field of form representing non-editable text display.
+ */
+export default class FormFieldInfoModel extends FormFieldAbstractModel {
+	/** @inheritDoc */
+	renderComponent( reactiveFieldInfo ) {
+		const info = super.renderComponent( reactiveFieldInfo );
+
+		info.template = "<!-- -->";
+
+		return info;
+	}
+
+	/** @inheritDoc */
+	static get isInteractive() {
+		return true;
+	}
+}

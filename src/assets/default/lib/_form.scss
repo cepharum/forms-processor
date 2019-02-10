@@ -17,10 +17,6 @@
 			box-sizing: border-box;
 			padding-right: 0.5em;
 
-			&:after {
-				content: ":\00a0";
-			}
-
 			.mandatory {
 				color: red;
 				font-weight: bold;
@@ -28,6 +24,10 @@
 				transform: scale(1.5);
 				padding: 0 0.1em;
 			}
+		}
+
+		&.with-label .label:after {
+			content: ":\00a0";
 		}
 
 		.widget {
