@@ -81,14 +81,29 @@
 					"normalization": "none"
 				},
 				{
+					"type": "info",
+					"name": "normalization_none_info",
+					"text": "input is `{{normalization_none}}` ({{length(normalization_none)}})"
+				},
+				{
 					"name": "normalization_trim",
 					"label": "Trimming",
 					"normalization": "trim"
 				},
 				{
+					"type": "info",
+					"name": "normalization_trim_info",
+					"text": "input is `{{normalization_trim}}` ({{length(normalization_trim)}})"
+				},
+				{
 					"name": "normalization_reduce",
 					"label": "Reducing",
 					"normalization": "reduce"
+				},
+				{
+					"type": "info",
+					"name": "normalization_reduce_info",
+					"text": "input is `{{normalization_reduce}}` ({{length(normalization_reduce)}})"
 				},
 				{
 					"name": "placeholder",

@@ -184,20 +184,42 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		const originalLength = fixedValue.length;
 		const cursorAtEnd = options.at === originalLength;
 
+
+		// adjust case
+		if ( this.upperCase ) {
+			fixedValue = fixedValue.toLocaleUpperCase();
+		} else if ( this.lowerCase ) {
+			fixedValue = fixedValue.toLocaleLowerCase();
+		}
+
+		if ( fixedValue.length !== originalLength && cursorAtEnd ) {
+			options.at += fixedValue.length - originalLength;
+		}
+
+
+		// apply pattern
+		let formattedValue = fixedValue;
+
+		const pattern = this.pattern;
+		if ( pattern ) {
+			const { valuable, formatted } = Pattern.parse( fixedValue, pattern, {
+				keepTrailingLiterals: !options.removing,
+				cursorPosition: options.at,
+			} );
+
+			fixedValue = valuable.value;
+			formattedValue = formatted.value;
+			options.at = formatted.cursor;
+		}
+
+
+		// normalize whitespace
 		switch ( this.normalization ) {
 			case "trim" :
 			case "reduce" : {
 				const match = /^(\s*)(.*?)(\s*)$/.exec( fixedValue );
 				if ( match ) {
-					if ( match[1].length > 0 ) {
-						options.at = Math.max( 0, options.at - match[1].length );
-					}
-
 					fixedValue = match[2];
-
-					if ( match[3].length > 0 ) {
-						options.at = Math.min( options.at, fixedValue.length + 1 );
-					}
 				}
 			}
 		}
@@ -220,9 +242,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						case "\f" :
 							if ( spaceBefore ) {
 								reduced = true;
-								if ( options.at > i ) {
-									options.at--;
-								}
 							} else {
 								spaceBefore = true;
 								chars[write++] = char;
@@ -243,29 +262,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			}
 		}
 
-		if ( this.upperCase ) {
-			fixedValue = fixedValue.toLocaleUpperCase();
-		} else if ( this.lowerCase ) {
-			fixedValue = fixedValue.toLocaleLowerCase();
-		}
-
-		if ( fixedValue.length !== originalLength && cursorAtEnd ) {
-			options.at += fixedValue.length - originalLength;
-		}
-
-		let formattedValue = fixedValue;
-
-		const pattern = this.pattern;
-		if ( pattern ) {
-			const { valuable, formatted } = Pattern.parse( fixedValue, pattern, {
-				keepTrailingLiterals: !options.removing,
-				cursorPosition: options.at,
-			} );
-
-			fixedValue = valuable.value;
-			formattedValue = formatted.value;
-			options.at = formatted.cursor;
-		}
 
 		return {
 			value: fixedValue,
