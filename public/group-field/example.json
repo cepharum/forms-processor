@@ -6,13 +6,15 @@
 	],
 	"sequence": [
 		{
-			"name": "GroupForm",
-			"label": "GroupForm",
+			"name": "form",
+			"label": "Grouping Fields",
+			"description": "This form demonstrates use of grouping fields aggregating a set of subordinated fields.",
 			"fields": [
 				{
-					"name": "Group",
-					"label": "Group",
+					"name": "eager",
+					"label": "Eager Labelled Group",
 					"type": "group",
+					"required": true,
 					"fields": [
 						{
 							"label": "text",
@@ -25,6 +27,33 @@
 						},
 						{
 							"label": "select",
+							"type": "select",
+							"options": [
+								"1",
+								"2",
+								"3"
+							],
+							"required": true
+						}
+					]
+				},
+				{
+					"name": "lazy",
+					"label": "Lazy Unlabelled Group",
+					"type": "group",
+					"drop": "lazy",
+					"required": true,
+					"fields": [
+						{
+							"required": true,
+							"suffix": "EUR",
+							"align": "right"
+						},
+						{
+							"type": "checkbox",
+							"required": true
+						},
+						{
 							"type": "select",
 							"options": [
 								"1",
