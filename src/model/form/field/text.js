@@ -106,6 +106,20 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 			},
 
+			placeholder( value, _, __, termHandler ) {
+				/**
+				 * Defines some text to be displayed in bounds of text input
+				 * control unless user has entered some text already.
+				 *
+				 * @name FormFieldTextModel#placeholder
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
+			},
+
 			align( value, _, __, termHandler ) {
 				/**
 				 * Defines some desired alignment for content of text field.
@@ -282,11 +296,17 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					}, that.prefix ) );
 				}
 
+				const domProps = {
+					type: "text",
+					value: reactiveFieldInfo.formattedValue,
+				};
+
+				if ( that.placeholder != null ) {
+					domProps.placeholder = that.placeholder;
+				}
+
 				elements.push( createElement( "input", {
-					domProps: {
-						type: "text",
-						value: reactiveFieldInfo.formattedValue,
-					},
+					domProps,
 					on: {
 						input: event => {
 							const { value: input, selectionStart } = event.target;

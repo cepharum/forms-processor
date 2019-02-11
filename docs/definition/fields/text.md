@@ -157,3 +157,9 @@ The attribute `align` is one of these values:
 | ------- | --------------------------------------- |
 | `left`  | Text input is aligned left. This is the default on omitting the attribute. |
 | `right` | Text input is aligned right.            |
+
+### placeholder
+
+This attribute provides a string to be displayed in bounds of text input control usually hinting at action required by user. It is visible unless there is some input provided by user or read from storage for modification.
+
+By default there is no placeholder. The attribute's value might be computed. 

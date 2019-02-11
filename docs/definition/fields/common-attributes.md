@@ -132,3 +132,7 @@ This set of probably localized strings is providing custom messages to replace t
 ### classes
 
 This attribute is commonly useful to have additional class names applied to the field's representation in HTML so rules in CSS may address them e.g. for individual styling. 
+
+### initial
+
+This attribute provides value of field to be used initially when loading form. It might be computable term which is kept updating actual value of field until the field has been changed by user input explicitly.

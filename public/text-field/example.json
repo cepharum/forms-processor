@@ -89,6 +89,11 @@
 					"name": "normalization_reduce",
 					"label": "Reducing",
 					"normalization": "reduce"
+				},
+				{
+					"name": "placeholder",
+					"label": "Placeholder",
+					"placeholder": "Enter something here..."
 				}
 			]
 		}
