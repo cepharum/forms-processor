@@ -75,7 +75,7 @@ Therefore every character in a pattern falls into one of three categories:
   }
   ```
   
-  The pattern `##??` is equivalent to expecting one mandatory digit and up to two more optional ones. It might be written as `##?#?` as well.
+  The pattern `##??` is equivalent to expecting one mandatory digit and one or two optional ones. It might be written as `##?#?` as well.
   :::
 * Literal characters are considered separators in formatted value. They usually aren't included with the resulting input value e.g. as available in terms addressing a text field's value. Any character which neither functional character nor quantifier is considered literal character except for these two character:
 
@@ -99,6 +99,24 @@ If your form asks for entering some coupon code you might have it instantly comp
 ```
 
 This pattern permits input of up to 20 latin letters converting them to uppercase implicitly. Dashes might be entered in given positions as well. When omitted they are inserted implicitly, though.
+:::
+
+::: warning Note!
+This attribute's value is not computable.
+:::
+
+### normalization
+
+This attribute controls how input values are normalized before validation. It is a string containing one of these keywords:
+
+* `none` disables any normalization controlled by this attribute.
+* `trim` requests to remove any leading or trailing whitespace characters.
+* `reduce` requests to remove any leading or trailing whitespace characters and have sequences of arbitrary whitespace replaced with single simple SPC characters.
+
+If omitted the default normalization mode is `trim`.
+
+::: warning Note!
+This attribute's value is not computable.
 :::
 
 ### upperCase

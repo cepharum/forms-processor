@@ -85,6 +85,27 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				return { value: value == null ? null : Pattern.compilePattern( value ) };
 			},
 
+			normalization( value ) {
+				/**
+				 * Exposes normalization mode selected in field's definition.
+				 *
+				 * @name FormFieldTextModel#normalization
+				 * @property {string}
+				 * @readonly
+				 */
+				const _value = value == null ? "trim" : String( value ).trim().toLowerCase();
+
+				switch ( _value ) {
+					case "none" :
+					case "trim" :
+					case "reduce" :
+						return { value: _value };
+
+					default :
+						throw new TypeError( `invalid normalization mode: ${value}` );
+				}
+			},
+
 			align( value, _, __, termHandler ) {
 				/**
 				 * Defines some desired alignment for content of text field.
@@ -148,6 +169,65 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 		const originalLength = fixedValue.length;
 		const cursorAtEnd = options.at === originalLength;
+
+		switch ( this.normalization ) {
+			case "trim" :
+			case "reduce" : {
+				const match = /^(\s*)(.*?)(\s*)$/.exec( fixedValue );
+				if ( match ) {
+					if ( match[1].length > 0 ) {
+						options.at = Math.max( 0, options.at - match[1].length );
+					}
+
+					fixedValue = match[2];
+
+					if ( match[3].length > 0 ) {
+						options.at = Math.min( options.at, fixedValue.length + 1 );
+					}
+				}
+			}
+		}
+
+		switch ( this.normalization ) {
+			case "reduce" : {
+				const numChars = fixedValue.length;
+				const chars = new Array( numChars );
+				let write = 0;
+				let reduced = false;
+
+				for ( let i = 0, spaceBefore = false; i < numChars; i++ ) {
+					const char = fixedValue.charAt( i );
+					switch ( char ) {
+						case " " :
+						case "\t" :
+						case "\r" :
+						case "\n" :
+						case "\v" :
+						case "\f" :
+							if ( spaceBefore ) {
+								reduced = true;
+								if ( options.at > i ) {
+									options.at--;
+								}
+							} else {
+								spaceBefore = true;
+								chars[write++] = char;
+							}
+							break;
+
+						default :
+							spaceBefore = false;
+							chars[write++] = char;
+					}
+				}
+
+				if ( reduced ) {
+					chars.splice( write );
+
+					fixedValue = chars.join( "" );
+				}
+			}
+		}
 
 		if ( this.upperCase ) {
 			fixedValue = fixedValue.toLocaleUpperCase();

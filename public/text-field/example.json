@@ -1,0 +1,96 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "sole",
+			"label": "Single-Line Text Input Fieldss",
+			"fields": [
+				{
+					"name": "most-simple",
+					"label": "Most Simple"
+				},
+				{
+					"name": "min-length",
+					"label": "Min. Length 5",
+					"size": "5-"
+				},
+				{
+					"name": "max-length",
+					"label": "Max. Length 3",
+					"size": "-3"
+				},
+				{
+					"name": "min-max-length",
+					"label": "Min./Max. Length 3-5",
+					"size": "3-5"
+				},
+				{
+					"name": "uppercase",
+					"label": "UPPERCASE",
+					"upperCase": true
+				},
+				{
+					"name": "lowercase",
+					"label": "lowercase",
+					"lowerCase": true
+				},
+				{
+					"name": "upperlowercase",
+					"label": "UPPERCASE wins",
+					"upperCase": true,
+					"lowerCase": true
+				},
+				{
+					"name": "patternLimit",
+					"label": "Pattern Limits",
+					"pattern": "a##?A"
+				},
+				{
+					"name": "patternDecorate",
+					"label": "Pattern Decorates",
+					"pattern": "a-# #?/A"
+				},
+				{
+					"name": "alignRight",
+					"label": "Align Right",
+					"align": "right"
+				},
+				{
+					"name": "prefix",
+					"label": "Prefix",
+					"prefix": "mailto:"
+				},
+				{
+					"name": "suffix",
+					"label": "Suffix",
+					"suffix": "@example.com"
+				},
+				{
+					"name": "presuffix",
+					"label": "Prefix/Suffix",
+					"prefix": "mailto:",
+					"suffix": "@example.com"
+				},
+				{
+					"name": "normalization_none",
+					"label": "No normalization",
+					"normalization": "none"
+				},
+				{
+					"name": "normalization_trim",
+					"label": "Trimming",
+					"normalization": "trim"
+				},
+				{
+					"name": "normalization_reduce",
+					"label": "Reducing",
+					"normalization": "reduce"
+				}
+			]
+		}
+	]
+}
