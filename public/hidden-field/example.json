@@ -16,7 +16,8 @@
 				},
 				{
 					"name": "FirstName",
-					"label": "First Name"
+					"label": "First Name",
+					"required": "=fullName"
 				},
 				{
 					"type": "hidden",
