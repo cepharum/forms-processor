@@ -7,7 +7,7 @@
 	"sequence": [
 		{
 			"name": "sole",
-			"label": "Single-Line Text Input Fieldss",
+			"label": "Single-Line Text Input Fields",
 			"fields": [
 				{
 					"name": "most-simple",

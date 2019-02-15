@@ -893,7 +893,7 @@ export default class FormFieldAbstractModel {
 	 */
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, originalName, name, qualifiedName, classes } = this;
+		const { type, originalName, name, qualifiedName, classes, form: { writeValue } } = this;
 
 		this.initializeReactive( reactiveFieldInfo );
 
@@ -930,7 +930,7 @@ export default class FormFieldAbstractModel {
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
-		<FieldComponent ref="fieldComponent" />
+		<FieldComponent ref="fieldComponent" @input="onInput" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
@@ -956,7 +956,13 @@ export default class FormFieldAbstractModel {
 					}
 
 					return lookup;
-				}
+				},
+				onInput( newValue ) {
+					that.touch();
+
+					writeValue( qualifiedName, newValue );
+					this.value = newValue;
+				},
 			},
 			created() {
 				this.__onGlobalFormAutoFocusEvent = () => {

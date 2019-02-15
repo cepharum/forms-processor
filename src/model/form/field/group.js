@@ -214,11 +214,35 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 		return {
 			render( createElement ) {
-				const components = fields.map( entry => {
-					return createElement( "div", { class: "multi-field-container" }, [
-						createElement( entry.component ),
+				const numFields = fields.length;
+				const components = new Array( numFields );
+
+				for ( let fieldIndex = 0; fieldIndex < numFields; fieldIndex++ ) {
+					const field = fields[fieldIndex];
+
+					components[fieldIndex] = createElement( "div", {
+						class: "multi-field-container",
+					}, [
+						createElement( field.component, {
+							on: {
+								input( newValue ) {
+									this.value = newValue;
+
+									const updatedValues = new Array( numFields );
+									for ( let j = 0; j < numFields; j++ ) {
+										if ( j === fieldIndex ) {
+											updatedValues[j] = newValue;
+										} else {
+											updatedValues[j] = fields[j].value;
+										}
+									}
+
+									this.$emit( "input", updatedValues );
+								}
+							}
+						} ),
 					] );
-				} );
+				}
 
 				return createElement( "div", {}, components );
 			},

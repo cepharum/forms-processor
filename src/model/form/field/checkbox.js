@@ -130,7 +130,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, type, multiple } = that;
+		const { form: { readValue }, qualifiedName, type, multiple } = that;
 
 		return {
 			template: `
@@ -186,21 +186,21 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						if ( added ) {
 							if ( value.indexOf( newValue ) < 0 ) {
 								value.push( newValue );
-								writeValue( qualifiedName, value );
+
+								this.$emit( "input", value );
 							}
 						} else {
 							const index = value.indexOf( newValue );
 							if ( index > -1 ) {
 								value.splice( index, 1 );
-								writeValue( qualifiedName, value );
+
+								this.$emit( "input", value );
 							}
 						}
 					} else if ( added ) {
-						this.value = newValue;
-						writeValue( qualifiedName, newValue );
+						this.$emit( "input", newValue );
 					} else {
-						this.value = null;
-						writeValue( qualifiedName, null );
+						this.$emit( "input", null );
 					}
 				},
 			},
