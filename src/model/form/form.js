@@ -177,7 +177,34 @@ export default class FormModel {
 			writeValue: { value: sequence.writeValue },
 		} );
 
-		reactiveFormInfo.fields = new Array( fields.length );
+
+		// create manager instances for every field of form
+		const numFields = fields.length;
+		const fieldManagers = new Array( numFields );
+		const reactiveFieldInfos = new Array( numFields );
+		const names = {};
+		let write = 0;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldDefinition = fields[i];
+			const reactiveFieldInfo = reactiveFieldInfos[write] = {};
+
+			const fieldManager = createField( this, sequence, fieldDefinition, write, reactiveFieldInfo );
+			if ( fieldManager ) {
+				const fieldName = fieldManager.qualifiedName;
+
+				if ( names.hasOwnProperty( fieldName ) ) {
+					throw new TypeError( `double definition of field named "${fieldName}"` );
+				}
+
+				names[fieldName] = true;
+
+				fieldManagers[write++] = fieldManager;
+			}
+		}
+
+		fieldManagers.splice( write );
+		reactiveFieldInfos.splice( write );
 
 		// define properties including code relying on properties defined before
 		Object.defineProperties( this, {
@@ -188,12 +215,10 @@ export default class FormModel {
 			 * @property {FormFieldAbstractModel[]}
 			 * @readonly
 			 */
-			fields: { value: fields.map( ( field, fieldIndex ) => {
-				const reactiveFieldInfo = reactiveFormInfo.fields[fieldIndex] = {};
-				return createField( this, sequence, field, fieldIndex, reactiveFieldInfo );
-			} ).filter( i => i ) },
+			fields: { value: fieldManagers },
 		} );
 
+		reactiveFormInfo.fields = reactiveFieldInfos;
 		reactiveFormInfo.valid = null;
 		reactiveFormInfo.pristine = true;
 		reactiveFormInfo.finished = false;
@@ -228,11 +253,12 @@ export default class FormModel {
 			 */
 			pristine: {
 				get: () => {
-					const numFields = this.fields.length;
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
 					let pristine = true;
 
-					for ( let i = 0; i < numFields; i++ ) {
-						const field = this.fields[i];
+					for ( let i = 0; i < _numFields; i++ ) {
+						const field = _fields[i];
 
 						if ( !field.pristine ) {
 							pristine = false;
@@ -251,9 +277,11 @@ export default class FormModel {
 						throw new TypeError( `Invalid request for marking form #${this.index} as pristine rejected.` );
 					}
 
-					const numFields = this.fields.length;
-					for ( let i = 0; i < numFields; i++ ) {
-						this.fields[i].touch( true );
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
+
+					for ( let i = 0; i < _numFields; i++ ) {
+						_fields[i].touch( true );
 					}
 				},
 			},
@@ -298,18 +326,18 @@ export default class FormModel {
 			 */
 			autoFocusField: {
 				get: () => {
-					const fieldInstances = this.fields;
-					const numFields = fieldInstances.length;
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
 
-					for ( let i = 0; i < numFields; i++ ) {
-						const field = fieldInstances[i];
+					for ( let i = 0; i < _numFields; i++ ) {
+						const field = _fields[i];
 
 						if ( !field.valid ) {
 							return field;
 						}
 					}
 
-					return fieldInstances[0] || null;
+					return _fields[0] || null;
 				},
 			},
 		} );
