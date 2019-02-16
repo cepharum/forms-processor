@@ -66,6 +66,16 @@ const reserved = [
 	"errors",
 ];
 
+/**
+ * Lists names of properties that mustn't be processed deferredly so they can
+ * access non-deferred properties during processing.
+ *
+ * @type {string[]}
+ */
+const deferredProperties = [
+	"initial",
+];
+
 
 
 /**
@@ -320,7 +330,7 @@ export default class FormFieldAbstractModel {
 						break;
 
 					default :
-						if ( reserved.indexOf( propertyName ) < 0 ) {
+						if ( reserved.indexOf( propertyName ) < 0 && deferredProperties.indexOf( propertyName ) < 0 ) {
 							// handle non-reserved properties of definition in a common way
 
 							if ( customProperties.hasOwnProperty( propertyName ) ) {
@@ -367,6 +377,31 @@ export default class FormFieldAbstractModel {
 		}
 
 		Object.defineProperties( this, getters );
+
+
+
+		// handle some property definitions deferredly
+		const deferredGetters = {};
+
+		const numDeferredProperties = deferredProperties.length;
+		for ( let i = 0; i < numDeferredProperties; i++ ) {
+			const propertyName = deferredProperties[i];
+			let propertyValue = qualifiedDefinition[propertyName];
+
+			switch ( propertyName ) {
+				default :
+					propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+					if ( propertyValue == null ) {
+						deferredGetters[propertyName] = { value: null };
+					} else {
+						deferredGetters[propertyName] = handleComputableValue( propertyValue, propertyName,
+							reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+					}
+			}
+		}
+
+		Object.defineProperties( this, deferredGetters );
+
 
 
 		/*
@@ -1074,6 +1109,9 @@ export default class FormFieldAbstractModel {
 					default :
 						return Boolean( value );
 				}
+
+			case "initial" :
+				return this.normalizeValue( value ).value;
 
 			default :
 				return value;
