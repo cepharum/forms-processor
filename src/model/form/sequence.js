@@ -152,7 +152,7 @@ export default class FormSequenceModel {
 			 * @property {object}
 			 * @readonly
 			 */
-			data: { value: data },
+			data: { get: data },
 
 			/**
 			 * Reads value of a field selected by its name from storage.

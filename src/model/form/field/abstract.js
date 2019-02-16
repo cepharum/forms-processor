@@ -651,7 +651,7 @@ export default class FormFieldAbstractModel {
 							const slice = compiled[i];
 
 							if ( typeof slice === "object" ) {
-								rendered[i] = slice.evaluate( form.data );
+								rendered[i] = slice.evaluate( form.sequence.data );
 							} else {
 								rendered[i] = slice;
 							}
@@ -673,7 +673,7 @@ export default class FormFieldAbstractModel {
 				terms.push( compiled );
 
 				return { get: () => {
-					const computed = compiled.evaluate( form.data );
+					const computed = compiled.evaluate( form.sequence.data );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {

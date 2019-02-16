@@ -71,7 +71,7 @@ export default {
 			const model = new FormSequenceModel( { id: _id, name: _name }, definition, registry, {
 				write: ( key, value ) => dispatch( "writeInput", { name: key, value } ),
 				read: getters.readInput,
-				data: state.input,
+				data: () => state.input,
 			}, () => rootGetters.locale );
 
 			commit( "define", {

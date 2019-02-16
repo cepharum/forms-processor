@@ -149,11 +149,14 @@ export default class FormModel {
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
 			 *
+			 * @deprecated Due to using getters accessing `form.sequence.data`
+			 *             should be preferred to reduce load on function stack.
+			 *
 			 * @name FormModel#data
 			 * @property {object}
 			 * @readonly
 			 */
-			data: { value: sequence.data },
+			data: { get: () => sequence.data },
 
 			/**
 			 * Reads value of a field selected by its name from storage.
