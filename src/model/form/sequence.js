@@ -805,6 +805,64 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Handles update of named field's value.
+	 *
+	 * @param {string} fieldName qualified name of field with updated value
+	 * @param {*} updatedValue updated value of named field
+	 * @returns {boolean} true if update of field has affected validity of updated field or any of its dependents
+	 */
+	onUpdateValue( fieldName, updatedValue ) {
+		const { fields } = this;
+		const field = fields[fieldName];
+
+		if ( field ) {
+			const containingForms = [];
+
+			if ( field.onUpdateValue( updatedValue ) ) {
+				containingForms.push( field.form );
+			}
+
+			const dependents = field.dependents;
+			const numDependents = dependents.length;
+
+			for ( let i = 0; i < numDependents; i++ ) {
+				const dependent = fields[dependents[i]];
+				if ( dependent ) {
+					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
+						if ( containingForms.indexOf( dependent.form ) > -1 ) {
+							containingForms.push( dependent.form );
+						}
+					}
+				}
+			}
+
+			if ( containingForms.length > 0 ) {
+				for ( let i = 0; i < containingForms.length; i++ ) {
+					containingForms[i].readValidState();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Initializes results of terms in either form of sequence.
+	 *
+	 * @returns {void}
+	 */
+	initializeTerms() {
+		const { fields } = this;
+		const fieldNames = Object.keys( fields );
+		const numFields = fieldNames.length;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
+			const field = fields[fieldName];
+
+			this.onUpdateValue( fieldName, field.value );
+		}
+	}
+
+	/**
 	 * Describes Vue component listing all forms in sequence or just the current
 	 * form in sequence.
 	 *
@@ -814,7 +872,7 @@ export default class FormSequenceModel {
 	 */
 	renderComponent( data ) {
 		const that = this;
-		const { forms, showAllForms, fields } = this;
+		const { forms, showAllForms } = this;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
@@ -848,34 +906,7 @@ export default class FormSequenceModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 
-						const field = fields[name];
-						if ( field ) {
-							const containingForms = [];
-
-							if ( field.onUpdateValue( this.$store, value ) ) {
-								containingForms.push( field.form );
-							}
-
-							const dependents = field.dependents;
-							const numDependents = dependents.length;
-
-							for ( let i = 0; i < numDependents; i++ ) {
-								const dependent = fields[dependents[i]];
-								if ( dependent ) {
-									if ( dependent.onUpdateValue( this.$store, value, name ) ) {
-										if ( containingForms.indexOf( dependent.form ) > -1 ) {
-											containingForms.push( dependent.form );
-										}
-									}
-								}
-							}
-
-							if ( containingForms.length > 0 ) {
-								for ( let i = 0; i < containingForms.length; i++ ) {
-									containingForms[i].readValidState();
-								}
-							}
-						}
+						that.onUpdateValue( name, value );
 					}
 				} );
 			},
