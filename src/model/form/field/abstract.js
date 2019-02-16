@@ -305,7 +305,7 @@ export default class FormFieldAbstractModel {
 				value: ( value, key, data = null, normalizer = null ) => {
 					return handleComputableValue( value, key,
 						data || reactiveFieldInfo,
-						normalizer || ( v => this.constructor.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
+						normalizer || ( v => this.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
 				},
 			},
 		} );
@@ -352,7 +352,7 @@ export default class FormFieldAbstractModel {
 
 								if ( propertyValue != null ) {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
-										reactiveFieldInfo, v => this.constructor.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+										reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 								}
 							}
 						}
@@ -534,18 +534,7 @@ export default class FormFieldAbstractModel {
 			 * @property {object<string,*>}
 			 * @readonly
 			 */
-			$data: {
-				get: () => {
-					form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
-
-					Object.defineProperties( this, {
-						$data: { value: reactiveFieldInfo },
-					} );
-
-					return reactiveFieldInfo;
-				},
-				configurable: true,
-			},
+			$data: { value: reactiveFieldInfo },
 
 			/**
 			 * Provides description of component representing current field.
@@ -803,14 +792,15 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
-	 * Initializes data in provided set of reactive data of field.
+	 * Initializes provided record to become reactive data set of a component
+	 * with current properties of field as managed current instance.
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
-	 * @returns {*} initial value of field as used on initializing reactive data
+	 * @returns {*} normalized internal value of field as used on initializing reactive data
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const { value, formattedValue } = this.normalizeValue( this.initial );
+		const { value, formattedValue } = this.normalizeValue( this.value );
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
@@ -851,12 +841,11 @@ export default class FormFieldAbstractModel {
 	/**
 	 * Handles change of a field's value by updating state of model accordingly.
 	 *
-	 * @param {*} store reference on store the adjustments took place in
 	 * @param {*} newValue new value of field
 	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
 	 * @returns {boolean} true if validity of field has changed
 	 */
-	onUpdateValue( store, newValue, updatedFieldName = null ) {
+	onUpdateValue( newValue, updatedFieldName = null ) {
 		const data = this.$data;
 		const oldValidity = data.valid;
 		const itsMe = updatedFieldName == null;
@@ -868,10 +857,7 @@ export default class FormFieldAbstractModel {
 			// -> my initial value might depend on it, so
 			//    re-assign my initial unless field has been
 			//    adjusted before
-			store.dispatch( "form/writeInput", {
-				name: this.qualifiedName,
-				value: this.initial,
-			} );
+			this.form.writeValue( this.qualifiedName, this.normalizeValue( this.initial ).value );
 		}
 
 		// changing current field or some field current one
@@ -1064,7 +1050,7 @@ export default class FormFieldAbstractModel {
 	 * @param {object<string,*>} definitions qualified set of a field's definition properties
 	 * @returns {*} normalized value for use with named definition property
 	 */
-	static normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
+	normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
 		switch ( name ) {
 			case "classes" :
 				return typeof value === "string" ? value.trim().split( /\s*[,;][,;\s]*/ ) : value;
