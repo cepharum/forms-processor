@@ -26,6 +26,7 @@
  * @author: cepharum
  */
 
+import Vue from "vue";
 import FormModel from "./form";
 
 import EventBus from "@/service/events";
@@ -226,6 +227,18 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			qualifiedNames: { value: qualifiedNames },
+
+			/**
+			 * Exposes event bus of current sequence manager.
+			 *
+			 * This event bus is used to emit and listen for events related to
+			 * current sequence of forms, only.
+			 *
+			 * @name FormSequenceModel#events
+			 * @property Vue
+			 * @readonly
+			 */
+			events: { value: new Vue() }
 		} );
 
 
