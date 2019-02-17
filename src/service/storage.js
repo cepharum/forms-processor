@@ -105,7 +105,7 @@ export default class Storage {
 				pointer[segment] = {};
 				changed = true;
 			} else if ( !pointer[segment] || typeof pointer[segment] !== "object" ) {
-				throw new TypeError( `Can't write to ${name} due to value at ${segment.slice( 0, i + 1 ).join( "." )}.` );
+				throw new TypeError( `Can't write to ${name} due to value at ${segments.slice( 0, i + 1 ).join( "." )}.` );
 			}
 
 			pointer = pointer[segment];
