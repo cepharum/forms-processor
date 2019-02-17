@@ -31,6 +31,7 @@ import L10n from "@/service/l10n";
 import Data from "@/service/data";
 import CompileTerm from "../utility/process";
 import { Processor } from "simple-terms";
+import Markdown from "../utility/markdown";
 
 const termCache = new Map();
 
@@ -996,6 +997,12 @@ export default class FormFieldAbstractModel {
 				showLabels() {
 					return !that.suppress || !that.suppress.labels;
 				},
+				useMarkdown() {
+					return that.markdown;
+				},
+				renderedHint() {
+					return Markdown.getRenderer().render( this.hint );
+				},
 			},
 			template: `
 <div v-if="required || visible" :class="componentClasses">
@@ -1004,7 +1011,8 @@ export default class FormFieldAbstractModel {
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" @input="onInput" />
-		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
+		<span class="hint" v-if="hint && !useMarkdown">{{ hint }}</span>
+		<span class="hint" v-if="hint && useMarkdown" v-html="renderedHint"></span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
@@ -1138,6 +1146,7 @@ export default class FormFieldAbstractModel {
 			case "required" :
 			case "visible" :
 			case "disabled" :
+			case "markdown" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
