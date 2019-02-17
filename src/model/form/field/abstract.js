@@ -183,6 +183,14 @@ export default class FormFieldAbstractModel {
 		const formName = form.name;
 		const qualifiedName = `${formName}.${normalizedName}`;
 
+		// prepare provided variable space for reactive data of current field's component
+		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.valid =
+		reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = reactiveFieldInfo.label =
+		reactiveFieldInfo.hint = null;
+		reactiveFieldInfo.pristine = true;
+		reactiveFieldInfo.errors = [];
+
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides reference on instance managing form containing field.
@@ -442,13 +450,6 @@ export default class FormFieldAbstractModel {
 		 * @type {?Component}
 		 */
 		let component = null;
-
-
-		// prepare provided variable space to be reactive data of current field
-		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.pristine =
-		reactiveFieldInfo.valid = reactiveFieldInfo.value = reactiveFieldInfo.formattedValue =
-		reactiveFieldInfo.label = reactiveFieldInfo.hint = null;
-		reactiveFieldInfo.errors = [];
 
 
 		Object.defineProperties( this, {
