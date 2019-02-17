@@ -437,15 +437,10 @@ export default class FormFieldAbstractModel {
 		let component = null;
 
 
-		// qualify provided variable space to be reactive data of current field
-		// in context of containing form's reactive data
-		reactiveFieldInfo.required = null;
-		reactiveFieldInfo.visible = null;
-		reactiveFieldInfo.pristine = true;
-		reactiveFieldInfo.valid = null;
-		reactiveFieldInfo.value = null;
-		reactiveFieldInfo.label = null;
-		reactiveFieldInfo.hint = null;
+		// prepare provided variable space to be reactive data of current field
+		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.pristine =
+		reactiveFieldInfo.valid = reactiveFieldInfo.value = reactiveFieldInfo.formattedValue =
+		reactiveFieldInfo.label = reactiveFieldInfo.hint = null;
 		reactiveFieldInfo.errors = [];
 
 
