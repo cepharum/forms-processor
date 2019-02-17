@@ -559,6 +559,9 @@ export default class FormFieldAbstractModel {
 		} );
 
 
+		const that = this;
+
+
 		/**
 		 * Resolves variable name found in terms used in definition converting
 		 * local references into global ones using a field's qualified name.
@@ -598,7 +601,7 @@ export default class FormFieldAbstractModel {
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
 			const customFunctions = {
-				lookup( fieldValue, fieldName, fieldProperty ) {
+				lookup( fieldValue, fieldName, fieldProperty = "options" ) {
 					const fieldKey = fieldName.toLowerCase();
 					const field = form.sequence.fields[fieldKey];
 					const map = field[fieldProperty];
@@ -618,7 +621,11 @@ export default class FormFieldAbstractModel {
 					}
 
 					return map;
-				}
+				},
+
+				localize( input ) {
+					return that.selectLocalization( input );
+				},
 			};
 
 
