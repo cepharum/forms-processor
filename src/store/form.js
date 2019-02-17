@@ -186,9 +186,11 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					const storedValue = Storage.read( stored, name, missing );
-					if ( storedValue !== missing ) {
-						field.value = storedValue;
+					if ( field.constructor.isInteractive ) {
+						const storedValue = Storage.read( stored, name, missing );
+						if ( storedValue !== missing ) {
+							field.value = storedValue;
+						}
 					}
 				}
 			}
