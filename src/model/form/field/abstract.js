@@ -156,7 +156,7 @@ export default class FormFieldAbstractModel {
 	 * @returns {boolean} true if fields of this type are generating input data
 	 */
 	static get isInteractive() {
-		return false;
+		return true;
 	}
 
 	/**

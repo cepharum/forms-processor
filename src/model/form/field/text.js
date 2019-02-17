@@ -173,11 +173,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
 

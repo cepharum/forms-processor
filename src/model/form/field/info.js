@@ -57,4 +57,9 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 			}
 		};
 	}
+
+	/** @inheritDoc */
+	static get isInteractive() {
+		return false;
+	}
 }

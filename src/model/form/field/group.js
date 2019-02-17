@@ -181,11 +181,6 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	validate( live ) {
 		const { fields } = this;
 		const numFields = fields.length;

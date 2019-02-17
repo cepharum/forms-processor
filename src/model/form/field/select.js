@@ -36,11 +36,6 @@ import Options from "../utility/options";
  */
 export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**

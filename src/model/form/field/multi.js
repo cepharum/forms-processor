@@ -97,11 +97,6 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	validate( live ) {
 		const errors = super.validate( live );
 		const fields = this.items.map( entry => entry.field );

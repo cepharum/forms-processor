@@ -35,11 +35,6 @@ import Options from "../utility/options";
  * Implements field type displaying set of checkboxes to choose one or more from.
  */
 export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
-	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
 	/**
 	 * @inheritDoc
 	 */
