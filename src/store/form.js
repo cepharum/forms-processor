@@ -45,8 +45,9 @@ export default {
 			definition: {},
 			input: {},
 			model: null,
-			localStore: false,
 			result: {},
+			localStoreId: null,
+			_timer: null,
 		};
 	},
 	actions: {
@@ -81,9 +82,30 @@ export default {
 				model,
 			} );
 
-			commit( "storeLocally", model.mode.local === "store" );
+			commit( "storeLocally", {
+				enabled: model.mode.local === "store",
+				id: model.mode.processId,
+			} );
 
 			commit( "resetInput" );
+
+			if ( state.localStoreId ) {
+				const rawStore = localStorage.getItem( state.localStoreId );
+				if ( rawStore != null ) {
+					let stored = null;
+
+					try {
+						stored = JSON.parse( rawStore );
+					} catch( e ) {
+						console.error( "failed reading locally persisted input:", e ); // eslint-disable-line no-console
+					}
+
+					if ( stored != null ) {
+						commit( "loadInput", { stored } );
+					}
+				}
+			}
+
 
 			model.initializeTerms();
 		},
@@ -91,15 +113,18 @@ export default {
 		/**
 		 * Requests to update a field's value in state.
 		 *
+		 * @param {object} state current state
 		 * @param {function} commit callback for committing changes to state
 		 * @param {string} name qualified name of field to adjust
 		 * @param {*} value new value of field
 		 * @returns {void}
 		 */
-		writeInput( { commit }, { name, value } ) {
-			const _name = Storage.normalizeName( name );
-			if ( _name != null ) {
-				commit( "writeInput", { name: _name, value } );
+		writeInput( { state, commit }, { name, value } ) {
+			if ( state.model ) {
+				const _name = Storage.normalizeName( name );
+				if ( _name != null ) {
+					commit( "writeInput", { name: _name, value } );
+				}
 			}
 		},
 
@@ -116,8 +141,12 @@ export default {
 			state.model = model;
 		},
 
-		storeLocally( state, flag ) {
-			state.localStore = Boolean( flag );
+		storeLocally( state, { enabled, id } ) {
+			if ( enabled && id && ( typeof id === "number" || typeof id === "string" ) ) {
+				state.localStoreId = `forms_processor_${id}`;
+			} else {
+				state.localStoreId = null;
+			}
 		},
 
 		resetInput( state ) {
@@ -137,6 +166,30 @@ export default {
 
 				if ( added ) {
 					state.input = state.input;
+
+					if ( state.localStoreId ) {
+						clearTimeout( state._timer );
+						state._timer = setTimeout( () => localStorage.setItem( state.localStoreId, JSON.stringify( state.input ) ), 500 );
+					}
+				}
+			}
+		},
+
+		loadInput( state, { stored } ) {
+			if ( state.model && stored && typeof stored === "object" ) {
+				const { fields } = state.model;
+				const names = Object.keys( fields );
+				const numFields = names.length;
+				const missing = {};
+
+				for ( let i = 0; i < numFields; i++ ) {
+					const name = names[i];
+					const field = fields[name];
+
+					const storedValue = Storage.read( stored, name, missing );
+					if ( storedValue !== missing ) {
+						field.value = storedValue;
+					}
 				}
 			}
 		},
@@ -144,6 +197,11 @@ export default {
 		writeInput( state, { name, value } ) {
 			if ( Storage.write( state.input, name, value ) ) {
 				state.input = state.input;
+			}
+
+			if ( state.localStoreId ) {
+				clearTimeout( state._timer );
+				state._timer = setTimeout( () => localStorage.setItem( state.localStoreId, JSON.stringify( state.input ) ), 500 );
 			}
 		},
 
