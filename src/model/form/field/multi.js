@@ -38,22 +38,24 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				let value = v;
-				if( Array.isArray( v ) ) {
+				if ( Array.isArray( v ) ) {
 					[value] = v;
 				}
-				if( typeof value !== "object" ) {
+
+				if ( typeof value !== "object" ) {
 					throw new Error( "provided invalid field description" );
 				}
-				if( !form.sequence.registry.fields.hasOwnProperty( value.type || "text" )
-				) {
+
+				if ( !form.sequence.registry.fields.hasOwnProperty( value.type || "text" ) ) {
 					throw new Error( "provided field of unknown type" );
 				}
-				return{ value };
+
+				return { value };
 			},
 
 			initialSize( v = 1 ) {
-				if( v ) {
-					if( isNaN( v ) ) {
+				if ( v ) {
+					if ( isNaN( v ) ) {
 						throw new Error( "provided NaN as initialSize " );
 					}
 				}
@@ -80,7 +82,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		const fixedValues = value || [];
-		for( let index = 0, length = fixedValues.length; index < length; index ++ ) {
+		for ( let index = 0, length = fixedValues.length; index < length; index++ ) {
 			fixedValues[index] = super.normalizeValue( fixedValues[index], options );
 		}
 		return {
@@ -106,7 +108,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		if( value.length || value.length === 0 ) {
+		if ( value.length || value.length === 0 ) {
 			if ( this.amount.isBelowRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_FEW" );
 			}
@@ -116,10 +118,10 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 			}
 		}
 
-		for( const entry of fields ) {
+		for ( const entry of fields ) {
 			const subErrrors = entry.validate( live );
-			if( subErrrors && subErrrors.length ) {
-				for( const error of subErrrors ) {
+			if ( subErrrors && subErrrors.length ) {
+				for ( const error of subErrrors ) {
 					errors.push( error );
 				}
 			}
@@ -158,24 +160,24 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 			},
 			mounted() {
 				const { initialSize } = that;
-				for( let index = 0; index < initialSize; index ++ ) {
+				for ( let index = 0; index < initialSize; index++ ) {
 					this.add();
 				}
 			},
 			methods: {
 				remove( index ) {
-					if( this.removeEnabled ) {
+					if ( this.removeEnabled ) {
 						this.items.splice( index, 1 );
 					}
 					writeValue( qualifiedName, this.items );
 				},
 				add( index ) {
-					if( this.addEnabled ) {
+					if ( this.addEnabled ) {
 						const numOfItems = this.items.length;
 						const mostRecentItem = this.items[numOfItems - 1];
 						let mostRecentName = -1;
-						if( mostRecentItem ) mostRecentName = Number( mostRecentItem.field.name );
-						const field = Object.assign( {},that.fields,{
+						if ( mostRecentItem ) mostRecentName = Number( mostRecentItem.field.name );
+						const field = Object.assign( {}, that.fields, {
 							name: String( mostRecentName + 1 ),
 						} );
 						const form = Object.create( that.form );
@@ -215,7 +217,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 							field: new Manager( form, field, numOfItems, newReactiveFieldInfo, {}, that ),
 							value: null,
 						};
-						if( index || index === 0 ) {
+						if ( index || index === 0 ) {
 							this.items.splice( index, 0, item );
 						} else {
 							this.items.push( item );
@@ -225,7 +227,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 				}
 			},
 			data() {
-				if( !that.items ) {
+				if ( !that.items ) {
 					that.items = [];
 				}
 				return {

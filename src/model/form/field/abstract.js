@@ -966,7 +966,7 @@ export default class FormFieldAbstractModel {
 	 */
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, originalName, name, qualifiedName, classes, form: { writeValue } } = this;
+		const { type, originalName, name, qualifiedName, classes, suppress } = this;
 
 		this.initializeReactive( reactiveFieldInfo );
 
@@ -992,10 +992,10 @@ export default class FormFieldAbstractModel {
 					].concat( classes );
 				},
 				showErrors() {
-					return !that.suppress || !that.suppress.errors;
+					return !suppress || !suppress.errors;
 				},
 				showLabels() {
-					return !that.suppress || !that.suppress.labels;
+					return !suppress || !suppress.labels;
 				},
 				useMarkdown() {
 					return that.markdown;
@@ -1064,20 +1064,6 @@ export default class FormFieldAbstractModel {
 				EventBus.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 			beforeMount() {
-				if ( that.pristine ) {
-					const { value, formattedValue } = that.normalizeValue( that.initial );
-
-					reactiveFieldInfo.value = value;
-					reactiveFieldInfo.formattedValue = formattedValue;
-				}
-
-				this.$on( "input", () => {
-					if ( !this.pristine ) {
-						this.valid = null;
-						const valid = that.valid; // eslint-disable-line no-unused-vars
-					}
-				} );
-
 				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
 					if ( emittingQualifiedName === qualifiedName ) {
 						const field = this.$refs.fieldComponent;
