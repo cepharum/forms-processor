@@ -799,20 +799,14 @@ export default class FormFieldAbstractModel {
 	 * with current properties of field as managed current instance.
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
-	 * @returns {*} normalized internal value of field as used on initializing reactive data
+	 * @returns {void}
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const { value, formattedValue } = this.normalizeValue( this.value );
-
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.value = value;
-		reactiveFieldInfo.formattedValue = formattedValue;
-
-		return value;
 	}
 
 	/**

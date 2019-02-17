@@ -91,10 +91,9 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	initializeReactive( reactiveFieldInfo ) {
-		const initial = super.initializeReactive( reactiveFieldInfo );
+		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
-		return initial;
 	}
 
 	/** @inheritDoc */
