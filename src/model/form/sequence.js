@@ -789,9 +789,8 @@ export default class FormSequenceModel {
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const fieldName = fieldNames[i];
-			const field = fieldsMap[fieldName];
+			const dependencies = fieldsMap[fieldName].dependsOn;
 
-			const dependencies = field.dependsOn;
 			if ( Array.isArray( dependencies ) ) {
 				const numDependencies = dependencies.length;
 
@@ -812,6 +811,10 @@ export default class FormSequenceModel {
 
 		for ( let i = 0; i < numKeys; i++ ) {
 			const key = keys[i];
+
+			if ( !fieldsMap.hasOwnProperty( key ) ) {
+				throw new TypeError( `invalid dependency on unknown field ${key}` );
+			}
 
 			fieldsMap[key].dependents = dependentsPerField[key];
 		}
