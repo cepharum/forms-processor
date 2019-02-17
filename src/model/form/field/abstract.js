@@ -76,6 +76,8 @@ const deferredProperties = [
 	"initial",
 ];
 
+let unnamedCounter = 0;
+
 
 
 /**
@@ -168,10 +170,15 @@ export default class FormFieldAbstractModel {
 	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
-		const { name } = definition;
-		if ( !name ) {
-			throw new TypeError( "Missing field name in definition." );
+		if ( !definition.name ) {
+			if ( this.constructor.isInteractive ) {
+				throw new TypeError( "Missing field name in definition." );
+			}
+
+			definition.name = `unnamed${String( "000" + ++unnamedCounter ).slice( -4 )}`;
 		}
+
+		const { name } = definition;
 
 
 		/*
