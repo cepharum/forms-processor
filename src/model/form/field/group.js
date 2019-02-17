@@ -181,6 +181,19 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
+	listDependencies() {
+		const { fields } = this;
+		const numFields = fields.length;
+		const deps = [];
+
+		for ( let i = 0; i < numFields; i++ ) {
+			deps.splice( deps.length, 0, ...fields[i].dependsOn );
+		}
+
+		return deps;
+	}
+
+	/** @inheritDoc */
 	setValue( newValue ) {
 		const isValue = newValue && typeof newValue === "object";
 		const { fields } = this;
@@ -199,6 +212,23 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 			this._lockWrite--;
 		}
+	}
+
+	/** @inheritDoc */
+	onUpdateValue( newValue, updatedFieldName = null ) {
+		const { fields } = this;
+		const numFields = fields.length;
+
+		let validityChanged = false;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const field = fields[i];
+			const newFieldValue = ( newValue && typeof newValue === "object" && newValue[field.name] ) || null;
+
+			validityChanged |= field.onUpdateValue( newFieldValue, updatedFieldName === this.qualifiedName ? field.qualifiedName : null );
+		}
+
+		return validityChanged;
 	}
 
 	/** @inheritDoc */

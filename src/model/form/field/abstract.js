@@ -461,7 +461,21 @@ export default class FormFieldAbstractModel {
 			 * @property {Array<string[]>}
 			 * @readonly
 			 */
-			dependsOn: { value: Object.keys( collectedDependencies ) },
+			dependsOn: { get: () => {
+				const localDeps = Object.keys( collectedDependencies );
+				const customDeps = this.listDependencies() || [];
+				const numCustomDeps = customDeps.length;
+
+				for ( let i = 0; i < numCustomDeps; i++ ) {
+					const customDep = customDeps[i];
+
+					if ( localDeps.indexOf( customDep ) < 0 ) {
+						localDeps.push( customDep );
+					}
+				}
+
+				return localDeps;
+			}, },
 
 			/**
 			 * Lists names of fields depending on current one's value/state.
@@ -803,6 +817,19 @@ export default class FormFieldAbstractModel {
 		}
 
 		return data.valid;
+	}
+
+	/**
+	 * Lists names of _additional_ fields this field depends on e.g. by using
+	 * custom terms.
+	 *
+	 * The returned list is merged with the list of field's dependencies detected
+	 * by common processing of definition properties.
+	 *
+	 * @return {Array} lists qualified names of fields this field depends on.
+	 */
+	listDependencies() {
+		return [];
 	}
 
 	/**
