@@ -79,9 +79,9 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 								}
 
 								if ( localIndex > -1 ) {
-									const values = form.readValue( this.qualifiedName );
+									const values = this.value;
 
-									return Array.isArray( values ) ? values[localIndex] : undefined;
+									return values && typeof values === "object" ? values[fields[localIndex].name] : undefined;
 								}
 
 								return form.readValue( name );
@@ -102,16 +102,11 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 								}
 
 								if ( localIndex > -1 ) {
-									const updatedValues = new Array( numFields );
-									for ( let i = 0; i < numFields; i++ ) {
-										if ( i === localIndex ) {
-											updatedValues[i] = value;
-										} else {
-											updatedValues[i] = fields[i].value;
-										}
-									}
+									const values = this.value || {};
 
-									form.writeValue( this.qualifiedName, updatedValues );
+									values[fields[localIndex].name] = value;
+
+									form.writeValue( this.qualifiedName, values );
 								} else {
 									form.writeValue( name, value );
 								}
@@ -119,8 +114,6 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						},
 						name: { value: this.qualifiedName },
 					} );
-
-					if ( !fieldDefinition.name ) fieldDefinition.name = String( di );
 
 					fields[di] = new fieldsRegistry[fieldType]( fieldForm, {
 						...fieldDefinition,
