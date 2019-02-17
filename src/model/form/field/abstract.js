@@ -245,7 +245,14 @@ export default class FormFieldAbstractModel {
 			 */
 			value: this.constructor.isInteractive ? {
 				get: () => form.readValue( qualifiedName ),
-				set: value => form.writeValue( qualifiedName, value ),
+				set: newValue => {
+					const { value, formattedValue } = this.normalizeValue( newValue ) || {};
+
+					form.writeValue( qualifiedName, value );
+
+					reactiveFieldInfo.value = value;
+					reactiveFieldInfo.formattedValue = formattedValue;
+				},
 			} : { value: undefined },
 
 			/**
