@@ -125,7 +125,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 					fields[di] = new fieldsRegistry[fieldType]( fieldForm, {
 						...fieldDefinition,
 						suppress: { errors: true },
-					}, di, reactiveFieldInfo.group[di], null, this );
+					}, di, reactiveFieldInfo.group[di], {}, this );
 				}
 
 				return { value: fields };

@@ -212,7 +212,7 @@ export default class FormFieldMultiModel extends FormFieldAbstractModel {
 						const newReactiveFieldInfo = {};
 						const item = {
 							reactiveFieldInfo: newReactiveFieldInfo,
-							field: new Manager( form, field, numOfItems, newReactiveFieldInfo ),
+							field: new Manager( form, field, numOfItems, newReactiveFieldInfo, {}, that ),
 							value: null,
 						};
 						if( index || index === 0 ) {
