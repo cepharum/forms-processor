@@ -120,10 +120,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 
 		return {
 			template: `
-				<select v-model="model" v-if="!multiple" class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-if="!multiple" class="select single" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
-				<select v-model="model" v-else-if="multiple" multiple class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-else-if="multiple" multiple class="select multi" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,

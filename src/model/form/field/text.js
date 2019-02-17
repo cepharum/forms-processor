@@ -291,6 +291,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					value: reactiveFieldInfo.formattedValue,
 				};
 
+				if ( that.disabled ) {
+					domProps.disabled = true;
+				}
+
 				if ( that.placeholder != null ) {
 					domProps.placeholder = that.placeholder;
 				}

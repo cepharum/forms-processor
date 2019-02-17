@@ -193,7 +193,7 @@ export default class FormFieldAbstractModel {
 		// prepare provided variable space for reactive data of current field's component
 		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.valid =
 		reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = reactiveFieldInfo.label =
-		reactiveFieldInfo.hint = null;
+		reactiveFieldInfo.hint = reactiveFieldInfo.disabled = null;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.errors = [];
 
@@ -807,10 +807,11 @@ export default class FormFieldAbstractModel {
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		reactiveFieldInfo.required = this.required;
-		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
+		reactiveFieldInfo.required = this.required;
+		reactiveFieldInfo.visible = this.visible;
+		reactiveFieldInfo.disabled = this.disabled;
 	}
 
 	/**
@@ -905,6 +906,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInformation.hint = this.hint;
 		reactiveFieldInformation.required = this.required;
 		reactiveFieldInformation.visible = this.visible;
+		reactiveFieldInformation.disabled = this.disabled;
 	}
 
 	/**
@@ -949,6 +951,7 @@ export default class FormFieldAbstractModel {
 						this.pristine ? "pristine" : "affected",
 						this.label ? "with-label" : "without-label",
 						this.valid ? "valid" : "invalid",
+						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
 						this.showLabels ? "show-labels" : "suppress-labels",
 					].concat( classes );
@@ -1100,6 +1103,7 @@ export default class FormFieldAbstractModel {
 
 			case "required" :
 			case "visible" :
+			case "disabled" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );

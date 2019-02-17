@@ -135,6 +135,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							:name="name"
 							:value="item.value"
 							:checked="isSet(item.value)"
+							:disabled="disabled"
 							@change="adjust( $event.target.checked, item.value )"
 						/>
 
