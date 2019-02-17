@@ -602,17 +602,21 @@ export default class FormFieldAbstractModel {
 					const fieldKey = fieldName.toLowerCase();
 					const field = form.sequence.fields[fieldKey];
 					const map = field[fieldProperty];
-					if( Array.isArray( map ) ) {
+
+					if ( Array.isArray( map ) ) {
 						for ( let index = 0, length = map.length; index < length; index++ ) {
 							const entry = map[index];
-							if( entry.value === fieldValue ) {
+
+							if ( entry.value === fieldValue ) {
 								return entry.label;
 							}
 						}
 					}
-					if( typeof map === "object" ) {
+
+					if ( typeof map === "object" ) {
 						return map.label;
 					}
+
 					return map;
 				}
 			};
@@ -849,12 +853,12 @@ export default class FormFieldAbstractModel {
 
 		this.updateFieldInformation( data, itsMe );
 
-		if ( !itsMe && data.pristine ) {
+		if ( !itsMe && data.pristine && this.constructor.isInteractive ) {
 			// some other field has been updated
 			// -> my initial value might depend on it, so
 			//    re-assign my initial unless field has been
 			//    adjusted before
-			this.form.writeValue( this.qualifiedName, this.normalizeValue( this.initial ).value );
+			this.value = this.initial;
 		}
 
 		// changing current field or some field current one
@@ -978,8 +982,7 @@ export default class FormFieldAbstractModel {
 				onInput( newValue ) {
 					that.touch();
 
-					writeValue( qualifiedName, newValue );
-					this.value = newValue;
+					that.value = newValue;
 				},
 			},
 			created() {
