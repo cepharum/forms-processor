@@ -181,6 +181,27 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
+	setValue( newValue ) {
+		const isValue = newValue && typeof newValue === "object";
+		const { fields } = this;
+		const numFields = fields.length;
+
+		if ( !( this._lockWrite > 0 ) ) {
+			this._lockWrite = ( this._lockWrite || 0 ) + 1;
+
+			for ( let i = 0; i < numFields; i++ ) {
+				const field = fields[i];
+
+				if ( field.constructor.isInteractive ) {
+					field.setValue( isValue ? newValue[field.name] : null );
+				}
+			}
+
+			this._lockWrite--;
+		}
+	}
+
+	/** @inheritDoc */
 	validate( live ) {
 		const { fields } = this;
 		const numFields = fields.length;

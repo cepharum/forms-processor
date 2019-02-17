@@ -189,7 +189,7 @@ export default {
 					if ( field.constructor.isInteractive ) {
 						const storedValue = Storage.read( stored, name, missing );
 						if ( storedValue !== missing ) {
-							field.value = storedValue;
+							field.setValue( storedValue );
 						}
 					}
 				}

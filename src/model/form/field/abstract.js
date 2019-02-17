@@ -257,17 +257,10 @@ export default class FormFieldAbstractModel {
 			 *
 			 * @name FormFieldAbstractModel#value
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
+			 * @readonly
 			 */
 			value: this.constructor.isInteractive ? {
 				get: () => form.readValue( qualifiedName ),
-				set: newValue => {
-					const { value, formattedValue } = this.normalizeValue( newValue ) || {};
-
-					form.writeValue( qualifiedName, value );
-
-					reactiveFieldInfo.value = value;
-					reactiveFieldInfo.formattedValue = formattedValue;
-				},
 			} : { value: undefined },
 
 			/**
@@ -821,6 +814,21 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Adjusts internal value of field.
+	 *
+	 * @param {*} newValue new value of field
+	 * @returns {void}
+	 */
+	setValue( newValue ) {
+		const { value, formattedValue } = this.normalizeValue( newValue ) || {};
+
+		this.form.writeValue( this.qualifiedName, value );
+
+		this.$data.value = value;
+		this.$data.formattedValue = formattedValue;
+	}
+
+	/**
 	 * Exposes service handling localization of internationalized values so
 	 * custom field extensions might access is via this provided abstract base
 	 * class.
@@ -862,10 +870,9 @@ export default class FormFieldAbstractModel {
 
 		if ( !itsMe && data.pristine && this.constructor.isInteractive ) {
 			// some other field has been updated
-			// -> my initial value might depend on it, so
-			//    re-assign my initial unless field has been
-			//    adjusted before
-			this.value = this.initial;
+			// -> my initial value might depend on it, so re-assign my initial
+			//    unless field has been adjusted before
+			this.setValue( this.initial );
 		}
 
 		// changing current field or some field current one
@@ -986,10 +993,10 @@ export default class FormFieldAbstractModel {
 
 					return lookup;
 				},
-				onInput( newValue ) {
+				onInput( value ) {
 					that.touch();
 
-					that.value = newValue;
+					that.setValue( value );
 				},
 			},
 			created() {
