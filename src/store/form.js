@@ -71,7 +71,7 @@ export default {
 			const model = new FormSequenceModel( { id: _id, name: _name }, definition, registry, {
 				write: ( key, value ) => dispatch( "writeInput", { name: key, value } ),
 				read: getters.readInput,
-				data: state.input,
+				data: () => state.input,
 			}, () => rootGetters.locale );
 
 			commit( "define", {
@@ -84,6 +84,8 @@ export default {
 			commit( "storeLocally", model.mode.local === "store" );
 
 			commit( "resetInput" );
+
+			model.initializeTerms();
 		},
 
 		/**
@@ -122,7 +124,7 @@ export default {
 			if ( state.model ) {
 				let added = false;
 
-				const fields = state.model.fields;
+				const { fields } = state.model;
 				const names = Object.keys( fields );
 				const numFields = names.length;
 

@@ -122,7 +122,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, multiple } = that;
+		const { form: { readValue }, qualifiedName, multiple } = that;
 
 		return {
 			template: `
@@ -152,8 +152,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 						const { value: normalized } = that.normalizeValue( newValue );
 
 						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							writeValue( qualifiedName, normalized );
-							this.value = normalized;
+							this.$emit( "input", normalized );
 						}
 					},
 				},

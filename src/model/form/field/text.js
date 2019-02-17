@@ -272,7 +272,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { writeValue }, qualifiedName } = that;
 
 		let lastValue = null;
 
@@ -322,22 +321,12 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 								return;
 							}
 
-							that.touch();
-
-							// update value of field in central store
-							writeValue( qualifiedName, value );
-
 							// update reactive data
-							this.value = value;
 							this.formattedValue = formattedValue;
 
 							// re-emit in scope of this field's type-specific
 							// component (containing input element created here)
 							this.$emit( "input", value );
-
-							// re-emit in scope of this field's base component
-							// (e.g. containing its type-specific component)
-							this.$parent.$emit( "input", value );
 						},
 					},
 				} ) );

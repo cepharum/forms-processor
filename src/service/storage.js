@@ -45,16 +45,17 @@ export default class Storage {
 	 *
 	 * @param {object} storage refers to object managed as _storage_ by constructed instance
 	 * @param {string} name path name of value to be read
+	 * @param {?*} fallbackValue value to return in case storage does not contain named value
 	 * @return {?*} found value, null if value is missing
 	 */
-	static read( storage, name ) {
+	static read( storage, name, fallbackValue = null ) {
 		if ( !storage || typeof storage !== "object" ) {
 			throw new TypeError( "Reading from invalid storage rejected." );
 		}
 
 		const _name = this.normalizeName( name );
 		if ( _name == null ) {
-			return null;
+			return fallbackValue == null ? null : fallbackValue;
 		}
 
 		let pointer = storage;
@@ -67,7 +68,7 @@ export default class Storage {
 			if ( pointer && typeof pointer === "object" && pointer.hasOwnProperty( segment ) ) {
 				pointer = pointer[segment];
 			} else {
-				return null;
+				return fallbackValue == null ? null : fallbackValue;
 			}
 		}
 

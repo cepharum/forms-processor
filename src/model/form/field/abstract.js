@@ -66,6 +66,16 @@ const reserved = [
 	"errors",
 ];
 
+/**
+ * Lists names of properties that mustn't be processed deferredly so they can
+ * access non-deferred properties during processing.
+ *
+ * @type {string[]}
+ */
+const deferredProperties = [
+	"initial",
+];
+
 
 
 /**
@@ -295,7 +305,7 @@ export default class FormFieldAbstractModel {
 				value: ( value, key, data = null, normalizer = null ) => {
 					return handleComputableValue( value, key,
 						data || reactiveFieldInfo,
-						normalizer || ( v => this.constructor.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
+						normalizer || ( v => this.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
 				},
 			},
 		} );
@@ -320,7 +330,7 @@ export default class FormFieldAbstractModel {
 						break;
 
 					default :
-						if ( reserved.indexOf( propertyName ) < 0 ) {
+						if ( reserved.indexOf( propertyName ) < 0 && deferredProperties.indexOf( propertyName ) < 0 ) {
 							// handle non-reserved properties of definition in a common way
 
 							if ( customProperties.hasOwnProperty( propertyName ) ) {
@@ -342,7 +352,7 @@ export default class FormFieldAbstractModel {
 
 								if ( propertyValue != null ) {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
-										reactiveFieldInfo, v => this.constructor.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+										reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 								}
 							}
 						}
@@ -367,6 +377,31 @@ export default class FormFieldAbstractModel {
 		}
 
 		Object.defineProperties( this, getters );
+
+
+
+		// handle some property definitions deferredly
+		const deferredGetters = {};
+
+		const numDeferredProperties = deferredProperties.length;
+		for ( let i = 0; i < numDeferredProperties; i++ ) {
+			const propertyName = deferredProperties[i];
+			let propertyValue = qualifiedDefinition[propertyName];
+
+			switch ( propertyName ) {
+				default :
+					propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+					if ( propertyValue == null ) {
+						deferredGetters[propertyName] = { value: null };
+					} else {
+						deferredGetters[propertyName] = handleComputableValue( propertyValue, propertyName,
+							reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+					}
+			}
+		}
+
+		Object.defineProperties( this, deferredGetters );
+
 
 
 		/*
@@ -499,18 +534,7 @@ export default class FormFieldAbstractModel {
 			 * @property {object<string,*>}
 			 * @readonly
 			 */
-			$data: {
-				get: () => {
-					form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
-
-					Object.defineProperties( this, {
-						$data: { value: reactiveFieldInfo },
-					} );
-
-					return reactiveFieldInfo;
-				},
-				configurable: true,
-			},
+			$data: { value: reactiveFieldInfo },
 
 			/**
 			 * Provides description of component representing current field.
@@ -616,7 +640,7 @@ export default class FormFieldAbstractModel {
 							const slice = compiled[i];
 
 							if ( typeof slice === "object" ) {
-								rendered[i] = slice.evaluate( form.data );
+								rendered[i] = slice.evaluate( form.sequence.data );
 							} else {
 								rendered[i] = slice;
 							}
@@ -638,7 +662,7 @@ export default class FormFieldAbstractModel {
 				terms.push( compiled );
 
 				return { get: () => {
-					const computed = compiled.evaluate( form.data );
+					const computed = compiled.evaluate( form.sequence.data );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {
@@ -768,14 +792,15 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
-	 * Initializes data in provided set of reactive data of field.
+	 * Initializes provided record to become reactive data set of a component
+	 * with current properties of field as managed current instance.
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
-	 * @returns {*} initial value of field as used on initializing reactive data
+	 * @returns {*} normalized internal value of field as used on initializing reactive data
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const { value, formattedValue } = this.normalizeValue( this.initial );
+		const { value, formattedValue } = this.normalizeValue( this.value );
 
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
@@ -816,12 +841,11 @@ export default class FormFieldAbstractModel {
 	/**
 	 * Handles change of a field's value by updating state of model accordingly.
 	 *
-	 * @param {*} store reference on store the adjustments took place in
 	 * @param {*} newValue new value of field
 	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
 	 * @returns {boolean} true if validity of field has changed
 	 */
-	onUpdateValue( store, newValue, updatedFieldName = null ) {
+	onUpdateValue( newValue, updatedFieldName = null ) {
 		const data = this.$data;
 		const oldValidity = data.valid;
 		const itsMe = updatedFieldName == null;
@@ -833,10 +857,7 @@ export default class FormFieldAbstractModel {
 			// -> my initial value might depend on it, so
 			//    re-assign my initial unless field has been
 			//    adjusted before
-			store.dispatch( "form/writeInput", {
-				name: this.qualifiedName,
-				value: this.initial,
-			} );
+			this.form.writeValue( this.qualifiedName, this.normalizeValue( this.initial ).value );
 		}
 
 		// changing current field or some field current one
@@ -893,7 +914,7 @@ export default class FormFieldAbstractModel {
 	 */
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, originalName, name, qualifiedName, classes } = this;
+		const { type, originalName, name, qualifiedName, classes, form: { writeValue } } = this;
 
 		this.initializeReactive( reactiveFieldInfo );
 
@@ -930,7 +951,7 @@ export default class FormFieldAbstractModel {
 		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
-		<FieldComponent ref="fieldComponent" />
+		<FieldComponent ref="fieldComponent" @input="onInput" />
 		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
@@ -956,7 +977,13 @@ export default class FormFieldAbstractModel {
 					}
 
 					return lookup;
-				}
+				},
+				onInput( newValue ) {
+					that.touch();
+
+					writeValue( qualifiedName, newValue );
+					this.value = newValue;
+				},
 			},
 			created() {
 				this.__onGlobalFormAutoFocusEvent = () => {
@@ -1023,7 +1050,7 @@ export default class FormFieldAbstractModel {
 	 * @param {object<string,*>} definitions qualified set of a field's definition properties
 	 * @returns {*} normalized value for use with named definition property
 	 */
-	static normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
+	normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
 		switch ( name ) {
 			case "classes" :
 				return typeof value === "string" ? value.trim().split( /\s*[,;][,;\s]*/ ) : value;
@@ -1068,6 +1095,9 @@ export default class FormFieldAbstractModel {
 					default :
 						return Boolean( value );
 				}
+
+			case "initial" :
+				return this.normalizeValue( value ).value;
 
 			default :
 				return value;

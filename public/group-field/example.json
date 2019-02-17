@@ -38,6 +38,11 @@
 					]
 				},
 				{
+					"type": "info",
+					"name": "eagerinfo",
+					"text": "='current value: ' + eager"
+				},
+				{
 					"name": "lazy",
 					"label": "Lazy Unlabelled Group",
 					"type": "group",
@@ -63,6 +68,11 @@
 							"required": true
 						}
 					]
+				},
+				{
+					"type": "info",
+					"name": "lazyinfo",
+					"text": "='current value: ' + lazy"
 				}
 			]
 		}

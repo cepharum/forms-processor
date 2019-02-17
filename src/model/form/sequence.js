@@ -41,11 +41,11 @@ export default class FormSequenceModel {
 	 * @param {string} id permanently unique ID of current sequence of forms
 	 * @param {object} definition definition of a sequence of forms
 	 * @param {FormsAPIExtensionsRegistry} registry registry of available types of fields and input processors
-	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
-	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
 	 * @param {function(string):*} read reads value of a named field
+	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
+	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
 	 * @param {function(string,*)} write adjusts value of a named field
-	 * @param {object<string,*>} data refers to (read-only) storage managed by `read`/`write`
+	 * @param {function():object<string,*>} data provides up-to-date reference on (read-only) storage managed by `read`/`write`
 	 */
 	constructor( { id, name }, definition, registry, { read, write, data }, localeFn ) {
 		const { mode = {}, sequence = [], processors = {} } = definition;
@@ -152,7 +152,7 @@ export default class FormSequenceModel {
 			 * @property {object}
 			 * @readonly
 			 */
-			data: { value: data },
+			data: { get: data },
 
 			/**
 			 * Reads value of a field selected by its name from storage.
@@ -230,6 +230,38 @@ export default class FormSequenceModel {
 
 
 
+		// compile list of form managers (detecting namespace clashes)
+		const numForms = sequence.length;
+		const formManagers = new Array( numForms );
+		const reactiveFormInfos = new Array( numForms );
+		const names = {};
+		let w = 0;
+
+		for ( let r = 0; r < numForms; r++ ) {
+			const formDefinition = sequence[r];
+			const reactiveFormInfo = reactiveFormInfos[w] = {};
+			const formManager = new FormModel( this, formDefinition, w, reactiveFormInfo );
+
+			if ( formManager ) {
+				const formName = formManager.name;
+
+				if ( names.hasOwnProperty( formName ) ) {
+					throw new TypeError( `double definition of form named "${formName}"` );
+				}
+
+				names[formName] = formManager;
+
+				formManagers[w++] = formManager;
+			}
+		}
+
+		formManagers.splice( w );
+		reactiveFormInfos.splice( w );
+
+		reactiveInfo.forms = reactiveFormInfos;
+
+
+
 		// defer definition of additional properties requiring public access
 		// on those defined before
 		Object.defineProperties( this, {
@@ -250,11 +282,7 @@ export default class FormSequenceModel {
 			 * @property {FormModel[]}
 			 * @readonly
 			 */
-			forms: { value: sequence.map( ( formDefinition, index ) => {
-				const reactiveFormInfo = reactiveInfo.forms[index] = {};
-
-				return new FormModel( this, formDefinition, index, reactiveFormInfo );
-			} ) },
+			forms: { value: formManagers },
 		} );
 
 
@@ -289,12 +317,11 @@ export default class FormSequenceModel {
 						return;
 					}
 
-					const forms = this.forms;
-					const numForms = forms.length;
-
+					const { forms } = this;
+					const _numForms = forms.length;
 					const _index = parseInt( index );
 
-					if ( _index < 0 || _index >= numForms || !forms[_index] ) {
+					if ( _index < 0 || _index >= _numForms || !forms[_index] ) {
 						throw new TypeError( `Invalid request for selecting form with index ${_index} out of bounds.` );
 					}
 
@@ -326,11 +353,11 @@ export default class FormSequenceModel {
 			currentName: {
 				get: () => this.forms[reactiveInfo.currentIndex].name,
 				set: newName => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 					let nameIndex = -1;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						if ( forms[i].name === newName ) {
 							nameIndex = i;
 							break;
@@ -354,10 +381,10 @@ export default class FormSequenceModel {
 			 */
 			firstInvalidIndex: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						if ( i > latestVisited ) {
 							break;
 						}
@@ -386,10 +413,10 @@ export default class FormSequenceModel {
 			 */
 			firstUnfinishedIndex: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						const form = forms[i];
 
 						if ( !form.finished || !form.valid ) {
@@ -410,10 +437,10 @@ export default class FormSequenceModel {
 			 */
 			finished: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						const form = forms[i];
 
 						if ( !form.finished || !form.valid ) {
@@ -778,6 +805,64 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Handles update of named field's value.
+	 *
+	 * @param {string} fieldName qualified name of field with updated value
+	 * @param {*} updatedValue updated value of named field
+	 * @returns {boolean} true if update of field has affected validity of updated field or any of its dependents
+	 */
+	onUpdateValue( fieldName, updatedValue ) {
+		const { fields } = this;
+		const field = fields[fieldName];
+
+		if ( field ) {
+			const containingForms = [];
+
+			if ( field.onUpdateValue( updatedValue ) ) {
+				containingForms.push( field.form );
+			}
+
+			const dependents = field.dependents;
+			const numDependents = dependents.length;
+
+			for ( let i = 0; i < numDependents; i++ ) {
+				const dependent = fields[dependents[i]];
+				if ( dependent ) {
+					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
+						if ( containingForms.indexOf( dependent.form ) > -1 ) {
+							containingForms.push( dependent.form );
+						}
+					}
+				}
+			}
+
+			if ( containingForms.length > 0 ) {
+				for ( let i = 0; i < containingForms.length; i++ ) {
+					containingForms[i].readValidState();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Initializes results of terms in either form of sequence.
+	 *
+	 * @returns {void}
+	 */
+	initializeTerms() {
+		const { fields } = this;
+		const fieldNames = Object.keys( fields );
+		const numFields = fieldNames.length;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
+			const field = fields[fieldName];
+
+			this.onUpdateValue( fieldName, field.value );
+		}
+	}
+
+	/**
 	 * Describes Vue component listing all forms in sequence or just the current
 	 * form in sequence.
 	 *
@@ -787,7 +872,7 @@ export default class FormSequenceModel {
 	 */
 	renderComponent( data ) {
 		const that = this;
-		const { forms, showAllForms, fields } = this;
+		const { forms, showAllForms } = this;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
@@ -821,34 +906,7 @@ export default class FormSequenceModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 
-						const field = fields[name];
-						if ( field ) {
-							const containingForms = [];
-
-							if ( field.onUpdateValue( this.$store, value ) ) {
-								containingForms.push( field.form );
-							}
-
-							const dependents = field.dependents;
-							const numDependents = dependents.length;
-
-							for ( let i = 0; i < numDependents; i++ ) {
-								const dependent = fields[dependents[i]];
-								if ( dependent ) {
-									if ( dependent.onUpdateValue( this.$store, value, name ) ) {
-										if ( containingForms.indexOf( dependent.form ) > -1 ) {
-											containingForms.push( dependent.form );
-										}
-									}
-								}
-							}
-
-							if ( containingForms.length > 0 ) {
-								for ( let i = 0; i < containingForms.length; i++ ) {
-									containingForms[i].readValidState();
-								}
-							}
-						}
+						that.onUpdateValue( name, value );
 					}
 				} );
 			},
