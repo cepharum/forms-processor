@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
 import CompileTerm from "../utility/process";
@@ -917,9 +916,7 @@ export default class FormFieldAbstractModel {
 			this.readValidState( { force: true } );
 		}
 
-		if ( !itsMe ) {
-			EventBus.$emit( "form:update", this.qualifiedName, updatedFieldName, newValue );
-		}
+		this.form.sequence.events.$emit( "form:update", this.qualifiedName, updatedFieldName || null, newValue );
 
 		return oldValidity !== data.valid;
 	}
@@ -1061,7 +1058,7 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				EventBus.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				that.form.sequence.events.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 			beforeMount() {
 				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
@@ -1076,11 +1073,13 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				EventBus.$on( "form:update", this.__onGlobalFormUpdateEvent );
+				that.form.sequence.events.$on( "form:update", this.__onGlobalFormUpdateEvent );
 			},
 			beforeDestroy() {
-				EventBus.$off( "form:update", this.__onGlobalFormUpdateEvent );
-				EventBus.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				const { events } = that.form.sequence;
+
+				events.$off( "form:update", this.__onGlobalFormUpdateEvent );
+				events.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 		};
 	}

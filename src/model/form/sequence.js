@@ -29,7 +29,6 @@
 import Vue from "vue";
 import FormModel from "./form";
 
-import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
 
@@ -614,7 +613,7 @@ export default class FormSequenceModel {
 		currentForm.finished = true;
 
 		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
-			EventBus.$emit( "form:autofocus" );
+			this.events.$emit( "form:autofocus" );
 			return false;
 		}
 
@@ -932,10 +931,10 @@ export default class FormSequenceModel {
 				}
 			},
 			mounted() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 			updated() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 		};
 	}
