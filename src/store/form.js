@@ -102,7 +102,7 @@ export default {
 
 					if ( stored != null ) {
 						if ( !model.mode.localStore.maxAge || ( stored.timestamp > Date.now() - model.mode.localStore.maxAge ) ) {
-							commit( "loadInput", { stored: stored.input } );
+							commit( "loadInput", stored );
 						}
 					}
 				}
@@ -166,8 +166,8 @@ export default {
 			}
 		},
 
-		loadInput( state, { stored } ) {
-			if ( state.model && stored && typeof stored === "object" ) {
+		loadInput( state, { input, touched } ) {
+			if ( state.model && input && typeof input === "object" ) {
 				const { fields } = state.model;
 				const names = Object.keys( fields );
 				const numFields = names.length;
@@ -178,9 +178,13 @@ export default {
 					const field = fields[name];
 
 					if ( field.constructor.isInteractive ) {
-						const storedValue = Storage.read( stored, name, missing );
+						const storedValue = Storage.read( input, name, missing );
 						if ( storedValue !== missing ) {
 							field.setValue( storedValue );
+
+							if ( touched && touched[name] ) {
+								field.touch();
+							}
 						}
 					}
 				}
@@ -195,10 +199,28 @@ export default {
 			if ( state.localStoreId ) {
 				clearTimeout( state._timer );
 
-				const saver = () => localStorage.setItem( state.localStoreId, JSON.stringify( {
-					timestamp: Date.now(),
-					input: state.input,
-				} ) );
+				const saver = () => {
+					const { fields } = state.model;
+					const names = Object.keys( fields );
+					const numFields = names.length;
+
+					const touched = {};
+
+					for ( let i = 0; i < numFields; i++ ) {
+						const fieldName = names[i];
+						const field = fields[fieldName];
+
+						if ( !field.pristine ) {
+							touched[fieldName] = 1;
+						}
+					}
+
+					localStorage.setItem( state.localStoreId, JSON.stringify( {
+						timestamp: Date.now(),
+						input: state.input,
+						touched,
+					} ) );
+				};
 
 				state._timer = setTimeout( saver, 500 );
 
