@@ -34,14 +34,8 @@ import Data from "../../../service/data";
  * Manages single field of form representing data input.
  */
 export default class FormFieldUploadModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties, ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			size( v ) {
 				/**
@@ -117,18 +111,15 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			},
 
 			...customProperties,
-		} );
+		}, container );
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
+	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, mimeType, uploadLabel, button, dropZone, multiple } = that;
+
+		const { form: { readValue }, qualifiedName, mimeType, uploadLabel, button, dropZone, multiple } = that;
+
 		return {
 			template: `
 				<span class="upload">
@@ -217,7 +208,8 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			methods: {
 				remove( index ) {
 					this.files.splice( index, 1 );
-					writeValue( qualifiedName, this.files );
+
+					this.$emit( "input", this.files );
 				},
 				fileSelected( e ) {
 					if ( this.selectedCallback ) {
@@ -230,15 +222,17 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 					}
 				},
 				selectedCallback( fileArray ) {
-					reactiveFieldInfo.pristine = false;
+					that.touch();
 
 					if ( !fileArray ) {
 						return;
 					}
-					for( const entry of fileArray ) {
+
+					for ( const entry of fileArray ) {
 						this.files.push( that.normalizeValue( entry ).value );
 					}
-					writeValue( qualifiedName, this.files );
+
+					this.$emit( "input", this.files );
 				},
 			},
 		};
@@ -281,16 +275,16 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		if( mimeType ) {
+		if ( mimeType ) {
 			let requiredTyes = mimeType.split( "," );
 			requiredTyes = requiredTyes.map( e => e.trim() );
-			if( value.some( el => !requiredTyes.some( type => el.type === type ) ) ) {
+			if ( value.some( el => !requiredTyes.some( type => el.type === type ) ) ) {
 				errors.push( "@VALIDATION.WRONG_TYPE" );
 			}
 		}
 
-		const totalSize = value.reduce( ( a,b ) => a + Number( b.size ), 0 );
-		if( totalSize && this.size ) {
+		const totalSize = value.reduce( ( a, b ) => a + Number( b.size ), 0 );
+		if ( totalSize && this.size ) {
 			if ( this.size.isBelowRange( totalSize ) ) {
 				errors.push( "@VALIDATION.TOO_SHORT" );
 			}

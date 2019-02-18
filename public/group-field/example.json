@@ -1,37 +1,80 @@
 {
-  "processors": [
-	{
-	  "url": "/"
-	}
-  ],
-  "sequence": [
-	{
-	  "name": "GroupForm",
-	  "label": "GroupForm",
-	  "fields": [
+	"processors": [
 		{
-		  "name": "Group",
-		  "label": "Group",
-		  "type": "group",
-		  "fields": [
-			{
-			  "label": "text",
-			  "required": true
-			},{
-			  "label": "checkbox",
-			  "type": "checkbox",
-			  "required": true
-			},{
-			  "label": "select",
-			  "type": "select",
-			  "options": [
-				"1","2","3"
-			  ],
-			  "required": true
-			}
-		  ]
+			"url": "/"
 		}
-	  ]
-	}
-  ]
+	],
+	"sequence": [
+		{
+			"name": "form",
+			"label": "Grouping Fields",
+			"description": "This form demonstrates use of grouping fields aggregating a set of subordinated fields.",
+			"fields": [
+				{
+					"name": "eager",
+					"label": "Eager Labelled Group",
+					"type": "group",
+					"required": true,
+					"fields": [
+						{
+							"label": "text",
+							"required": true
+						},
+						{
+							"label": "checkbox",
+							"type": "checkbox",
+							"required": true
+						},
+						{
+							"label": "select",
+							"type": "select",
+							"options": [
+								"1",
+								"2",
+								"3"
+							],
+							"required": true
+						}
+					]
+				},
+				{
+					"type": "info",
+					"name": "eagerinfo",
+					"text": "='current value: ' + eager"
+				},
+				{
+					"name": "lazy",
+					"label": "Lazy Unlabelled Group",
+					"type": "group",
+					"drop": "lazy",
+					"required": true,
+					"fields": [
+						{
+							"required": true,
+							"suffix": "EUR",
+							"align": "right"
+						},
+						{
+							"type": "checkbox",
+							"required": true
+						},
+						{
+							"type": "select",
+							"options": [
+								"1",
+								"2",
+								"3"
+							],
+							"required": true
+						}
+					]
+				},
+				{
+					"type": "info",
+					"name": "lazyinfo",
+					"text": "='current value: ' + lazy"
+				}
+			]
+		}
+	]
 }

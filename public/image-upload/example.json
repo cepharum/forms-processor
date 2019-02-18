@@ -46,7 +46,7 @@
 					"type": "image"
 				},
 			  	{
-					"name": "field5",
+					"name": "field6",
 					"label": "wrong display mode",
 				  	"button": "no",
 				  	"previewMode": [],

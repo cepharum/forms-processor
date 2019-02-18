@@ -22,6 +22,8 @@ The label is used as headline displayed above every form of sequence.
 
 This property provides some introducing description of whole sequence of forms. It is is kept visible above every form of sequence.
 
+## Mode
+
 ### mode
 
 * Type: `object`
@@ -30,6 +32,8 @@ This property provides some introducing description of whole sequence of forms. 
 
 In property `mode` there is an object that consists of several properties customizing the presented forms' behaviour and appearance. See [mode configuration](mode.md) for additional information.
 
+## Processors
+
 ### processing
 
 * Type: `object`
@@ -37,6 +41,8 @@ In property `mode` there is an object that consists of several properties custom
 * Localizable: no
 
 This property `processing` is selecting how to processed all forms' input eventually. It usually describes how to transmit input to some remote server or similar.
+
+## Forms And Fields
 
 ### sequence
 
