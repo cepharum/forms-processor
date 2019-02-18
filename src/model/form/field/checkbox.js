@@ -146,18 +146,18 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 		return {
 			template: `
 				<span class="checkbox options" :class="classes">
-					<span class="option" :class="{checked:isSet(item.value)}" v-for="(item, index) in options" :key="index">
+					<span class="option" :class="{checked:isSet(item.value), ['no-'+(index+1)]: true}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
-							:id="!isRadio && supportsMultiSelection ? name + '.' + index : name"
-							:name="name"
+							:id="individualId( index )"
+							:name="groupName"
 							:value="item.value"
 							:checked="isSet(item.value)"
 							:disabled="disabled"
 							@change="adjust( $event.target.checked, item.value )"
 						/>
 
-						<label :for="isRadio || supportsMultiSelection ? name + '.' + index : name" 
+						<label :for="individualId( index )" 
 							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</span>
@@ -175,8 +175,14 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						single: numOptions < 2
 					};
 				},
-				name() {
+				normalizedName() {
+					return qualifiedName.replace( /\./g, "_" );
+				},
+				groupName() {
 					return group == null ? qualifiedName : group;
+				},
+				individualId() {
+					return index => `${this.normalizedName}.${index}`;
 				},
 				supportsMultiSelection() {
 					return this.multiple && ( this.options && this.options.length > 1 );
