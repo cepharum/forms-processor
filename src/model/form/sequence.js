@@ -549,19 +549,55 @@ export default class FormSequenceModel {
 	 * Qualifies section of configuration customizing operation modes of forms
 	 * processor.
 	 *
-	 * @param {object} input user-provided configuration of operation modes
+	 * @param {object} mode user-provided configuration of operation modes
 	 * @returns {object} qualified configuration of operation modes
 	 */
-	static qualifyModeConfiguration( input ) {
-		if ( !input.view ) {
-			input.view = {};
+	static qualifyModeConfiguration( mode ) {
+		if ( !mode.view ) {
+			mode.view = {};
 		}
 
-		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
+		mode.view.progress = Data.normalizeToBoolean( mode.view.progress, true );
 
-		input.navigation = String( input.navigation || "auto" ).trim().toLowerCase();
+		mode.navigation = String( mode.navigation || "auto" ).trim().toLowerCase();
 
-		return input;
+		if ( mode.localStore == null ) {
+			mode.localStore = {
+				enabled: false,
+				id: null,
+			};
+		} else {
+			if ( typeof mode.localStore !== "object" ) {
+				throw new TypeError( "invalid configuration of local store" );
+			}
+
+			const { localStore } = mode;
+
+			localStore.enabled = Data.normalizeToBoolean( localStore.enabled, true );
+
+			if ( !localStore.id ) {
+				localStore.enabled = false;
+			} else if ( localStore.maxAge != null ) {
+				const match = /^\s*(\d+)\s*([smhdw])\s*$/i.exec( localStore.maxAge );
+				if ( match ) {
+					const amount = parseInt( match[1] );
+
+					switch ( match[2].toLowerCase() ) {
+						case "s" : localStore.maxAge = amount * 1000; break;
+						case "m" : localStore.maxAge = amount * 60 * 1000; break;
+						case "h" : localStore.maxAge = amount * 60 * 60 * 1000; break;
+						case "d" : localStore.maxAge = amount * 24 * 60 * 60 * 1000; break;
+						case "w" : localStore.maxAge = amount * 7 * 24 * 60 * 60 * 1000; break;
+					}
+				} else if ( /^\s*\d+\s*$/.test( localStore.maxAge ) ) {
+					localStore.maxAge = parseInt( localStore.maxAge ) * 1000;
+				} else {
+					throw new TypeError( "invalid configuration for maximum age of locally stored input" );
+				}
+			}
+		}
+
+		return mode;
 	}
 
 	/**

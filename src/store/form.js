@@ -83,8 +83,8 @@ export default {
 			} );
 
 			commit( "storeLocally", {
-				enabled: model.mode.local === "store",
-				id: model.mode.processId,
+				enabled: model.mode.localStore.enabled,
+				id: model.mode.localStore.id,
 			} );
 
 			commit( "resetInput" );
@@ -101,7 +101,9 @@ export default {
 					}
 
 					if ( stored != null ) {
-						commit( "loadInput", { stored } );
+						if ( !model.mode.localStore.maxAge || ( stored.timestamp > Date.now() - model.mode.localStore.maxAge ) ) {
+							commit( "loadInput", { stored: stored.input } );
+						}
 					}
 				}
 			}
@@ -151,8 +153,6 @@ export default {
 
 		resetInput( state ) {
 			if ( state.model ) {
-				let added = false;
-
 				const { fields } = state.model;
 				const names = Object.keys( fields );
 				const numFields = names.length;
@@ -161,16 +161,7 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ).value );
-				}
-
-				if ( added ) {
-					state.input = state.input;
-
-					if ( state.localStoreId ) {
-						clearTimeout( state._timer );
-						state._timer = setTimeout( () => localStorage.setItem( state.localStoreId, JSON.stringify( state.input ) ), 500 );
-					}
+					field.setValue( field.initial );
 				}
 			}
 		},
@@ -203,7 +194,19 @@ export default {
 
 			if ( state.localStoreId ) {
 				clearTimeout( state._timer );
-				state._timer = setTimeout( () => localStorage.setItem( state.localStoreId, JSON.stringify( state.input ) ), 500 );
+
+				const saver = () => localStorage.setItem( state.localStoreId, JSON.stringify( {
+					timestamp: Date.now(),
+					input: state.input,
+				} ) );
+
+				state._timer = setTimeout( saver, 500 );
+
+				if ( !state._saveOnPageUnload ) {
+					state._saveOnPageUnload = true;
+
+					window.addEventListener( "beforeunload", saver );
+				}
 			}
 		},
 

@@ -1,7 +1,9 @@
 {
 	"mode": {
-		"local": "store",
-		"processId": "1234"
+		"localStore": {
+			"id": "1234",
+			"maxAge": 30
+		}
 	},
 	"processors": [
 		{
