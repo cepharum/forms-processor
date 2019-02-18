@@ -173,11 +173,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
 
@@ -296,6 +291,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					value: reactiveFieldInfo.formattedValue,
 				};
 
+				if ( that.disabled ) {
+					domProps.disabled = true;
+				}
+
 				if ( that.placeholder != null ) {
 					domProps.placeholder = that.placeholder;
 				}
@@ -316,13 +315,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 							event.target.value = lastValue = formattedValue;
 							event.target.setSelectionRange( options.at, options.at );
-
-							if ( value === this.value ) {
-								return;
-							}
-
-							// update reactive data
-							this.formattedValue = formattedValue;
 
 							// re-emit in scope of this field's type-specific
 							// component (containing input element created here)

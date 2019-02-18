@@ -79,9 +79,9 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 								}
 
 								if ( localIndex > -1 ) {
-									const values = form.readValue( this.qualifiedName );
+									const values = this.value;
 
-									return Array.isArray( values ) ? values[localIndex] : undefined;
+									return values && typeof values === "object" ? values[fields[localIndex].name] : undefined;
 								}
 
 								return form.readValue( name );
@@ -102,16 +102,11 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 								}
 
 								if ( localIndex > -1 ) {
-									const updatedValues = new Array( numFields );
-									for ( let i = 0; i < numFields; i++ ) {
-										if ( i === localIndex ) {
-											updatedValues[i] = value;
-										} else {
-											updatedValues[i] = fields[i].value;
-										}
-									}
+									const values = this.value || {};
 
-									form.writeValue( this.qualifiedName, updatedValues );
+									values[fields[localIndex].name] = value;
+
+									form.writeValue( this.qualifiedName, values );
 								} else {
 									form.writeValue( name, value );
 								}
@@ -120,12 +115,10 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						name: { value: this.qualifiedName },
 					} );
 
-					if ( !fieldDefinition.name ) fieldDefinition.name = String( di );
-
 					fields[di] = new fieldsRegistry[fieldType]( fieldForm, {
 						...fieldDefinition,
 						suppress: { errors: true },
-					}, di, reactiveFieldInfo.group[di], null, this );
+					}, di, reactiveFieldInfo.group[di], {}, this );
 				}
 
 				return { value: fields };
@@ -181,8 +174,54 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
+	listDependencies() {
+		const { fields } = this;
+		const numFields = fields.length;
+		const deps = [];
+
+		for ( let i = 0; i < numFields; i++ ) {
+			deps.splice( deps.length, 0, ...fields[i].dependsOn );
+		}
+
+		return deps;
+	}
+
+	/** @inheritDoc */
+	setValue( newValue ) {
+		const isValue = newValue && typeof newValue === "object";
+		const { fields } = this;
+		const numFields = fields.length;
+
+		if ( !( this._lockWrite > 0 ) ) {
+			this._lockWrite = ( this._lockWrite || 0 ) + 1;
+
+			for ( let i = 0; i < numFields; i++ ) {
+				const field = fields[i];
+
+				if ( field.constructor.isInteractive ) {
+					field.setValue( isValue ? newValue[field.name] : null );
+				}
+			}
+
+			this._lockWrite--;
+		}
+	}
+
+	/** @inheritDoc */
+	onUpdateValue( newValue, updatedFieldName = null ) {
+		const { fields } = this;
+		const numFields = fields.length;
+
+		let validityChanged = false;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const field = fields[i];
+			const newFieldValue = ( newValue && typeof newValue === "object" && newValue[field.name] ) || null;
+
+			validityChanged |= field.onUpdateValue( newFieldValue, updatedFieldName === this.qualifiedName ? field.qualifiedName : null );
+		}
+
+		return validityChanged;
 	}
 
 	/** @inheritDoc */

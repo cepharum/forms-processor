@@ -26,9 +26,9 @@
  * @author: cepharum
  */
 
+import Vue from "vue";
 import FormModel from "./form";
 
-import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
 
@@ -226,6 +226,18 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			qualifiedNames: { value: qualifiedNames },
+
+			/**
+			 * Exposes event bus of current sequence manager.
+			 *
+			 * This event bus is used to emit and listen for events related to
+			 * current sequence of forms, only.
+			 *
+			 * @name FormSequenceModel#events
+			 * @property Vue
+			 * @readonly
+			 */
+			events: { value: new Vue() }
 		} );
 
 
@@ -537,19 +549,55 @@ export default class FormSequenceModel {
 	 * Qualifies section of configuration customizing operation modes of forms
 	 * processor.
 	 *
-	 * @param {object} input user-provided configuration of operation modes
+	 * @param {object} mode user-provided configuration of operation modes
 	 * @returns {object} qualified configuration of operation modes
 	 */
-	static qualifyModeConfiguration( input ) {
-		if ( !input.view ) {
-			input.view = {};
+	static qualifyModeConfiguration( mode ) {
+		if ( !mode.view ) {
+			mode.view = {};
 		}
 
-		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
+		mode.view.progress = Data.normalizeToBoolean( mode.view.progress, true );
 
-		input.navigation = String( input.navigation || "auto" ).trim().toLowerCase();
+		mode.navigation = String( mode.navigation || "auto" ).trim().toLowerCase();
 
-		return input;
+		if ( mode.localStore == null ) {
+			mode.localStore = {
+				enabled: false,
+				id: null,
+			};
+		} else {
+			if ( typeof mode.localStore !== "object" ) {
+				throw new TypeError( "invalid configuration of local store" );
+			}
+
+			const { localStore } = mode;
+
+			localStore.enabled = Data.normalizeToBoolean( localStore.enabled, true );
+
+			if ( !localStore.id ) {
+				localStore.enabled = false;
+			} else if ( localStore.maxAge != null ) {
+				const match = /^\s*(\d+)\s*([smhdw])\s*$/i.exec( localStore.maxAge );
+				if ( match ) {
+					const amount = parseInt( match[1] );
+
+					switch ( match[2].toLowerCase() ) {
+						case "s" : localStore.maxAge = amount * 1000; break;
+						case "m" : localStore.maxAge = amount * 60 * 1000; break;
+						case "h" : localStore.maxAge = amount * 60 * 60 * 1000; break;
+						case "d" : localStore.maxAge = amount * 24 * 60 * 60 * 1000; break;
+						case "w" : localStore.maxAge = amount * 7 * 24 * 60 * 60 * 1000; break;
+					}
+				} else if ( /^\s*\d+\s*$/.test( localStore.maxAge ) ) {
+					localStore.maxAge = parseInt( localStore.maxAge ) * 1000;
+				} else {
+					throw new TypeError( "invalid configuration for maximum age of locally stored input" );
+				}
+			}
+		}
+
+		return mode;
 	}
 
 	/**
@@ -601,7 +649,7 @@ export default class FormSequenceModel {
 		currentForm.finished = true;
 
 		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
-			EventBus.$emit( "form:autofocus" );
+			this.events.$emit( "form:autofocus" );
 			return false;
 		}
 
@@ -776,9 +824,8 @@ export default class FormSequenceModel {
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const fieldName = fieldNames[i];
-			const field = fieldsMap[fieldName];
+			const dependencies = fieldsMap[fieldName].dependsOn;
 
-			const dependencies = field.dependsOn;
 			if ( Array.isArray( dependencies ) ) {
 				const numDependencies = dependencies.length;
 
@@ -799,6 +846,10 @@ export default class FormSequenceModel {
 
 		for ( let i = 0; i < numKeys; i++ ) {
 			const key = keys[i];
+
+			if ( !fieldsMap.hasOwnProperty( key ) ) {
+				throw new TypeError( `invalid dependency on unknown field ${key}` );
+			}
 
 			fieldsMap[key].dependents = dependentsPerField[key];
 		}
@@ -916,10 +967,10 @@ export default class FormSequenceModel {
 				}
 			},
 			mounted() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 			updated() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 		};
 	}

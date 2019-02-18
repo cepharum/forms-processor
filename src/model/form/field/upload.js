@@ -115,11 +115,6 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
 		const that = this;
 

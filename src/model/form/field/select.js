@@ -36,11 +36,6 @@ import Options from "../utility/options";
  */
 export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**
@@ -113,35 +108,26 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	initializeReactive( reactiveFieldInfo ) {
-		const initial = super.initializeReactive( reactiveFieldInfo );
+		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
-		return initial;
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue }, qualifiedName, multiple } = that;
 
 		return {
 			template: `
-				<select v-model="model" v-if="!multiple" class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-if="!supportMultiSelect" class="select single" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
-				<select v-model="model" v-else-if="multiple" multiple class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-else-if="supportMultiSelect" multiple class="select multi" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
-			data: () => {
-				return {
-					value: readValue( qualifiedName ),
-				};
-			},
+			data: () => reactiveFieldInfo,
 			computed: {
-				options() {
-					return reactiveFieldInfo.options;
-				},
 				model: {
 					get() {
 						return this.value;
@@ -156,8 +142,8 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 						}
 					},
 				},
-				multiple() {
-					return multiple && ( this.options && this.options.length > 1 );
+				supportMultiSelect() {
+					return this.multiple && ( this.options && this.options.length > 1 );
 				},
 			},
 		};

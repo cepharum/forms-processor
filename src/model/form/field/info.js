@@ -28,7 +28,6 @@
 
 import FormFieldAbstractModel from "./abstract";
 import Markdown from "../utility/markdown";
-const md = Markdown.getRenderer();
 
 /**
  * Manages single field of form representing non-editable text display.
@@ -47,7 +46,7 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 			},
 			computed: {
 				renderedText() {
-					return md.render( this.text );
+					return that.markdown ? Markdown.getRenderer().render( this.text ) : this.text;
 				}
 			},
 			methods: {
@@ -56,5 +55,10 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 				},
 			}
 		};
+	}
+
+	/** @inheritDoc */
+	static get isInteractive() {
+		return false;
 	}
 }

@@ -45,8 +45,9 @@ export default {
 			definition: {},
 			input: {},
 			model: null,
-			localStore: false,
 			result: {},
+			localStoreId: null,
+			_timer: null,
 		};
 	},
 	actions: {
@@ -81,9 +82,32 @@ export default {
 				model,
 			} );
 
-			commit( "storeLocally", model.mode.local === "store" );
+			commit( "storeLocally", {
+				enabled: model.mode.localStore.enabled,
+				id: model.mode.localStore.id,
+			} );
 
 			commit( "resetInput" );
+
+			if ( state.localStoreId ) {
+				const rawStore = localStorage.getItem( state.localStoreId );
+				if ( rawStore != null ) {
+					let stored = null;
+
+					try {
+						stored = JSON.parse( rawStore );
+					} catch( e ) {
+						console.error( "failed reading locally persisted input:", e ); // eslint-disable-line no-console
+					}
+
+					if ( stored != null ) {
+						if ( !model.mode.localStore.maxAge || ( stored.timestamp > Date.now() - model.mode.localStore.maxAge ) ) {
+							commit( "loadInput", stored );
+						}
+					}
+				}
+			}
+
 
 			model.initializeTerms();
 		},
@@ -91,15 +115,18 @@ export default {
 		/**
 		 * Requests to update a field's value in state.
 		 *
+		 * @param {object} state current state
 		 * @param {function} commit callback for committing changes to state
 		 * @param {string} name qualified name of field to adjust
 		 * @param {*} value new value of field
 		 * @returns {void}
 		 */
-		writeInput( { commit }, { name, value } ) {
-			const _name = Storage.normalizeName( name );
-			if ( _name != null ) {
-				commit( "writeInput", { name: _name, value } );
+		writeInput( { state, commit }, { name, value } ) {
+			if ( state.model ) {
+				const _name = Storage.normalizeName( name );
+				if ( _name != null ) {
+					commit( "writeInput", { name: _name, value } );
+				}
 			}
 		},
 
@@ -116,14 +143,16 @@ export default {
 			state.model = model;
 		},
 
-		storeLocally( state, flag ) {
-			state.localStore = Boolean( flag );
+		storeLocally( state, { enabled, id } ) {
+			if ( enabled && id && ( typeof id === "number" || typeof id === "string" ) ) {
+				state.localStoreId = `forms_processor_${id}`;
+			} else {
+				state.localStoreId = null;
+			}
 		},
 
 		resetInput( state ) {
 			if ( state.model ) {
-				let added = false;
-
 				const { fields } = state.model;
 				const names = Object.keys( fields );
 				const numFields = names.length;
@@ -132,11 +161,32 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					added |= Storage.write( state.input, name, field.normalizeValue( field.initial ).value );
+					field.setValue( field.initial );
 				}
+			}
+		},
 
-				if ( added ) {
-					state.input = state.input;
+		loadInput( state, { input, touched } ) {
+			if ( state.model && input && typeof input === "object" ) {
+				const { fields } = state.model;
+				const names = Object.keys( fields );
+				const numFields = names.length;
+				const missing = {};
+
+				for ( let i = 0; i < numFields; i++ ) {
+					const name = names[i];
+					const field = fields[name];
+
+					if ( field.constructor.isInteractive ) {
+						const storedValue = Storage.read( input, name, missing );
+						if ( storedValue !== missing ) {
+							field.setValue( storedValue );
+
+							if ( touched && touched[name] ) {
+								field.touch();
+							}
+						}
+					}
 				}
 			}
 		},
@@ -144,6 +194,41 @@ export default {
 		writeInput( state, { name, value } ) {
 			if ( Storage.write( state.input, name, value ) ) {
 				state.input = state.input;
+			}
+
+			if ( state.localStoreId ) {
+				clearTimeout( state._timer );
+
+				const saver = () => {
+					const { fields } = state.model;
+					const names = Object.keys( fields );
+					const numFields = names.length;
+
+					const touched = {};
+
+					for ( let i = 0; i < numFields; i++ ) {
+						const fieldName = names[i];
+						const field = fields[fieldName];
+
+						if ( !field.pristine ) {
+							touched[fieldName] = 1;
+						}
+					}
+
+					localStorage.setItem( state.localStoreId, JSON.stringify( {
+						timestamp: Date.now(),
+						input: state.input,
+						touched,
+					} ) );
+				};
+
+				state._timer = setTimeout( saver, 500 );
+
+				if ( !state._saveOnPageUnload ) {
+					state._saveOnPageUnload = true;
+
+					window.addEventListener( "beforeunload", saver );
+				}
 			}
 		},
 
