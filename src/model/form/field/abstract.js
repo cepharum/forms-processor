@@ -162,6 +162,28 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Generates presumed list of qualified names a defined field of current
+	 * type is expected to cover.
+	 *
+	 * @param {FormSequenceModel} sequence refers to manager of sequence fields will be part of
+	 * @param {string} formName normalized name of form defined field will be part of
+	 * @param {object} fieldDefinition definition of field
+	 * @param {int} fieldIndex numeric index of field in its containing form's set of fields
+	 * @return {string[]} presumed list of qualified names in context of defined field
+	 */
+	static presumeQualifiedNames( sequence, formName, fieldDefinition, fieldIndex ) { // eslint-disable-line no-unused-vars
+		if ( !fieldDefinition.name ) {
+			if ( this.isInteractive ) {
+				throw new TypeError( "Missing field name in definition." );
+			}
+
+			fieldDefinition.name = `unnamed${String( "000" + ++unnamedCounter ).slice( -4 )}`;
+		}
+
+		return [`${formName}.${String( fieldDefinition.name ).trim().toLowerCase()}`];
+	}
+
+	/**
 	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
 	 * @param {int} fieldIndex index of field in set of containing form's fields
@@ -170,16 +192,10 @@ export default class FormFieldAbstractModel {
 	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
-		if ( !definition.name ) {
-			if ( this.constructor.isInteractive ) {
-				throw new TypeError( "Missing field name in definition." );
-			}
-
-			definition.name = `unnamed${String( "000" + ++unnamedCounter ).slice( -4 )}`;
-		}
-
 		const { name } = definition;
 
+		// assume qualified names have been presumed before using
+		// presumeQualifiedNames() above, thus `name` must be defined now
 
 		/*
 		 * --- expose essential properties of field ---------------------------
@@ -591,8 +607,8 @@ export default class FormFieldAbstractModel {
 			const { qualifiedNames } = form.sequence;
 			const [ major, minor ] = originalPath;
 
-			if ( !qualifiedNames.has( `${major}.${minor}`.toLowerCase() ) ) {
-				if ( !qualifiedNames.has( `${form.name}.${major}`.toLowerCase() ) ) {
+			if ( !qualifiedNames[`${major}.${minor}`.toLowerCase()] ) {
+				if ( !qualifiedNames[`${form.name}.${major}`.toLowerCase()] ) {
 					throw new TypeError( `invalid dependency on unknown field ${originalPath.join( "." )}` );
 				}
 

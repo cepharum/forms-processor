@@ -33,7 +33,37 @@ import FormFieldAbstractModel from "./abstract";
  */
 export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
+	static presumeQualifiedNames( sequence, formName, fieldDefinition, fieldIndex ) {
+		if ( !fieldDefinition.hasOwnProperty( "name" ) ) {
+			fieldDefinition.name = `group${String( "000" + fieldIndex ).slice( -4 )}`;
+		}
+
+		const list = super.presumeQualifiedNames( sequence, formName, fieldDefinition, fieldIndex );
+
+		const { fields } = fieldDefinition;
+
+		if ( Array.isArray( fields ) ) {
+			const fakeFormName = list[0];
+			const numFields = fields.length;
+
+			for ( let i = 0; i < numFields; i++ ) {
+				const subFieldDefinition = fields[i];
+				const subFieldManager = sequence.selectFieldManager( subFieldDefinition );
+				if ( subFieldManager ) {
+					list.splice( list.length, 0, ...subFieldManager.presumeQualifiedNames( sequence, fakeFormName, subFieldDefinition, i ) );
+				}
+			}
+		}
+
+		return list;
+	}
+
+	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
+		if ( !definition.hasOwnProperty( "name" ) ) {
+			definition.name = `group${String( "000" + fieldIndex ).slice( -4 )}`;
+		}
+
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
 				if ( !Array.isArray( v ) ) {
@@ -267,14 +297,14 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 								input( newValue ) {
 									this.value = newValue;
 
-									const updatedValues = new Array( numFields );
-									for ( let j = 0; j < numFields; j++ ) {
-										if ( j === fieldIndex ) {
-											updatedValues[j] = newValue;
-										} else {
-											updatedValues[j] = fields[j].value;
-										}
+								const updatedValues = new Array( numFields );
+								for ( let j = 0; j < numFields; j++ ) {
+									if ( j === fieldIndex ) {
+										updatedValues[j] = newValue;
+									} else {
+										updatedValues[j] = fields[j].value;
 									}
+								}
 
 									this.$emit( "input", updatedValues );
 								}

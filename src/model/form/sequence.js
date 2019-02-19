@@ -64,19 +64,6 @@ export default class FormSequenceModel {
 			throw new TypeError( "Invalid name of sequence of forms." );
 		}
 
-		const qualifiedNames = new Map();
-
-		for ( let i = 0; i < numDefinedForms; i++ ) {
-			const { name: formName, fields } = sequence[i];
-
-			const numFields = Array.isArray( fields ) ? fields.length : 0;
-			for ( let j = 0; j < numFields; j++ ) {
-				const qualifiedName = `${formName}.${fields[j].name}`;
-
-				qualifiedNames.set( qualifiedName.toLowerCase(), qualifiedName );
-			}
-		}
-
 
 		Object.defineProperties( this, {
 			/**
@@ -215,19 +202,6 @@ export default class FormSequenceModel {
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
 
 			/**
-			 * Maps all-lowercase version of qualified name of every field in
-			 * every form to the actual qualified name of either field.
-			 *
-			 * This is used by FormFieldAbstractModel on qualifying relative
-			 * field names.
-			 *
-			 * @name FormSequenceModel#qualifiedNames
-			 * @property {Map<string,string>}
-			 * @readonly
-			 */
-			qualifiedNames: { value: qualifiedNames },
-
-			/**
 			 * Exposes event bus of current sequence manager.
 			 *
 			 * This event bus is used to emit and listen for events related to
@@ -238,6 +212,48 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			events: { value: new Vue() }
+		} );
+
+
+		const presumedQualifiedNames = {};
+
+		for ( let i = 0; i < numDefinedForms; i++ ) {
+			const { name: _formName, fields } = sequence[i];
+			const formName = _formName.toLowerCase();
+
+			const numFields = Array.isArray( fields ) ? fields.length : 0;
+			for ( let j = 0; j < numFields; j++ ) {
+				const fieldDefinition = fields[j];
+
+				const Manager = this.selectFieldManager( fieldDefinition );
+				if ( Manager ) {
+					const qualifiedNames = Manager.presumeQualifiedNames( this, formName, fieldDefinition, j );
+					if ( Array.isArray( qualifiedNames ) ) {
+						const numQualifiedNames = qualifiedNames.length;
+
+						for ( let k = 0; k < numQualifiedNames; k++ ) {
+							presumedQualifiedNames[qualifiedNames[k]] = true;
+						}
+					}
+				}
+			}
+		}
+
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides dictionary of presumed qualified names of either field
+			 * defined in current sequence.
+			 *
+			 * This is used by FormFieldAbstractModel on qualifying relative
+			 * field names e.g. in terms used in either field's definition. Thus
+			 * qualified names must be collected prematurely.
+			 *
+			 * @name FormSequenceModel#qualifiedNames
+			 * @property {object<string,true>}
+			 * @readonly
+			 */
+			qualifiedNames: { value: presumedQualifiedNames },
 		} );
 
 
@@ -1101,5 +1117,40 @@ export default class FormSequenceModel {
 		processors.splice( write );
 
 		return processors;
+	}
+
+	/**
+	 * Creates manager for field associated w/ provided form.
+	 *
+	 * @param {FormModel} form refers to form created field is going zo belong to
+	 * @param {object} fieldDefinition definition of field to create
+	 * @param {int} fieldIndex index of field in set of containing form's fields
+	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 * @returns {?FormFieldAbstractModel} manager for handling defined field
+	 */
+	createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
+		const Manager = this.selectFieldManager( fieldDefinition );
+		if ( Manager ) {
+			return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
+		}
+
+		console.error( `Missing manager for handling form fields of type ${fieldDefinition.type || "text"}.` ); // eslint-disable-line no-console
+
+		return null;
+	}
+
+	/**
+	 * Selects class implementing manager for type of field described in
+	 * provided definition of a field.
+	 *
+	 * @param {object} fieldDefinition definition of a field
+	 * @return {?class<FormFieldAbstractModel>} implementation of selected type of field, null if type is unknown
+	 */
+	selectFieldManager( fieldDefinition ) {
+		const { type = "text" } = fieldDefinition;
+
+		const normalized = String( type ).trim().toLowerCase();
+
+		return this.registry.fields[normalized] || null;
 	}
 }

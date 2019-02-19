@@ -189,7 +189,7 @@ export default class FormModel {
 			const fieldDefinition = fields[i];
 			const reactiveFieldInfo = reactiveFieldInfos[write] = {};
 
-			const fieldManager = createField( this, sequence, fieldDefinition, write, reactiveFieldInfo );
+			const fieldManager = sequence.createField( this, fieldDefinition, write, reactiveFieldInfo );
 			if ( fieldManager ) {
 				const fieldName = fieldManager.qualifiedName;
 
@@ -442,29 +442,4 @@ export default class FormModel {
 		};
 
 	}
-}
-
-
-/**
- * Creates manager for field associated w/ provided form.
- *
- * @param {FormModel} form refers to form created field is going zo belong to
- * @param {FormSequenceModel} sequence model controlling sequence of forms
- * @param {object} fieldDefinition definition of field to create
- * @param {int} fieldIndex index of field in set of containing form's fields
- * @param {object} reactiveFieldInfo provided object to contain reactive information of field
- * @returns {?FormFieldAbstractModel} manager for handling defined field
- */
-function createField( form, sequence, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
-	const { type = "text" } = fieldDefinition;
-
-	const normalized = String( type ).trim().toLowerCase();
-	const Manager = sequence.registry.fields[normalized];
-	if ( Manager ) {
-		return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
-	}
-
-	console.error( `Missing manager for handling form fields of type ${type}.` ); // eslint-disable-line no-console
-
-	return null;
 }

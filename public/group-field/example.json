@@ -18,12 +18,14 @@
 					"fields": [
 						{
 							"label": "text",
-							"required": true
+							"required": true,
+							"name": "a"
 						},
 						{
 							"label": "checkbox",
 							"type": "checkbox",
-							"required": true
+							"required": true,
+							"name": "b"
 						},
 						{
 							"label": "select",
@@ -33,13 +35,13 @@
 								"2",
 								"3"
 							],
-							"required": true
+							"required": true,
+							"name": "c"
 						}
 					]
 				},
 				{
 					"type": "info",
-					"name": "eagerinfo",
 					"text": "='current value: ' + eager"
 				},
 				{
@@ -52,11 +54,13 @@
 						{
 							"required": true,
 							"suffix": "EUR",
-							"align": "right"
+							"align": "right",
+							"name": "a"
 						},
 						{
 							"type": "checkbox",
-							"required": true
+							"required": true,
+							"name": "b"
 						},
 						{
 							"type": "select",
@@ -65,14 +69,80 @@
 								"2",
 								"3"
 							],
-							"required": true
+							"required": true,
+							"name": "c"
 						}
 					]
 				},
 				{
 					"type": "info",
-					"name": "lazyinfo",
 					"text": "='current value: ' + lazy"
+				},
+				{
+					"label": "Unnamed Group",
+					"type": "group",
+					"required": true,
+					"fields": [
+						{
+							"label": "text",
+							"required": true,
+							"name": "a"
+						},
+						{
+							"label": "checkbox",
+							"type": "checkbox",
+							"required": true,
+							"name": "b"
+						},
+						{
+							"label": "select",
+							"type": "select",
+							"options": [
+								"1",
+								"2",
+								"3"
+							],
+							"required": true,
+							"name": "c"
+						}
+					]
+				},
+				{
+					"label": "Nested Groups",
+					"type": "group",
+					"fields": [
+						{
+							"label": "text",
+							"required": true,
+							"name": "a"
+						},
+						{
+							"type": "group",
+							"fields": [
+								{
+									"label": "checkbox",
+									"type": "checkbox",
+									"required": true,
+									"name": "b"
+								},
+								{
+									"label": "select",
+									"type": "select",
+									"options": [
+										"1",
+										"2",
+										"3"
+									],
+									"required": true,
+									"name": "c"
+								}
+							]
+						}
+					]
+				},
+				{
+					"type": "info",
+					"text": "='current value: ' + form.group0005.group0001.c"
 				}
 			]
 		}
