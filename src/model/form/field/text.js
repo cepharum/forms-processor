@@ -32,6 +32,8 @@ import Pattern from "../utility/pattern";
 import Format from "../utility/format";
 import Data from "../../../service/data";
 
+const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
+
 /**
  * Manages single field of form representing text input.
  */
@@ -167,6 +169,61 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 */
 				return termHandler( value, rawValue => {
 					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
+			},
+
+			reducer( value, _, __, termHandler ) {
+				/**
+				 * Defines optional regular expression used to reduce input prior
+				 * to its eventual validation.
+				 *
+				 * @name FormFieldTextModel#reducer
+				 * @property {?RegExp}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					if ( rawValue == null ) {
+						return null;
+					}
+
+					const stringValue = String( rawValue ).trim();
+					if ( stringValue === "" ) {
+						return null;
+					}
+
+					const match = ptnPatternSyntax.exec( stringValue );
+					if ( match ) {
+						return new RegExp( match[1], match[2] );
+					}
+
+					return new RegExp( stringValue );
+				} );
+			},
+
+			regexp( value, _, __, termHandler ) {
+				/**
+				 * Defines optional regular expression input has to match.
+				 *
+				 * @name FormFieldTextModel#regexp
+				 * @property {?RegExp}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					if ( rawValue == null ) {
+						return null;
+					}
+
+					const stringValue = String( rawValue ).trim();
+					if ( stringValue === "" ) {
+						return null;
+					}
+
+					const match = ptnPatternSyntax.exec( stringValue );
+					if ( match ) {
+						return new RegExp( match[1], match[2] );
+					}
+
+					return new RegExp( stringValue );
 				} );
 			},
 
@@ -344,13 +401,24 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	validate( live ) {
 		const errors = super.validate();
 
-		const value = String( this.value == null ? "" : this.value ).trim();
 
-		if ( this.required && !value.length ) {
-			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		let value = String( this.value == null ? "" : this.value ).trim();
+
+
+		// apply optional reducer to strip off characters to be ignored on validating
+		const { reducer } = this;
+		if ( reducer ) {
+			// https://stackoverflow.com/a/16046903/3182819
+			const numCaptures = ( new RegExp( reducer.source + "|" ) ).exec( "" ).length - 1;
+
+			value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
 		}
 
-		if ( value.length ) {
+
+		// perform basic validations
+		if ( this.required && !value.length ) {
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		} else {
 			if ( this.size.isBelowRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_SHORT" );
 			}
@@ -358,19 +426,32 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			if ( this.size.isAboveRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_LONG" );
 			}
-		}
 
-		let format = this.format;
-		if ( format ) {
-			format = String( format ).trim().toLowerCase();
 
-			if ( typeof Format[format] === "function" ) {
-				const result = Format[format]( value, Boolean( live ), this, { countryCodes: this.countryCodes } );
-				if ( result.errors ) {
-					errors.splice( errors.length, 0, ...result.errors );
+			// check for complying with optionally selected format
+			let { format } = this;
+			if ( format ) {
+				format = String( format ).trim().toLowerCase();
+
+				if ( typeof Format[format] === "function" ) {
+					const result = Format[format]( value, Boolean( live ), this, { countryCodes: this.countryCodes } );
+					if ( result.errors ) {
+						errors.splice( errors.length, 0, ...result.errors );
+					}
+				}
+			}
+
+
+			// check for complying with custom pattern
+			if ( !live ) {
+				const { regexp } = this;
+
+				if ( regexp && !regexp.test( value ) ) {
+					errors.push( "@VALIDATION.PATTERN_MISMATCH" );
 				}
 			}
 		}
+
 
 		return errors;
 	}
