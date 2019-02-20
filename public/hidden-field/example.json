@@ -28,7 +28,8 @@
 				{
 					"type": "info",
 					"name": "output",
-					"text": "The saved full name is **{{fullname || 'not set'}}**."
+					"text": "The saved full name is **{{fullname || 'not set'}}**.",
+					"markdown": true
 				}
 			]
 		}
