@@ -998,7 +998,7 @@ export default class FormFieldAbstractModel {
 						this.required ? "mandatory" : "optional",
 						this.pristine ? "pristine" : "touched",
 						this.label ? "with-label" : "without-label",
-						this.valid ? "valid" : "invalid",
+						this.valid ? "valid" : this.valid == null ? "validity-unknown" : "invalid",
 						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
 						this.showLabels ? "show-labels" : "suppress-labels",

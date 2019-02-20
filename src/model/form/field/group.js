@@ -258,22 +258,26 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 	validate( live ) {
 		const { fields } = this;
 		const numFields = fields.length;
-		const errors = new Array( numFields + 1 );
-		let write = 0;
 
-		errors[write++] = super.validate( live );
+		const errors = super.validate( live );
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const field = fields[i];
 
 			if ( !field.pristine ) {
-				errors[write++] = field.validate( live );
+				const fieldIsValid = field.readValidState( { live } );
+				if ( !fieldIsValid ) {
+					const subErrors = field.errors;
+					const numSubErrors = subErrors.length;
+
+					for ( let j = 0; j < numSubErrors; j++ ) {
+						errors.push( subErrors[j] );
+					}
+				}
 			}
 		}
 
-		errors.splice( write );
-
-		return [].concat( ...errors );
+		return errors;
 	}
 
 	/** @inheritDoc */
