@@ -527,7 +527,7 @@ export default class FormFieldAbstractModel {
 			 * Exposes information on current field being pristine or not.
 			 *
 			 * @note This information is basically read-only. It's possible to
-			 *       write falsy value to explicitly mark field _affected_. This
+			 *       write falsy value to explicitly mark field _touched_. This
 			 *       is implicitly dropping cached information on field's
 			 *       validity.
 			 *
@@ -825,7 +825,7 @@ export default class FormFieldAbstractModel {
 			if ( !data.pristine ) {
 				// don't adjust mark on a pristine field's validity so it won't
 				// be visually reflected in GUI and to ensure it is re-validated
-				// first time after becoming affected
+				// first time after becoming touched
 				data.valid = isValid;
 			}
 
@@ -996,7 +996,7 @@ export default class FormFieldAbstractModel {
 						`nname-${name}`,
 						`qname-${qualifiedName.replace( /\./g, "_" )}`,
 						this.required ? "mandatory" : "optional",
-						this.pristine ? "pristine" : "affected",
+						this.pristine ? "pristine" : "touched",
 						this.label ? "with-label" : "without-label",
 						this.valid ? "valid" : "invalid",
 						this.disabled ? "disabled" : "enabled",
