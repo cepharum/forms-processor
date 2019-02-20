@@ -116,7 +116,9 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @readonly
 				 */
 				return termHandler( value, rawValue => {
-					return rawValue == null ? null : String( rawValue ).trim() || null;
+					const localized = this.selectLocalization( rawValue );
+
+					return localized == null ? null : String( localized ).trim() || null;
 				} );
 			},
 
