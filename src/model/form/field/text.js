@@ -298,7 +298,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 
 				if ( that.placeholder != null ) {
-					domProps.placeholder = that.placeholder;
+					domProps.placeholder = that.placeholder + ( that.required && !that.label ? "*" : "" );
 				}
 
 				elements.push( createElement( "input", {
