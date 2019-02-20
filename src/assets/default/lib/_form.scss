@@ -154,21 +154,11 @@
 		.upload {
 			.dropContainer {
 				margin-top: 0.5rem;
-
-				&.dragOver {
-					background-color: #d9f3ff;
-					outline: 2px dashed rgba(0, 0, 0, 0.54);
-					outline-offset: -7px;
-
-					svg {
-						transform: scale(0.9);
-					}
-				}
-
-				height: 8rem;
-				outline-offset: -2px;
-				outline: 2px dashed rgba(0, 0, 0, 0.54);
-				transition: outline-offset 200ms ease, background-color 200ms;
+				height: 5em;
+				box-sizing: border-box;
+				background-color: rgba(0,0,0,0.025);
+				border: 2px dashed rgba(0, 0, 0, 0.5);
+				transition: border-color 200ms ease, background-color 300ms ease;
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -179,6 +169,14 @@
 					transform: scale(1);
 				}
 
+				&.dragOver {
+					background-color: rgba(0,0,0,0.1);
+					border-color: rgba(0, 0, 0, 0.8);
+
+					svg {
+						transform: scale(1.2);
+					}
+				}
 			}
 
 			.files {

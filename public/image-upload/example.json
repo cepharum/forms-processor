@@ -38,19 +38,21 @@
 				  	"button": "no",
 					"type": "image"
 				},
-			  	{
-					"name": "field5",
-					"label": "wrong display mode",
-				  	"button": "no",
-				  	"previewMode": "fghjk",
-					"type": "image"
-				},
-			  	{
-					"name": "field6",
-					"label": "wrong display mode",
-				  	"button": "no",
-				  	"previewMode": [],
-					"type": "image"
+				{
+					"type": "info",
+					"name": "filecount",
+					"text": "you've selected {{length( field1 )}} file(s) in top-most field"
+				}
+			]
+		},
+		{
+			"name": "step2",
+			"label": "Second Page",
+			"fields": [
+				{
+					"name": "info",
+					"type": "info",
+					"text": "you've selected {{length( field1 )}} file(s) in top-most field"
 				}
 			]
 		}

@@ -39,7 +39,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			size( v ) {
 				/**
-				 * Defines valid range of the combined size of all provided files.
+				 * Defines valid range of the size of either provided files.
 				 *
 				 * @name FormFieldTextModel#size
 				 * @property {Range}
@@ -48,11 +48,22 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				return { value: new Range( v ) };
 			},
 
-			amount( v ) {
+			totalSize( v ) {
 				/**
-				 * Defines valid range of the amount of files allowed.
+				 * Defines valid range of the total size of all provided files.
 				 *
-				 * @name FormFieldTextModel#size
+				 * @name FormFieldTextModel#totalSize
+				 * @property {Range}
+				 * @readonly
+				 */
+				return { value: new Range( v ) };
+			},
+
+			count( v ) {
+				/**
+				 * Defines valid range for the number of files.
+				 *
+				 * @name FormFieldTextModel#count
 				 * @property {Range}
 				 * @readonly
 				 */
@@ -61,10 +72,11 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 			button( v ) {
 				/**
-				 * Defines valid range of the amount of files allowed.
+				 * Indicates whether some button should be provided for
+				 * triggering selection of files for upload.
 				 *
-				 * @name FormFieldTextModel#size
-				 * @property {Range}
+				 * @name FormFieldTextModel#button
+				 * @property {boolean}
 				 * @readonly
 				 */
 				return { value: Data.normalizeToBoolean( v, true ) };
@@ -72,10 +84,11 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 			dropZone( v ) {
 				/**
-				 * Defines valid range of the amount of files allowed.
+				 * Indicates whether some "drop zone" should be provided so the
+				 * user can drag and drop files into for selection.
 				 *
-				 * @name FormFieldTextModel#size
-				 * @property {Range}
+				 * @name FormFieldTextModel#dropZone
+				 * @property {boolean}
 				 * @readonly
 				 */
 				return { value: Data.normalizeToBoolean( v, true ) };
@@ -83,31 +96,96 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 			multiple( v ) {
 				/**
-				 * Defines valid range of the amount of files allowed.
+				 * Indicates if multiple files may be selected at once.
 				 *
-				 * @name FormFieldTextModel#size
-				 * @property {Range}
+				 * @name FormFieldTextModel#multiple
+				 * @property {boolean}
 				 * @readonly
 				 */
 				return { value: Data.normalizeToBoolean( v, true ) };
 			},
 
-			/**
-			 * Generates property descriptor exposing options to choose from in
-			 * list control.
-			 *
-			 * @param {*} definitionValue value of property provided in definition of field
-			 * @param {string} definitionName name of property provided in definition of field
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			uploadLabel( definitionValue = {
-				de: "Datei auswählen",
-				any: "Add File",
-			}, definitionName ) {
-				const localizedValue = this.selectLocalization( definitionValue );
+			uploadLabel( v, _, __, termHandler ) {
+				/**
+				 * Provides label of button eventually triggering upload of
+				 * selected files.
+				 *
+				 * @name FormFieldTextModel#uploadLabel
+				 * @property {string}
+				 * @readonly
+				 */
+				return termHandler( v, rawValue => {
+					const value = rawValue == null ? {
+						de: "Datei auswählen",
+						any: "Add File",
+					} : rawValue;
 
-				return this.createGetter( localizedValue, definitionName );
+					const localized = this.selectLocalization( value );
+
+					return localized == null ? null : String( localized ).trim() || null;
+				} );
+			},
+
+			mimeType( v, _, __, termHandler ) {
+				/**
+				 * Optionally MIME identifiers explicitly granted for upload.
+				 *
+				 * @name FormFieldUploadModel#mimeType
+				 * @property ?string[]
+				 * @readonly
+				 */
+				return termHandler( v, rawValue => {
+					const ptnValidMime = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/;
+					let mimes;
+
+					switch ( typeof rawValue ) {
+						case "string" :
+							mimes = rawValue.split( /\s*,[\s,]*/ );
+							break;
+
+						case "object" :
+							if ( Array.isArray( rawValue ) ) {
+								mimes = rawValue;
+								break;
+							}
+
+							if ( rawValue == null ) {
+								return null;
+							}
+
+							// falls through
+						default :
+							throw new TypeError( "invalid definition of valid MIME types" );
+					}
+
+					const numMimes = mimes.length;
+					const filtered = new Array( numMimes );
+					let write = 0;
+
+					for ( let i = 0; i < numMimes; i++ ) {
+						const mime = mimes[i];
+
+						if ( mime != null ) {
+							const asString = String( mime ).trim();
+
+							if ( asString !== "" ) {
+								if ( ptnValidMime.test( mime ) ) {
+									filtered[write++] = mime;
+								} else {
+									throw new TypeError( `invalid MIME ${mime} in definition of valid MIME types` );
+								}
+							}
+						}
+					}
+
+					if ( write > 0 ) {
+						filtered.splice( write );
+
+						return filtered;
+					}
+
+					return null;
+				} );
 			},
 
 			...customProperties,
@@ -115,132 +193,119 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
-		const that = this;
+	initializeReactive( reactiveFieldInfo ) {
+		super.initializeReactive( reactiveFieldInfo );
 
-		const { form: { readValue }, qualifiedName, mimeType, uploadLabel, button, dropZone, multiple } = that;
+		reactiveFieldInfo.dragOverClass = null;
+	}
+
+	/** @inheritDoc */
+	renderFieldComponent( reactiveFieldInfo ) {
+		const { previewComponent, qualifiedName } = this;
 
 		return {
 			template: `
 				<span class="upload">
 					<div class="files">
-						<preview v-for="(file, index) of files" :file="file"
+						<preview v-for="(file, index) of value" :file="file"
 						:key="file.name + '_'+ file.lastModifiedDate" 
-						@remove="()=> remove(index)"/>
+						@remove="remove(index)"/>
 					</div>
 					<div v-if="dropZone" class="dropContainer" :class="dragOverClass"
-						v-on:dragover="e => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            e.dataTransfer.dropEffect = 'copy';
-                            if(this.dragOverClass !== 'dragOver') this.dragOverClass = 'dragOver';
-                        }"
-                        v-on:dragenter="e => {
-                            if(this.dragOverClass !== 'dragOver') this.dragOverClass = 'dragOver';
-                        }"
-                        v-on:dragleave="e=> {
-                            this.dragOverClass = '';
-                        }"
-                        v-on:dragend="e=> {
-                            this.dragOverClass = '';
-                        }"
-                        v-on:drop="e => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            this.dragOverClass = '';
-                            const files = e.dataTransfer.files;
-                            selectedCallback(files);
-                        }"
+						@dragover="onDragOverDropZone"
+                        @dragenter="onDragEnterDropZone"
+                        @dragleave="onDragLeaveDropZone"
+                        @dragend="onDragEndDropZone"
+                        @drop="onDrop"
 					>
-					<svg width="100%" height="4rem" viewBox="0 0 3 3" version="1.1" xmlns="http://www.w3.org/2000/svg">
+					<svg style="max-width:50%;max-height:50%;" viewBox="0 0 3 3" version="1.1" xmlns="http://www.w3.org/2000/svg">
 						<path d="M0,1l1,0l0,-1l1,0l0,1l1,0l0,1l-1,0l0,1l-1,0l0,-1l-1,0l0,-1Z"/>
 					</svg>
 					</div>
-					<button title="" v-if="button">
+					<button v-if="button" @click="onClickButton">
 						{{uploadLabel}}
-						<input 
+						<input
 							type="file"
 							:multiple="multiple"
 							:id="name"
 							:name="name"
-							:accept="mimeType"
+							:accept="mimeTypeAsString"
+							ref="fileButton"
+							style="visibility:hidden" 
 							@change="fileSelected"/>
 					</button>
 				</span>
 			`,
-			data: () => {
-				return {
-					dragOverClass: "",
-					files: readValue( qualifiedName ) || [],
-					name: qualifiedName,
-				};
-			},
+			data: () => reactiveFieldInfo,
 			components: {
-				preview: that.previewComponent,
+				preview: previewComponent,
 			},
 			computed: {
-				mimeType: {
-					get() {
-						return mimeType;
-					}
+				name: () => qualifiedName,
+				mimeTypeAsString() {
+					return this.mimeType ? this.mimeType.join( "," ) : null;
 				},
-				uploadLabel: {
-					get() {
-						return uploadLabel;
-					}
-				},
-				button: {
-					get() {
-						return button;
-					}
-				},
-				dropZone: {
-					get() {
-						return dropZone;
-					}
-				},
-				multiple: {
-					get() {
-						return multiple;
-					}
-				}
 			},
 			methods: {
 				remove( index ) {
-					this.files.splice( index, 1 );
+					this.value.splice( index, 1 );
 
-					this.$emit( "input", this.files );
+					this.$emit( "input", this.value );
 				},
-				fileSelected( e ) {
-					if ( this.selectedCallback ) {
-						if ( e.target.files ) {
-							this.selectedCallback( e.target.files );
-							e.target.value = "";
-						} else {
-							this.selectedCallback( null );
-						}
+				onClickButton() {
+					this.$refs.fileButton.click();
+				},
+				fileSelected( event ) {
+					if ( event.target.files ) {
+						this.addFiles( event.target.files );
+
+						event.target.value = "";
 					}
 				},
-				selectedCallback( fileArray ) {
-					that.touch();
-
-					if ( !fileArray ) {
-						return;
+				addFiles( files ) {
+					for ( const file of files ) {
+						this.value.push( file );
 					}
 
-					for ( const entry of fileArray ) {
-						this.files.push( that.normalizeValue( entry ).value );
-					}
+					this.$emit( "input", this.value );
+				},
+				onDragOverDropZone( event ) {
+					event.stopPropagation();
+					event.preventDefault();
 
-					this.$emit( "input", this.files );
+					event.dataTransfer.dropEffect = "copy";
+
+					if ( this.dragOverClass !== "dragOver" ) {
+						this.dragOverClass = "dragOver";
+					}
+				},
+				onDragEnterDropZone() {
+					if ( this.dragOverClass !== "dragOver" ) {
+						this.dragOverClass = "dragOver";
+					}
+				},
+				onDragLeaveDropZone() {
+					this.dragOverClass = "";
+				},
+				onDragEndDropZone() {
+					this.dragOverClass = "";
+				},
+				onDrop( event ) {
+					event.stopPropagation();
+					event.preventDefault();
+
+					this.dragOverClass = "";
+
+					this.addFiles( event.dataTransfer.files );
 				},
 			},
 		};
 	}
 
 	/**
-	 * renders a Preview of the uploaded Files
-	 * @return {{}} Vue Component that renders a preview for Files
+	 * Renders preview of single file selected for upload.
+	 *
+	 * @return {object} description of Vue component presenting preview of file
 	 */
 	get previewComponent() {
 		return {
@@ -260,49 +325,69 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	normalizeValue( value ) {
+		let normalized;
+
+		if ( value == null ) {
+			normalized = [];
+		} else if ( Array.isArray( value ) ) {
+			normalized = value;
+		} else {
+			normalized = [value];
+		}
+
 		return {
-			value,
-			formattedValue: value,
+			value: normalized,
+			formattedValue: normalized,
 		};
 	}
 
 	/** @inheritDoc */
 	validate() {
 		const errors = super.validate();
-		const { value, mimeType } = this;
+		const { value: files, mimeType } = this;
+		const numFiles = files.length;
 
-		if ( this.required && !value.length ) {
+		if ( this.required && !numFiles ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
-		}
+		} else {
+			if ( mimeType ) {
+				if ( files.some( el => !mimeType.some( type => el.type === type ) ) ) {
+					errors.push( "@VALIDATION.MIME_MISMATCH" );
+				}
+			}
 
-		if ( mimeType ) {
-			let requiredTyes = mimeType.split( "," );
-			requiredTyes = requiredTyes.map( e => e.trim() );
-			if ( value.some( el => !requiredTyes.some( type => el.type === type ) ) ) {
-				errors.push( "@VALIDATION.WRONG_TYPE" );
+			let totalSize = 0;
+			for ( let i = 0; i < numFiles; i++ ) {
+				const { size } = files[i];
+
+				if ( this.size.isBelowRange( size ) ) {
+					errors.push( "@VALIDATION.TOO_SMALL_FILE" );
+				}
+
+				if ( this.size.isAboveRange( size ) ) {
+					errors.push( "@VALIDATION.TOO_BIG_FILE" );
+				}
+
+				totalSize += size;
+			}
+
+			if ( this.totalSize.isBelowRange( totalSize ) ) {
+				errors.push( "@VALIDATION.TOO_SMALL_FILES_TOTAL" );
+			}
+
+			if ( this.totalSize.isAboveRange( totalSize ) ) {
+				errors.push( "@VALIDATION.TOO_BIG_FILES_TOTAL" );
+			}
+
+			if ( this.count.isBelowRange( files.length ) ) {
+				errors.push( "@VALIDATION.TOO_LITTLE_FILES" );
+			}
+
+			if ( this.count.isAboveRange( files.length ) ) {
+				errors.push( "@VALIDATION.TOO_MANY_FILES" );
 			}
 		}
 
-		const totalSize = value.reduce( ( a, b ) => a + Number( b.size ), 0 );
-		if ( totalSize && this.size ) {
-			if ( this.size.isBelowRange( totalSize ) ) {
-				errors.push( "@VALIDATION.TOO_SHORT" );
-			}
-
-			if ( this.size.isAboveRange( totalSize ) ) {
-				errors.push( "@VALIDATION.TOO_LONG" );
-			}
-		}
-
-		if ( value.length && this.amount ) {
-			if ( this.amount.isBelowRange( value.length ) ) {
-				errors.push( "@VALIDATION.TOO_LITTLE" );
-			}
-
-			if ( this.amount.isAboveRange( value.length ) ) {
-				errors.push( "@VALIDATION.TOO_MANY" );
-			}
-		}
 		return errors;
 	}
 }

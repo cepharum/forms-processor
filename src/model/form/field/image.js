@@ -26,65 +26,51 @@
  * @author: cepharum
  */
 
-import upload from "./upload";
+import FormFieldUploadModel from "./upload";
 
 /**
  * Manages single field of form representing image input.
  */
-export default class image extends upload {
+export default class FormFieldImageUploadModel extends FormFieldUploadModel {
 	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
+		if ( !definition.hasOwnProperty( "mimeType" ) ) {
+			definition.mimeType = [ "image/jpeg", "image/png" ];
+		}
+
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-
-			/**
-			 * sets mimeType to allow only images
-			 *
-			 * @param {*} definitionValue value of property provided in definition of field
-			 * @param {string} definitionName name of property provided in definition of field
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			mimeType( definitionValue = "image/jpeg, image/png", definitionName ) {
-				return this.createGetter( definitionValue, definitionName );
-			},
-
-			/**
-			 * Generates property descriptor exposing options to choose from in
-			 * list control.
-			 *
-			 * @param {*} v value of property provided in definition of field
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			previewMode( v = "foreground" ) {
-				// const warning = `previewMode encountered, fallback to "foreground":`;
-				if( typeof v !== "string" ) {
-				    //	console.warn( `typeWarning ${warning}`, v );
-					return {
-						value: "foreground",
-					};
+			previewMode( v ) {
+				/**
+				 * Defines whether showing preview of image(s) selected for upload
+				 * by using background image (via CSS styling) or by <img> HTML
+				 * element ("foreground").
+				 *
+				 * @name FormFieldImageUploadModel#previewMode
+				 * @property string
+				 * @readonly
+				 */
+				if ( v == null ) {
+					return { value: "foreground" };
 				}
-				let value = "foreground";
-				switch ( v.toLowerCase().trim() ) {
-					case "background" :
-						value = "background";
-						break;
-					case "foreground" :
-						break;
-					default :
-						// console.warn( `invalid ${warning}`, v );
+
+				if ( typeof v === "string" ) {
+					switch ( v.toLowerCase().trim() ) {
+						case "background" :
+							return { value: "background" };
+
+						case "foreground" :
+							return { value: "foreground" };
+					}
 				}
-				return { value };
+
+				throw new TypeError( "invalid definition of preview mode" );
 			},
 
 			...customProperties,
 		}, container );
 	}
 
-	/**
-	 * renders a Preview of the uploaded Files
-	 * @return {{}} Vue Component that renders a preview for Files
-	 */
+	/** @inheritDoc */
 	get previewComponent() {
 		const that = this;
 		const { previewMode } = that;

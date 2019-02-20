@@ -1,0 +1,36 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "sole",
+			"label": "Sole Form",
+			"fields": [
+				{
+					"name": "digits",
+					"label": "Digits Only",
+					"regexp": "^\\d*$",
+					"required": true,
+					"hint": "accepts digits, only"
+				},
+				{
+					"name": "digits-no-space",
+					"reducer": "/\\s+/g",
+					"regexp": "^[0-9]*$",
+					"hint": "accepts digits, only, but ignores whitespace",
+					"size": "3-"
+				},
+				{
+					"name": "letters",
+					"label": "Latin Letters Only",
+					"regexp": "/^[a-z]*$/i",
+					"required": true,
+					"hint": "accepts latin letters, only"
+				}
+			]
+		}
+	]
+}
