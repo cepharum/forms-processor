@@ -340,6 +340,27 @@ export default class FormModel {
 					return _fields[0] || null;
 				},
 			},
+
+			/**
+			 * Indicates if form has one or more required fields.
+			 *
+			 * @name FormModel#hasRequiredFields
+			 * @property boolean
+			 * @readonly
+			 */
+			hasRequiredFields: {
+				get: () => {
+					const _numFields = fieldManagers.length;
+
+					for ( let i = 0; i < _numFields; i++ ) {
+						if ( fieldManagers[i].required ) {
+							return true;
+						}
+					}
+
+					return false;
+				}
+			},
 		} );
 
 		Object.defineProperties( this, {
@@ -400,15 +421,14 @@ export default class FormModel {
 	 * @returns {{render:function()}} description of Vue component
 	 */
 	renderComponent( formInfo ) {
-		const fields = this.fields;
+		const that = this;
+		const { fields, sequence, originalName, name, title, description } = this;
 		const numFields = fields.length;
 		const components = new Array( numFields );
 
 		for ( let i = 0; i < numFields; i++ ) {
 			components[i] = fields[i].component;
 		}
-
-		const { originalName, name, title, description } = this;
 
 		return {
 			data() {
@@ -428,16 +448,48 @@ export default class FormModel {
 					this.valid ? "valid" : "invalid",
 				];
 
+				const blocks = [
+					createElement( "h2", title ),
+					createElement( "p", description ),
+				];
+
+				const mode = sequence.mode.view.explainRequired;
+				switch ( mode ) {
+					default :
+						if ( !mode ) {
+							break;
+						}
+
+						if ( !that.hasRequiredFields ) {
+							break;
+						}
+
+						// falls through
+					case "always" :
+						blocks.push(
+							createElement( "div", {
+								class: "auxiliary-info",
+							}, [
+								createElement( "div", {
+									class: "explain-required",
+								}, [
+									createElement( "span", { class: "mandatory" }, "*" ),
+									createElement( "span", { class: "explanation" }, L10n.translate( sequence.translations, "COMMON.EXPLAIN_REQUIRED" ) ),
+								] ),
+							] ),
+						);
+				}
+
+				blocks.push(
+					createElement( "div", {
+						class: "fields",
+					}, elements )
+				);
+
 				return createElement( "div", {
 					class: classes.join( " " ),
 					"data-name": name,
-				}, [
-					createElement( "h2", title ),
-					createElement( "p", description ),
-					createElement( "div", {
-						class: "fields",
-					}, elements ),
-				] );
+				}, blocks );
 			},
 		};
 

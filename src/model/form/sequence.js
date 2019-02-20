@@ -38,16 +38,22 @@ import Data from "@/service/data";
  */
 export default class FormSequenceModel {
 	/**
+	 * @typedef {object} AuxiliaryInfo
+	 * @param {function():string} locale callback invoked to fetch tag of current locale
+	 * @param {function():LocaleTranslationTree} translations callback invoked to fetch map of current translations
+	 */
+
+	/**
 	 * @param {string} id permanently unique ID of current sequence of forms
 	 * @param {object} definition definition of a sequence of forms
 	 * @param {FormsAPIExtensionsRegistry} registry registry of available types of fields and input processors
 	 * @param {function(string):*} read reads value of a named field
-	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
+	 * @param {AuxiliaryInfo} auxiliary provides additional information
 	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
 	 * @param {function(string,*)} write adjusts value of a named field
 	 * @param {function():object<string,*>} data provides up-to-date reference on (read-only) storage managed by `read`/`write`
 	 */
-	constructor( { id, name }, definition, registry, { read, write, data }, localeFn ) {
+	constructor( { id, name }, definition, registry, { read, write, data }, auxiliary ) {
 		const { mode = {}, sequence = [], processors = {} } = definition;
 
 		const numDefinedForms = sequence.length;
@@ -176,7 +182,17 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			locale: { get: localeFn },
+			locale: { get: auxiliary.locale },
+
+			/**
+			 * Exposes current map of translations statically defined as part of
+			 * forms processor.
+			 *
+			 * @name FormSequenceModel#translations
+			 * @property {LocaleTranslationTree}
+			 * @readonly
+			 */
+			translations: { get: auxiliary.translations },
 
 			/**
 			 * Exposes registries of custom types of fields and custom input
@@ -573,7 +589,10 @@ export default class FormSequenceModel {
 			mode.view = {};
 		}
 
-		mode.view.progress = Data.normalizeToBoolean( mode.view.progress, true );
+		const { view } = mode;
+
+		view.progress = Data.normalizeToBoolean( view.progress, true );
+		view.explainRequired = String( view.explainRequired ).trim().toLowerCase() === "always" ? "always" : Data.normalizeToBoolean( view.explainRequired, true );
 
 		mode.navigation = String( mode.navigation || "auto" ).trim().toLowerCase();
 

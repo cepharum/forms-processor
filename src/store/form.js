@@ -73,7 +73,10 @@ export default {
 				write: ( key, value ) => dispatch( "writeInput", { name: key, value } ),
 				read: getters.readInput,
 				data: () => state.input,
-			}, () => rootGetters.locale );
+			}, {
+				locale: () => rootGetters.locale,
+				translations: () => rootGetters.l10n,
+			} );
 
 			commit( "define", {
 				id: _id,

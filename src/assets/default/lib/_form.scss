@@ -1,4 +1,26 @@
+@mixin mandatoryMark {
+	color: red;
+	font-weight: bold;
+	display: inline-block;
+	transform: scale(1.5);
+	padding: 0 0.1em;
+}
+
 .form {
+	.auxiliary-info {
+		margin: 1em 0;
+
+		.explain-required {
+			.mandatory {
+				@include mandatoryMark;
+			}
+
+			.explanation:before {
+				content: " ";
+			}
+		}
+	}
+
 	.field {
 		position: relative;
 		overflow: hidden;
@@ -18,11 +40,7 @@
 			padding-right: 0.5em;
 
 			.mandatory {
-				color: red;
-				font-weight: bold;
-				display: inline-block;
-				transform: scale(1.5);
-				padding: 0 0.1em;
+				@include mandatoryMark;
 			}
 
 			label:after {

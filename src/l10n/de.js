@@ -38,6 +38,9 @@ export default function() {
 			WAIT_PROMPT: "Bitte warten.",
 			WAIT_EXPLANATION: "Das Formular wird geladen.",
 		},
+		COMMON: {
+			EXPLAIN_REQUIRED: "= erforderliche Angabe"
+		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",

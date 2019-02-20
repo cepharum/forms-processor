@@ -38,6 +38,9 @@ export default function() {
 			WAIT_PROMPT: "Please wait!",
 			WAIT_EXPLANATION: "Loading Form ...",
 		},
+		COMMON: {
+			EXPLAIN_REQUIRED: "= required information"
+		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Validation failed unexpectedly.",
 			MISSING_REQUIRED: "This information is required.",
