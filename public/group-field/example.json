@@ -143,6 +143,37 @@
 				{
 					"type": "info",
 					"text": "='current value: ' + form.group0005.group0001.c"
+				},
+				{
+					"type": "radio",
+					"name": "showmore",
+					"options": [
+						{
+							"value": "no",
+							"label": "that's it."
+						},
+						{
+							"value": "yes",
+							"label": "show another group"
+						}
+					]
+				},
+				{
+					"type": "group",
+					"name": "visiblityControlled",
+					"visible": "=form.showmore==\"yes\"",
+					"fields": [
+						{
+							"name": "first",
+							"placeholder": "first part",
+							"required": "=form.showmore=='yes'"
+						},
+						{
+							"name": "second",
+							"placeholder": "second part",
+							"required": "=form.showmore=='yes'"
+						}
+					]
 				}
 			]
 		}

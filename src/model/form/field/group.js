@@ -242,7 +242,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 		const { fields } = this;
 		const numFields = fields.length;
 
-		let validityChanged = false;
+		let validityChanged = super.onUpdateValue( newValue, updatedFieldName );
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const field = fields[i];
