@@ -145,7 +145,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 		return {
 			template: `
-				<span class="checkbox options" :class="classes">
+				<span class="checkbox options" :class="fieldClasses">
 					<span class="option" :class="{checked:isSet(item.value), ['no-'+(index+1)]: true}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
@@ -164,7 +164,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 			`,
 			data: () => reactiveFieldInfo,
 			computed: {
-				classes() {
+				fieldClasses() {
 					const multi = this.supportsMultiSelection;
 					const numOptions = this.options.length;
 
