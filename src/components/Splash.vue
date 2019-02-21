@@ -20,9 +20,13 @@ import Data from "@/service/data";
 import FormFieldAbstractModel from "../model/form/field/abstract";
 import FormProcessorAbstractModel from "../model/form/processor/abstract";
 
+import AppInfo from "../../package";
+
 export default {
 	name: "Splash",
 	created() {
+		console.debug( `forms-processor ${AppInfo.version}` ); // eslint-disable-line no-console
+
 		const configuration = this.$root.$options.form;
 
 		Promise.resolve( this.$store.dispatch( "l10n/select" ) )
