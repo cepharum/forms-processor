@@ -149,11 +149,14 @@ export default class FormModel {
 			/**
 			 * Provides variable space of all forms in a sequence of forms.
 			 *
+			 * @deprecated Due to using getters accessing `form.sequence.data`
+			 *             should be preferred to reduce load on function stack.
+			 *
 			 * @name FormModel#data
 			 * @property {object}
 			 * @readonly
 			 */
-			data: { value: sequence.data },
+			data: { get: () => sequence.data },
 
 			/**
 			 * Reads value of a field selected by its name from storage.
@@ -174,7 +177,34 @@ export default class FormModel {
 			writeValue: { value: sequence.writeValue },
 		} );
 
-		reactiveFormInfo.fields = new Array( fields.length );
+
+		// create manager instances for every field of form
+		const numFields = fields.length;
+		const fieldManagers = new Array( numFields );
+		const reactiveFieldInfos = new Array( numFields );
+		const names = {};
+		let write = 0;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldDefinition = fields[i];
+			const reactiveFieldInfo = reactiveFieldInfos[write] = {};
+
+			const fieldManager = sequence.createField( this, fieldDefinition, write, reactiveFieldInfo );
+			if ( fieldManager ) {
+				const fieldName = fieldManager.qualifiedName;
+
+				if ( names.hasOwnProperty( fieldName ) ) {
+					throw new TypeError( `double definition of field named "${fieldName}"` );
+				}
+
+				names[fieldName] = true;
+
+				fieldManagers[write++] = fieldManager;
+			}
+		}
+
+		fieldManagers.splice( write );
+		reactiveFieldInfos.splice( write );
 
 		// define properties including code relying on properties defined before
 		Object.defineProperties( this, {
@@ -185,12 +215,10 @@ export default class FormModel {
 			 * @property {FormFieldAbstractModel[]}
 			 * @readonly
 			 */
-			fields: { value: fields.map( ( field, fieldIndex ) => {
-				const reactiveFieldInfo = reactiveFormInfo.fields[fieldIndex] = {};
-				return createField( this, sequence, field, fieldIndex, reactiveFieldInfo );
-			} ).filter( i => i ) },
+			fields: { value: fieldManagers },
 		} );
 
+		reactiveFormInfo.fields = reactiveFieldInfos;
 		reactiveFormInfo.valid = null;
 		reactiveFormInfo.pristine = true;
 		reactiveFormInfo.finished = false;
@@ -225,11 +253,12 @@ export default class FormModel {
 			 */
 			pristine: {
 				get: () => {
-					const numFields = this.fields.length;
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
 					let pristine = true;
 
-					for ( let i = 0; i < numFields; i++ ) {
-						const field = this.fields[i];
+					for ( let i = 0; i < _numFields; i++ ) {
+						const field = _fields[i];
 
 						if ( !field.pristine ) {
 							pristine = false;
@@ -248,9 +277,11 @@ export default class FormModel {
 						throw new TypeError( `Invalid request for marking form #${this.index} as pristine rejected.` );
 					}
 
-					const numFields = this.fields.length;
-					for ( let i = 0; i < numFields; i++ ) {
-						this.fields[i].pristine = false;
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
+
+					for ( let i = 0; i < _numFields; i++ ) {
+						_fields[i].touch( true );
 					}
 				},
 			},
@@ -295,19 +326,40 @@ export default class FormModel {
 			 */
 			autoFocusField: {
 				get: () => {
-					const fieldInstances = this.fields;
-					const numFields = fieldInstances.length;
+					const { fields: _fields } = this;
+					const _numFields = _fields.length;
 
-					for ( let i = 0; i < numFields; i++ ) {
-						const field = fieldInstances[i];
+					for ( let i = 0; i < _numFields; i++ ) {
+						const field = _fields[i];
 
 						if ( !field.valid ) {
 							return field;
 						}
 					}
 
-					return fieldInstances[0] || null;
+					return _fields[0] || null;
 				},
+			},
+
+			/**
+			 * Indicates if form has one or more required fields.
+			 *
+			 * @name FormModel#hasRequiredFields
+			 * @property boolean
+			 * @readonly
+			 */
+			hasRequiredFields: {
+				get: () => {
+					const _numFields = fieldManagers.length;
+
+					for ( let i = 0; i < _numFields; i++ ) {
+						if ( fieldManagers[i].required ) {
+							return true;
+						}
+					}
+
+					return false;
+				}
 			},
 		} );
 
@@ -369,15 +421,14 @@ export default class FormModel {
 	 * @returns {{render:function()}} description of Vue component
 	 */
 	renderComponent( formInfo ) {
-		const fields = this.fields;
+		const that = this;
+		const { fields, sequence, originalName, name, title, description } = this;
 		const numFields = fields.length;
 		const components = new Array( numFields );
 
 		for ( let i = 0; i < numFields; i++ ) {
 			components[i] = fields[i].component;
 		}
-
-		const { originalName, name, title, description } = this;
 
 		return {
 			data() {
@@ -393,47 +444,59 @@ export default class FormModel {
 					"form",
 					`form-name-${originalName}`,
 					`form-nname-${name}`,
-					this.pristine ? "pristine" : "affected",
+					this.pristine ? "pristine" : "touched",
 					this.valid ? "valid" : "invalid",
 				];
+
+				const blocks = [];
+
+				if ( String( title ).trim().length > 0 ) {
+					blocks.push( createElement( "h2", title ) );
+				}
+
+				if ( String( description ).trim().length > 0 ) {
+					blocks.push( createElement( "p", description ) );
+				}
+
+				const mode = sequence.mode.view.explainRequired;
+				switch ( mode ) {
+					default :
+						if ( !mode ) {
+							break;
+						}
+
+						if ( !that.hasRequiredFields ) {
+							break;
+						}
+
+						// falls through
+					case "always" :
+						blocks.push(
+							createElement( "div", {
+								class: "auxiliary-info",
+							}, [
+								createElement( "div", {
+									class: "explain-required",
+								}, [
+									createElement( "span", { class: "mandatory" }, "*" ),
+									createElement( "span", { class: "explanation" }, L10n.translate( sequence.translations, "COMMON.EXPLAIN_REQUIRED" ) ),
+								] ),
+							] ),
+						);
+				}
+
+				blocks.push(
+					createElement( "div", {
+						class: "fields",
+					}, elements )
+				);
 
 				return createElement( "div", {
 					class: classes.join( " " ),
 					"data-name": name,
-				}, [
-					createElement( "h2", title ),
-					createElement( "p", description ),
-					createElement( "div", {
-						class: "fields",
-					}, elements ),
-				] );
+				}, blocks );
 			},
 		};
 
 	}
-}
-
-
-/**
- * Creates manager for field associated w/ provided form.
- *
- * @param {FormModel} form refers to form created field is going zo belong to
- * @param {FormSequenceModel} sequence model controlling sequence of forms
- * @param {object} fieldDefinition definition of field to create
- * @param {int} fieldIndex index of field in set of containing form's fields
- * @param {object} reactiveFieldInfo provided object to contain reactive information of field
- * @returns {?FormFieldAbstractModel} manager for handling defined field
- */
-function createField( form, sequence, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
-	const { type = "text" } = fieldDefinition;
-
-	const normalized = String( type ).trim().toLowerCase();
-	const Manager = sequence.registry.fields[normalized];
-	if ( Manager ) {
-		return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
-	}
-
-	console.error( `Missing manager for handling form fields of type ${type}.` ); // eslint-disable-line no-console
-
-	return null;
 }

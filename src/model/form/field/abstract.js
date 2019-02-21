@@ -26,11 +26,11 @@
  * @author: cepharum
  */
 
-import { Processor } from "simple-terms";
-
-import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
+import CompileTerm from "../utility/process";
+import { Processor } from "simple-terms";
+import Markdown from "../utility/markdown";
 
 const termCache = new Map();
 
@@ -44,13 +44,6 @@ const defaultProperties = {
 	visible: "true",
 	type: "text",
 };
-
-/**
- * Matches definition of a binding occurring in a property's value.
- *
- * @type {RegExp}
- */
-const ptnBinding = /({{[^}]+}})/;
 
 /**
  * Lists reserved names of properties that mustn't be commonly processed
@@ -72,6 +65,18 @@ const reserved = [
 	"valid",
 	"errors",
 ];
+
+/**
+ * Lists names of properties that mustn't be processed deferredly so they can
+ * access non-deferred properties during processing.
+ *
+ * @type {string[]}
+ */
+const deferredProperties = [
+	"initial",
+];
+
+let unnamedCounter = 0;
 
 
 
@@ -153,7 +158,29 @@ export default class FormFieldAbstractModel {
 	 * @returns {boolean} true if fields of this type are generating input data
 	 */
 	static get isInteractive() {
-		return false;
+		return true;
+	}
+
+	/**
+	 * Generates presumed list of qualified names a defined field of current
+	 * type is expected to cover.
+	 *
+	 * @param {FormSequenceModel} sequence refers to manager of sequence fields will be part of
+	 * @param {string} formName normalized name of form defined field will be part of
+	 * @param {object} fieldDefinition definition of field
+	 * @param {int} fieldIndex numeric index of field in its containing form's set of fields
+	 * @return {string[]} presumed list of qualified names in context of defined field
+	 */
+	static presumeQualifiedNames( sequence, formName, fieldDefinition, fieldIndex ) { // eslint-disable-line no-unused-vars
+		if ( !fieldDefinition.name ) {
+			if ( this.isInteractive ) {
+				throw new TypeError( "Missing field name in definition." );
+			}
+
+			fieldDefinition.name = `unnamed${String( "000" + ++unnamedCounter ).slice( -4 )}`;
+		}
+
+		return [`${formName}.${String( fieldDefinition.name ).trim().toLowerCase()}`];
 	}
 
 	/**
@@ -162,13 +189,13 @@ export default class FormFieldAbstractModel {
 	 * @param {int} fieldIndex index of field in set of containing form's fields
 	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
 	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
+	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {} ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		const { name } = definition;
-		if ( !name ) {
-			throw new TypeError( "Missing field name in definition." );
-		}
 
+		// assume qualified names have been presumed before using
+		// presumeQualifiedNames() above, thus `name` must be defined now
 
 		/*
 		 * --- expose essential properties of field ---------------------------
@@ -178,6 +205,14 @@ export default class FormFieldAbstractModel {
 		const normalizedName = originalName.toLowerCase();
 		const formName = form.name;
 		const qualifiedName = `${formName}.${normalizedName}`;
+
+		// prepare provided variable space for reactive data of current field's component
+		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.valid =
+		reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = reactiveFieldInfo.label =
+		reactiveFieldInfo.hint = reactiveFieldInfo.disabled = null;
+		reactiveFieldInfo.pristine = true;
+		reactiveFieldInfo.errors = [];
+
 
 		Object.defineProperties( this, {
 			/**
@@ -238,11 +273,20 @@ export default class FormFieldAbstractModel {
 			 *
 			 * @name FormFieldAbstractModel#value
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
+			 * @readonly
 			 */
 			value: this.constructor.isInteractive ? {
 				get: () => form.readValue( qualifiedName ),
-				set: value => form.writeValue( qualifiedName, value ),
 			} : { value: undefined },
+
+			/**
+			 * Exposes any field containing current one.
+			 *
+			 * @name FormFieldAbstractModel#container
+			 * @property {?FormFieldAbstractModel}
+			 * @readonly
+			 */
+			container: { value: container || null },
 		} );
 
 
@@ -292,7 +336,7 @@ export default class FormFieldAbstractModel {
 				value: ( value, key, data = null, normalizer = null ) => {
 					return handleComputableValue( value, key,
 						data || reactiveFieldInfo,
-						normalizer || ( v => this.constructor.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
+						normalizer || ( v => this.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
 				},
 			},
 		} );
@@ -317,7 +361,7 @@ export default class FormFieldAbstractModel {
 						break;
 
 					default :
-						if ( reserved.indexOf( propertyName ) < 0 ) {
+						if ( reserved.indexOf( propertyName ) < 0 && deferredProperties.indexOf( propertyName ) < 0 ) {
 							// handle non-reserved properties of definition in a common way
 
 							if ( customProperties.hasOwnProperty( propertyName ) ) {
@@ -329,10 +373,17 @@ export default class FormFieldAbstractModel {
 									handleCustomProperty.call( this, descriptor, propertyValue, propertyName );
 								}
 							} else {
-								propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+								switch ( propertyName ) {
+									case "suppress" :
+										break;
+
+									default :
+										propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+								}
+
 								if ( propertyValue != null ) {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
-										reactiveFieldInfo, v => this.constructor.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+										reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 								}
 							}
 						}
@@ -357,6 +408,31 @@ export default class FormFieldAbstractModel {
 		}
 
 		Object.defineProperties( this, getters );
+
+
+
+		// handle some property definitions deferredly
+		const deferredGetters = {};
+
+		const numDeferredProperties = deferredProperties.length;
+		for ( let i = 0; i < numDeferredProperties; i++ ) {
+			const propertyName = deferredProperties[i];
+			let propertyValue = qualifiedDefinition[propertyName];
+
+			switch ( propertyName ) {
+				default :
+					propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+					if ( propertyValue == null ) {
+						deferredGetters[propertyName] = { value: null };
+					} else {
+						deferredGetters[propertyName] = handleComputableValue( propertyValue, propertyName,
+							reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
+					}
+			}
+		}
+
+		Object.defineProperties( this, deferredGetters );
+
 
 
 		/*
@@ -392,18 +468,6 @@ export default class FormFieldAbstractModel {
 		let component = null;
 
 
-		// qualify provided variable space to be reactive data of current field
-		// in context of containing form's reactive data
-		reactiveFieldInfo.required = null;
-		reactiveFieldInfo.visible = null;
-		reactiveFieldInfo.pristine = true;
-		reactiveFieldInfo.valid = null;
-		reactiveFieldInfo.value = null;
-		reactiveFieldInfo.label = null;
-		reactiveFieldInfo.hint = null;
-		reactiveFieldInfo.errors = [];
-
-
 		Object.defineProperties( this, {
 			/**
 			 * Lists paths of variables this field depends on due to terms used
@@ -413,7 +477,21 @@ export default class FormFieldAbstractModel {
 			 * @property {Array<string[]>}
 			 * @readonly
 			 */
-			dependsOn: { value: Object.keys( collectedDependencies ) },
+			dependsOn: { get: () => {
+				const localDeps = Object.keys( collectedDependencies );
+				const customDeps = this.listDependencies() || [];
+				const numCustomDeps = customDeps.length;
+
+				for ( let i = 0; i < numCustomDeps; i++ ) {
+					const customDep = customDeps[i];
+
+					if ( localDeps.indexOf( customDep ) < 0 ) {
+						localDeps.push( customDep );
+					}
+				}
+
+				return localDeps;
+			}, },
 
 			/**
 			 * Lists names of fields depending on current one's value/state.
@@ -449,7 +527,7 @@ export default class FormFieldAbstractModel {
 			 * Exposes information on current field being pristine or not.
 			 *
 			 * @note This information is basically read-only. It's possible to
-			 *       write falsy value to explicitly mark field _affected_. This
+			 *       write falsy value to explicitly mark field _touched_. This
 			 *       is implicitly dropping cached information on field's
 			 *       validity.
 			 *
@@ -465,6 +543,10 @@ export default class FormFieldAbstractModel {
 
 					reactiveFieldInfo.pristine = false;
 					reactiveFieldInfo.valid = null;
+
+					if ( container ) {
+						container.touch();
+					}
 				},
 			},
 
@@ -485,18 +567,7 @@ export default class FormFieldAbstractModel {
 			 * @property {object<string,*>}
 			 * @readonly
 			 */
-			$data: {
-				get: () => {
-					form.writeValue( qualifiedName, this.initializeReactive( reactiveFieldInfo ) );
-
-					Object.defineProperties( this, {
-						$data: { value: reactiveFieldInfo },
-					} );
-
-					return reactiveFieldInfo;
-				},
-				configurable: true,
-			},
+			$data: { value: reactiveFieldInfo },
 
 			/**
 			 * Provides description of component representing current field.
@@ -518,6 +589,9 @@ export default class FormFieldAbstractModel {
 		} );
 
 
+		const that = this;
+
+
 		/**
 		 * Resolves variable name found in terms used in definition converting
 		 * local references into global ones using a field's qualified name.
@@ -533,8 +607,8 @@ export default class FormFieldAbstractModel {
 			const { qualifiedNames } = form.sequence;
 			const [ major, minor ] = originalPath;
 
-			if ( !qualifiedNames.has( `${major}.${minor}`.toLowerCase() ) ) {
-				if ( !qualifiedNames.has( `${form.name}.${major}`.toLowerCase() ) ) {
+			if ( !qualifiedNames[`${major}.${minor}`.toLowerCase()] ) {
+				if ( !qualifiedNames[`${form.name}.${major}`.toLowerCase()] ) {
 					throw new TypeError( `invalid dependency on unknown field ${originalPath.join( "." )}` );
 				}
 
@@ -556,15 +630,83 @@ export default class FormFieldAbstractModel {
 		 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
-			const trimmedValue = value == null ? "" : String( value ).trim();
-			if ( trimmedValue.charAt( 0 ) === "=" ) {
-				// whole value contains term
-				// -> deliver evaluator
-				const term = new Processor( trimmedValue.slice( 1 ), {}, termCache, resolveVariableName );
-				terms.push( term );
+			const customFunctions = {
+				lookup( fieldValue, fieldName, fieldProperty = "options" ) {
+					const fieldKey = fieldName.toLowerCase();
+					const field = form.sequence.fields[fieldKey];
+					const map = field[fieldProperty];
+
+					if ( Array.isArray( map ) ) {
+						for ( let index = 0, length = map.length; index < length; index++ ) {
+							const entry = map[index];
+
+							if ( entry.value === fieldValue ) {
+								return entry.label;
+							}
+						}
+					}
+
+					if ( typeof map === "object" ) {
+						return map.label;
+					}
+
+					return map;
+				},
+
+				localize( input ) {
+					return that.selectLocalization( input );
+				},
+			};
+
+
+			const compiled = CompileTerm.compileString( value, customFunctions, termCache, resolveVariableName );
+
+			if ( Array.isArray( compiled ) ) {
+				// value _might contain_ one or more computable terms
+				const numSlices = compiled.length;
+				let hasTerm = false;
+
+				for ( let i = 0; i < numSlices; i++ ) {
+					const slice = compiled[i];
+
+					if ( slice instanceof Processor ) {
+						terms.push( slice );
+						hasTerm = true;
+					}
+				}
+
+				if ( hasTerm ) {
+					// value _is containing_ one or more computable terms
+					return { get: () => {
+						const rendered = new Array( numSlices );
+
+						for ( let i = 0; i < numSlices; i++ ) {
+							const slice = compiled[i];
+
+							if ( typeof slice === "object" ) {
+								rendered[i] = slice.evaluate( form.sequence.data );
+							} else {
+								rendered[i] = slice;
+							}
+						}
+
+						const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
+
+						if ( data ) {
+							data[key] = computed;
+						}
+
+						return computed;
+					} };
+				}
+			}
+
+			if ( compiled instanceof Processor ) {
+				// value completely consists of a sole term's source
+				terms.push( compiled );
 
 				return { get: () => {
-					const computed = term.evaluate( form.data );
+					const computed = compiled.evaluate( form.sequence.data );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {
@@ -575,51 +717,7 @@ export default class FormFieldAbstractModel {
 				} };
 			}
 
-
-			// test if value contains bindings (terms wrapped in double curly braces)
-			const slices = trimmedValue.split( ptnBinding );
-			const numSlices = slices.length;
-			let isDynamic = false;
-
-			for ( let i = 0; i < numSlices; i++ ) { // eslint-disable-line max-depth
-				const slice = slices[i];
-				const match = slice.match( ptnBinding );
-				if ( match ) { // eslint-disable-line max-depth
-					const term = new Processor( slice.slice( 2, -2 ), {}, termCache, resolveVariableName );
-					terms.push( term );
-					slices[i] = term;
-					isDynamic = true;
-				}
-			}
-
-			if ( isDynamic ) {
-				// got value containing bindings
-				// -> deliver evaluator
-				return { get: () => {
-					const rendered = new Array( numSlices );
-
-					for ( let i = 0; i < numSlices; i++ ) {
-						const slice = slices[i];
-
-						if ( slice instanceof Processor ) {
-							rendered[i] = slice.evaluate( form.data );
-						} else {
-							rendered[i] = slice;
-						}
-					}
-
-
-					const computed = normalizer ? normalizer( rendered.join( "" ) ) : rendered.join( "" );
-
-					if ( data ) {
-						data[key] = computed;
-					}
-
-					return computed;
-				} };
-			}
-
-
+			// value doesn't contain any computable term
 			// got static value
 			// -> deliver normalized value
 			const normalized = normalizer ? normalizer( value ) : value;
@@ -727,7 +825,7 @@ export default class FormFieldAbstractModel {
 			if ( !data.pristine ) {
 				// don't adjust mark on a pristine field's validity so it won't
 				// be visually reflected in GUI and to ensure it is re-validated
-				// first time after becoming affected
+				// first time after becoming touched
 				data.valid = isValid;
 			}
 
@@ -738,23 +836,47 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
-	 * Initializes data in provided set of reactive data of field.
+	 * Lists names of _additional_ fields this field depends on e.g. by using
+	 * custom terms.
+	 *
+	 * The returned list is merged with the list of field's dependencies detected
+	 * by common processing of definition properties.
+	 *
+	 * @return {Array} lists qualified names of fields this field depends on.
+	 */
+	listDependencies() {
+		return [];
+	}
+
+	/**
+	 * Initializes provided record to become reactive data set of a component
+	 * with current properties of field as managed current instance.
 	 *
 	 * @param {object} reactiveFieldInfo reactive variable space e.g. used by field's component
-	 * @returns {*} initial value of field as used on initializing reactive data
+	 * @returns {void}
 	 * @protected
 	 */
 	initializeReactive( reactiveFieldInfo ) {
-		const { value, formattedValue } = this.normalizeValue( this.initial );
-
-		reactiveFieldInfo.required = this.required;
-		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.label = this.label;
 		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.value = value;
-		reactiveFieldInfo.formattedValue = formattedValue;
+		reactiveFieldInfo.required = this.required;
+		reactiveFieldInfo.visible = this.visible;
+		reactiveFieldInfo.disabled = this.disabled;
+	}
 
-		return value;
+	/**
+	 * Adjusts internal value of field.
+	 *
+	 * @param {*} newValue new value of field
+	 * @returns {void}
+	 */
+	setValue( newValue ) {
+		const { value, formattedValue } = this.normalizeValue( newValue ) || {};
+
+		this.form.writeValue( this.qualifiedName, value );
+
+		this.$data.value = value;
+		this.$data.formattedValue = formattedValue;
 	}
 
 	/**
@@ -770,29 +892,38 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Marks current field touched.
+	 *
+	 * NOTE! This method should be preferred over adjusting property `pristine`
+	 *       so containers might observe pristine fields and derive its own
+	 *       state using some custom algorithm.
+	 *
+	 * @param {boolean} force set true to force setting any field _touched_ (e.g. on clicking button "Next")
+	 * @returns {void}
+	 */
+	touch( force = false ) { // eslint-disable-line no-unused-vars
+		this.pristine = false;
+	}
+
+	/**
 	 * Handles change of a field's value by updating state of model accordingly.
 	 *
-	 * @param {*} store reference on store the adjustments took place in
 	 * @param {*} newValue new value of field
 	 * @param {?string} updatedFieldName name of updated field, null if current field was updated
 	 * @returns {boolean} true if validity of field has changed
 	 */
-	onUpdateValue( store, newValue, updatedFieldName = null ) {
+	onUpdateValue( newValue, updatedFieldName = null ) {
 		const data = this.$data;
 		const oldValidity = data.valid;
 		const itsMe = updatedFieldName == null;
 
 		this.updateFieldInformation( data, itsMe );
 
-		if ( !itsMe && data.pristine ) {
+		if ( !itsMe && data.pristine && this.constructor.isInteractive ) {
 			// some other field has been updated
-			// -> my initial value might depend on it, so
-			//    re-assign my initial unless field has been
-			//    adjusted before
-			store.dispatch( "form/writeInput", {
-				name: this.qualifiedName,
-				value: this.initial,
-			} );
+			// -> my initial value might depend on it, so re-assign my initial
+			//    unless field has been adjusted before
+			this.setValue( this.initial );
 		}
 
 		// changing current field or some field current one
@@ -801,9 +932,7 @@ export default class FormFieldAbstractModel {
 			this.readValidState( { force: true } );
 		}
 
-		if ( !itsMe ) {
-			EventBus.$emit( "form:update", this.qualifiedName, updatedFieldName, newValue );
-		}
+		this.form.sequence.events.$emit( "form:update", this.qualifiedName, updatedFieldName || null, newValue );
 
 		return oldValidity !== data.valid;
 	}
@@ -825,6 +954,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInformation.hint = this.hint;
 		reactiveFieldInformation.required = this.required;
 		reactiveFieldInformation.visible = this.visible;
+		reactiveFieldInformation.disabled = this.disabled;
 	}
 
 	/**
@@ -849,7 +979,7 @@ export default class FormFieldAbstractModel {
 	 */
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { type, originalName, name, qualifiedName, classes } = this;
+		const { type, originalName, name, qualifiedName, classes, suppress } = this;
 
 		this.initializeReactive( reactiveFieldInfo );
 
@@ -866,21 +996,37 @@ export default class FormFieldAbstractModel {
 						`nname-${name}`,
 						`qname-${qualifiedName.replace( /\./g, "_" )}`,
 						this.required ? "mandatory" : "optional",
-						this.pristine ? "pristine" : "affected",
-						this.label ? "with-label" : "without-label",
-						this.valid ? "valid" : "invalid"
+						this.pristine ? "pristine" : "touched",
+						this.label == null ? "without-label" : "with-label",
+						this.valid ? "valid" : this.valid == null ? "validity-unknown" : "invalid",
+						this.disabled ? "disabled" : "enabled",
+						this.showErrors ? "show-errors" : "suppress-errors",
+						this.showLabels ? "show-labels" : "suppress-labels",
 					].concat( classes );
-				}
+				},
+				showErrors() {
+					return !suppress || !suppress.errors;
+				},
+				showLabels() {
+					return !suppress || !suppress.labels;
+				},
+				useMarkdown() {
+					return that.markdown;
+				},
+				renderedHint() {
+					return Markdown.getRenderer().render( this.hint );
+				},
 			},
 			template: `
 <div v-if="required || visible" :class="componentClasses">
-	<span class="label">
-		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
+	<span class="label" v-if="showLabels">
+		<label v-if="label!=null">{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
-		<FieldComponent ref="fieldComponent" />
-		<span class="hint" v-if="hint && hint.length">{{ hint }}</span>
-		<span class="errors" v-if="errors.length">
+		<FieldComponent ref="fieldComponent" @input="onInput" />
+		<span class="hint" v-if="hint && !useMarkdown">{{ hint }}</span>
+		<span class="hint" v-if="hint && useMarkdown" v-html="renderedHint"></span>
+		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
 	</span>
@@ -904,7 +1050,12 @@ export default class FormFieldAbstractModel {
 					}
 
 					return lookup;
-				}
+				},
+				onInput( value ) {
+					that.touch();
+
+					that.setValue( value );
+				},
 			},
 			created() {
 				this.__onGlobalFormAutoFocusEvent = () => {
@@ -923,23 +1074,9 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				EventBus.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				that.form.sequence.events.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 			beforeMount() {
-				if ( that.pristine ) {
-					const { value, formattedValue } = that.normalizeValue( that.initial );
-
-					reactiveFieldInfo.value = value;
-					reactiveFieldInfo.formattedValue = formattedValue;
-				}
-
-				this.$on( "input", () => {
-					if ( !this.pristine ) {
-						this.valid = null;
-						const valid = that.valid; // eslint-disable-line no-unused-vars
-					}
-				} );
-
 				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
 					if ( emittingQualifiedName === qualifiedName ) {
 						const field = this.$refs.fieldComponent;
@@ -952,11 +1089,13 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				EventBus.$on( "form:update", this.__onGlobalFormUpdateEvent );
+				that.form.sequence.events.$on( "form:update", this.__onGlobalFormUpdateEvent );
 			},
 			beforeDestroy() {
-				EventBus.$off( "form:update", this.__onGlobalFormUpdateEvent );
-				EventBus.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				const { events } = that.form.sequence;
+
+				events.$off( "form:update", this.__onGlobalFormUpdateEvent );
+				events.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
 			},
 		};
 	}
@@ -971,17 +1110,44 @@ export default class FormFieldAbstractModel {
 	 * @param {object<string,*>} definitions qualified set of a field's definition properties
 	 * @returns {*} normalized value for use with named definition property
 	 */
-	static normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
+	normalizeDefinitionValue( value, name, definitions ) { // eslint-disable-line no-unused-vars
 		switch ( name ) {
 			case "classes" :
-				return typeof value === "string" ? value.trim().split( /\s*[,;]\s*/ ) : value;
+				return typeof value === "string" ? value.trim().split( /\s*[,;][,;\s]*/ ) : value;
 
 			case "label" :
 			case "hint" :
 				return String( value );
 
+			case "suppress" : {
+				let _value = value;
+
+				if ( typeof _value === "string" ) {
+					_value = _value.trim().split( /\s*,[,\s]*/ );
+				}
+
+				if ( Array.isArray( _value ) ) {
+					const object = {};
+					const numValues = _value.length;
+
+					for ( let i = 0; i < numValues; i++ ) {
+						const v = _value[i];
+
+						if ( v != null ) {
+							object[String( numValues[i] ).toLowerCase()] = true;
+						}
+					}
+
+					return object;
+				}
+
+				return value && typeof value == "object" ? value : {};
+			}
+
 			case "required" :
 			case "visible" :
+			case "disabled" :
+			case "markdown" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
@@ -991,6 +1157,9 @@ export default class FormFieldAbstractModel {
 					default :
 						return Boolean( value );
 				}
+
+			case "initial" :
+				return this.normalizeValue( value ).value;
 
 			default :
 				return value;

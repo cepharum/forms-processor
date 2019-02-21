@@ -20,9 +20,13 @@ import Data from "@/service/data";
 import FormFieldAbstractModel from "../model/form/field/abstract";
 import FormProcessorAbstractModel from "../model/form/processor/abstract";
 
+import AppInfo from "../../package";
+
 export default {
 	name: "Splash",
 	created() {
+		console.debug( `forms-processor ${AppInfo.version}` ); // eslint-disable-line no-console
+
 		const configuration = this.$root.$options.form;
 
 		Promise.resolve( this.$store.dispatch( "l10n/select" ) )
@@ -106,9 +110,19 @@ export default {
 			.then( () => Definition.load( configuration.definition ) )
 			.then( definition => this.$store.dispatch( "form/define", {
 				id: configuration.id,
+				name: configuration.name,
 				definition,
 				registry: configuration.registry,
 			} ) )
+			.then( () => {
+				const { onReady } = configuration;
+
+				if ( typeof onReady === "function" ) {
+					return onReady.call( this.$store.getters["form/sequenceManager"] );
+				}
+
+				return undefined;
+			} )
 			.then( () => this.$store.dispatch( "switchView", "forms" ) )
 			.catch( error => {
 				this.error = [error.message];
@@ -117,7 +131,13 @@ export default {
 					this.stack = error.stack;
 				}
 
-				console.error( this.error ); // eslint-disable-line no-console
+				const { onError } = configuration;
+
+				if ( typeof onError === "function" ) {
+					onError( error );
+				} else {
+					console.error( this.error ); // eslint-disable-line no-console
+				}
 			} );
 	},
 	data() {

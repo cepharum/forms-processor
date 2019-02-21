@@ -36,17 +36,7 @@ import Options from "../utility/options";
  */
 export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**
 			 * Generates property descriptor exposing options to choose from in
@@ -101,8 +91,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				return {
 					value: Data.normalizeToBoolean( definitionValue ),
 				};
-			}
-		} );
+			},
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */
@@ -116,52 +108,42 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	initializeReactive( reactiveFieldInfo ) {
-		const initial = super.initializeReactive( reactiveFieldInfo );
+		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
-		return initial;
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, multiple } = that;
 
 		return {
 			template: `
-				<select v-model="model" v-if="!multiple" class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-if="!supportMultiSelect" class="select single" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
-				<select v-model="model" v-else-if="multiple" multiple class="select" :class="multiple ? 'multi' : 'single'">
+				<select v-model="model" v-else-if="supportMultiSelect" multiple class="select multi" :disabled="disabled">
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
-			data: () => {
-				return {
-					value: readValue( qualifiedName ),
-				};
-			},
+			data: () => reactiveFieldInfo,
 			computed: {
-				options() {
-					return reactiveFieldInfo.options;
-				},
 				model: {
 					get() {
 						return this.value;
 					},
 					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
+						that.touch();
 
 						const { value: normalized } = that.normalizeValue( newValue );
 
 						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							writeValue( qualifiedName, normalized );
-							this.value = normalized;
+							this.$emit( "input", normalized );
 						}
 					},
 				},
-				multiple() {
-					return multiple && ( this.options && this.options.length > 1 );
+				supportMultiSelect() {
+					return this.multiple && ( this.options && this.options.length > 1 );
 				},
 			},
 		};
@@ -188,10 +170,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		if ( this.required ) {
 			if ( value instanceof Array ) {
 				if ( !value.length ) {
-					errors.push( "@VALIDATION.MISSING_SELECTED" );
+					errors.push( "@VALIDATION.MISSING_SELECTION" );
 				}
 			} else if ( !value ) {
-				errors.push( "@VALIDATION.MISSING_SELECTED" );
+				errors.push( "@VALIDATION.MISSING_SELECTION" );
 			}
 		}
 

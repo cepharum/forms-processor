@@ -30,20 +30,18 @@ import FormFieldAbstractModel from "./abstract";
 import Range from "../utility/range";
 import Pattern from "../utility/pattern";
 import Format from "../utility/format";
+import Data from "../../../service/data";
+
+const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
 
 /**
  * Manages single field of form representing text input.
  */
 export default class FormFieldTextModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-			size( v ) {
+			size( value, _, __, termHandler ) {
 				/**
 				 * Defines valid range of a value's length.
 				 *
@@ -51,10 +49,34 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {Range}
 				 * @readonly
 				 */
-				return { value: new Range( v ) };
+				return termHandler( value, rawValue => new Range( rawValue ) );
 			},
 
-			pattern( v ) {
+			upperCase( value, _, __, termHandler ) {
+				/**
+				 * Configures field to convert all input to upper-case letters
+				 * if applicable.
+				 *
+				 * @name FormFieldTextModel#upperCase
+				 * @property {boolean}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
+			},
+
+			lowerCase( value, _, __, termHandler ) {
+				/**
+				 * Configures field to convert all input to lower-case letters
+				 * if applicable.
+				 *
+				 * @name FormFieldTextModel#lowerCase
+				 * @property {boolean}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
+			},
+
+			pattern( value ) {
 				/**
 				 * Exposes compiled pattern optionally defined on field.
 				 *
@@ -62,45 +84,282 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?CompiledPattern}
 				 * @readonly
 				 */
-				return { value: v == null ? null : Pattern.compilePattern( v ) };
+				return { value: value == null ? null : Pattern.compilePattern( value ) };
 			},
-		} );
-	}
 
-	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
+			normalization( value ) {
+				/**
+				 * Exposes normalization mode selected in field's definition.
+				 *
+				 * @name FormFieldTextModel#normalization
+				 * @property {string}
+				 * @readonly
+				 */
+				const _value = value == null ? "trim" : String( value ).trim().toLowerCase();
+
+				switch ( _value ) {
+					case "none" :
+					case "trim" :
+					case "reduce" :
+						return { value: _value };
+
+					default :
+						throw new TypeError( `invalid normalization mode: ${value}` );
+				}
+			},
+
+			placeholder( value, _, __, termHandler ) {
+				/**
+				 * Defines some text to be displayed in bounds of text input
+				 * control unless user has entered some text already.
+				 *
+				 * @name FormFieldTextModel#placeholder
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					const localized = this.selectLocalization( rawValue );
+
+					return localized == null ? null : String( localized ).trim() || null;
+				} );
+			},
+
+			align( value, _, __, termHandler ) {
+				/**
+				 * Defines some desired alignment for content of text field.
+				 *
+				 * @name FormFieldTextModel#align
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					const _value = rawValue == null ? null : String( rawValue ).trim().toLowerCase() || null;
+
+					switch ( _value ) {
+						case "right" :
+							return _value;
+
+						case "left" :
+						default :
+							return "left";
+					}
+				} );
+			},
+
+			prefix( value, _, __, termHandler ) {
+				/**
+				 * Defines some static text to appear in front of text field.
+				 *
+				 * @name FormFieldTextModel#prefix
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
+			},
+
+			suffix( value, _, __, termHandler ) {
+				/**
+				 * Defines some static text to appear next to the text field.
+				 *
+				 * @name FormFieldTextModel#suffix
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					return rawValue == null ? null : String( rawValue ).trim() || null;
+				} );
+			},
+
+			reducer( value, _, __, termHandler ) {
+				/**
+				 * Defines optional regular expression used to reduce input prior
+				 * to its eventual validation.
+				 *
+				 * @name FormFieldTextModel#reducer
+				 * @property {?RegExp}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					if ( rawValue == null ) {
+						return null;
+					}
+
+					const stringValue = String( rawValue ).trim();
+					if ( stringValue === "" ) {
+						return null;
+					}
+
+					const match = ptnPatternSyntax.exec( stringValue );
+					if ( match ) {
+						return new RegExp( match[1], match[2] );
+					}
+
+					return new RegExp( stringValue );
+				} );
+			},
+
+			regexp( value, _, __, termHandler ) {
+				/**
+				 * Defines optional regular expression input has to match.
+				 *
+				 * @name FormFieldTextModel#regexp
+				 * @property {?RegExp}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					if ( rawValue == null ) {
+						return null;
+					}
+
+					const stringValue = String( rawValue ).trim();
+					if ( stringValue === "" ) {
+						return null;
+					}
+
+					const match = ptnPatternSyntax.exec( stringValue );
+					if ( match ) {
+						return new RegExp( match[1], match[2] );
+					}
+
+					return new RegExp( stringValue );
+				} );
+			},
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */
 	normalizeValue( value, options = {} ) {
 		let fixedValue = value == null ? "" : String( value );
 
+		const originalLength = fixedValue.length;
+		const cursorAtEnd = options.at === originalLength;
+
+
+		// adjust case
+		if ( this.upperCase ) {
+			fixedValue = fixedValue.toLocaleUpperCase();
+		} else if ( this.lowerCase ) {
+			fixedValue = fixedValue.toLocaleLowerCase();
+		}
+
+		if ( fixedValue.length !== originalLength && cursorAtEnd ) {
+			options.at += fixedValue.length - originalLength;
+		}
+
+
+		// apply pattern
+		let formattedValue = fixedValue;
+
 		const pattern = this.pattern;
 		if ( pattern ) {
-			fixedValue = Pattern.parse( fixedValue, pattern, { keepTrailingLiterals: !options.removing } );
+			const { valuable, formatted } = Pattern.parse( fixedValue, pattern, {
+				keepTrailingLiterals: !options.removing,
+				cursorPosition: options.at,
+			} );
+
+			fixedValue = valuable.value;
+			formattedValue = formatted.value;
+			options.at = formatted.cursor;
 		}
+
+
+		// normalize whitespace
+		switch ( this.normalization ) {
+			case "trim" :
+			case "reduce" : {
+				const match = /^(\s*)(.*?)(\s*)$/.exec( fixedValue );
+				if ( match ) {
+					fixedValue = match[2];
+				}
+			}
+		}
+
+		switch ( this.normalization ) {
+			case "reduce" : {
+				const numChars = fixedValue.length;
+				const chars = new Array( numChars );
+				let write = 0;
+				let reduced = false;
+
+				for ( let i = 0, spaceBefore = false; i < numChars; i++ ) {
+					const char = fixedValue.charAt( i );
+					switch ( char ) {
+						case " " :
+						case "\t" :
+						case "\r" :
+						case "\n" :
+						case "\v" :
+						case "\f" :
+							if ( spaceBefore ) {
+								reduced = true;
+							} else {
+								spaceBefore = true;
+								chars[write++] = char;
+							}
+							break;
+
+						default :
+							spaceBefore = false;
+							chars[write++] = char;
+					}
+				}
+
+				if ( reduced ) {
+					chars.splice( write );
+
+					fixedValue = chars.join( "" );
+				}
+			}
+		}
+
 
 		return {
 			value: fixedValue,
-			formattedValue: fixedValue,
+			formattedValue,
 		};
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { writeValue }, qualifiedName } = that;
 
 		let lastValue = null;
 
 		return {
 			render( createElement ) {
-				return createElement( "input", {
-					domProps: {
-						type: "text",
-						value: reactiveFieldInfo.formattedValue,
-					},
+				const elements = [];
+				const classes = [
+					"align-" + that.align,
+				];
+
+				if ( that.prefix == null ) {
+					classes.push( "without-prefix" );
+				} else {
+					classes.push( "with-prefix" );
+					elements.push( createElement( "span", {
+						class: "prefix",
+					}, that.prefix ) );
+				}
+
+				const domProps = {
+					type: "text",
+					value: reactiveFieldInfo.formattedValue,
+				};
+
+				if ( that.disabled ) {
+					domProps.disabled = true;
+				}
+
+				if ( that.placeholder != null ) {
+					domProps.placeholder = that.placeholder + ( that.required && !that.label ? "*" : "" );
+				}
+
+				elements.push( createElement( "input", {
+					domProps,
 					on: {
 						input: event => {
 							const { value: input, selectionStart } = event.target;
@@ -114,23 +373,25 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 							const { value, formattedValue } = that.normalizeValue( input, options );
 
 							event.target.value = lastValue = formattedValue;
+							event.target.setSelectionRange( options.at, options.at );
 
-							if ( value === this.value ) {
-								return;
-							}
-
-							this.value = value;
-							reactiveFieldInfo.pristine = false;
-
-							writeValue( qualifiedName, value );
-							reactiveFieldInfo.value = value;
-							reactiveFieldInfo.formattedValue = formattedValue;
-
+							// re-emit in scope of this field's type-specific
+							// component (containing input element created here)
 							this.$emit( "input", value );
-							this.$parent.$emit( "input", value ); // FIXME is this required due to $emit always forwarded to "parent"
 						},
 					},
-				} );
+				} ) );
+
+				if ( that.suffix == null ) {
+					classes.push( "without-suffix" );
+				} else {
+					classes.push( "with-suffix" );
+					elements.push( createElement( "span", {
+						class: "suffix",
+					}, that.suffix ) );
+				}
+
+				return createElement( "div", { class: classes, }, elements );
 			},
 			data: () => reactiveFieldInfo,
 		};
@@ -140,13 +401,24 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	validate( live ) {
 		const errors = super.validate();
 
-		const value = String( this.value == null ? "" : this.value ).trim();
 
-		if ( this.required && !value.length ) {
-			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		let value = String( this.value == null ? "" : this.value ).trim();
+
+
+		// apply optional reducer to strip off characters to be ignored on validating
+		const { reducer } = this;
+		if ( reducer ) {
+			// https://stackoverflow.com/a/16046903/3182819
+			const numCaptures = ( new RegExp( reducer.source + "|" ) ).exec( "" ).length - 1;
+
+			value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
 		}
 
-		if ( value.length ) {
+
+		// perform basic validations
+		if ( this.required && !value.length ) {
+			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		} else {
 			if ( this.size.isBelowRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_SHORT" );
 			}
@@ -154,19 +426,32 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			if ( this.size.isAboveRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_LONG" );
 			}
-		}
 
-		let format = this.format;
-		if ( format ) {
-			format = String( format ).trim().toLowerCase();
 
-			if ( typeof Format[format] === "function" ) {
-				const result = Format[format]( value, Boolean( live ), this );
-				if ( result.errors ) {
-					errors.splice( errors.length, 0, ...result.errors );
+			// check for complying with optionally selected format
+			let { format } = this;
+			if ( format ) {
+				format = String( format ).trim().toLowerCase();
+
+				if ( typeof Format[format] === "function" ) {
+					const result = Format[format]( value, Boolean( live ), this, { countryCodes: this.countryCodes } );
+					if ( result.errors ) {
+						errors.splice( errors.length, 0, ...result.errors );
+					}
+				}
+			}
+
+
+			// check for complying with custom pattern
+			if ( !live ) {
+				const { regexp } = this;
+
+				if ( regexp && !regexp.test( value ) ) {
+					errors.push( "@VALIDATION.PATTERN_MISMATCH" );
 				}
 			}
 		}
+
 
 		return errors;
 	}

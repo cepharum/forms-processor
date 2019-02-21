@@ -38,18 +38,33 @@ export default function() {
 			WAIT_PROMPT: "Bitte warten.",
 			WAIT_EXPLANATION: "Das Formular wird geladen.",
 		},
+		COMMON: {
+			EXPLAIN_REQUIRED: "= erforderliche Angabe"
+		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
+			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
 			TOO_LONG: "Ihre Angabe ist zu lang.",
-			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
+			TOO_FEW: "Zu wenig Angaben getätigt",
+			TOO_MANY: "Ihre Angabe enthält zu viele Elemente.",
+			TOO_LITTLE_FILES: "Sie haben zu wenige Dateien ausgewählt.",
+			TOO_MANY_FILES: "Sie haben zu viele Dateien ausgewählt.",
+			TOO_SMALL_FILES_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu gering.",
+			TOO_BIG_FILES_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu hoch.",
+			TOO_SMALL_FILE: "Die Größe der ausgewählten Datei ist zu gering.",
+			TOO_BIG_FILE: "Die Größe der ausgewählten Datei ist zu hoch.",
+			MIME_MISMATCH: "Sie haben eine Datei mit falschem Format ausgewählt.",
+			PATTERN_MISMATCH: "Das Format Ihrer Angabe ist fehlerhaft.",
 		},
 		BUTTONS: {
 			PREVIOUS: "Zurück",
 			NEXT: "Weiter",
 			CONTINUE: "Fortfahren",
 			SUBMIT: "Absenden",
+			ADD: "Hinzufügen",
+			REMOVE: "Löschen",
 		},
 		FORMATS: {
 			IP4: {
@@ -66,6 +81,17 @@ export default function() {
 			PHONE: {
 				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer Telefonnummer unzulässig sind.",
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige Telefonnummer.",
+			},
+			IBAN: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer IBAN unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre IBAN bestimmt ein unzulässiges Land.",
+				INVALID_FORMAT: "Ihre Angabe entspricht nicht dem Format einer IBAN.",
+				CHECKSUM_FAILED: "Die Prüfsumme der IBAN ist falsch. Bitte prüfen Sie auf mögliche Tippfehler!",
+			},
+			BIC: {
+				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer BIC unzulässig sind.",
+				INVALID_COUNTRY_CODE: "Ihre BIC bestimmt ein unzulässiges Land.",
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige BIC.",
 			},
 		},
 	};

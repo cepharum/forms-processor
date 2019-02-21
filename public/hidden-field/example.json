@@ -1,0 +1,37 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "hidden",
+			"label": "Hidden Fields",
+			"description": "This form includes some hidden fields with values computed from other fields thus exposing saved results of those computations for re-use.",
+			"fields": [
+				{
+					"name": "lastName",
+					"label": "Last Name"
+				},
+				{
+					"name": "FirstName",
+					"label": "First Name",
+					"required": "=fullName"
+				},
+				{
+					"type": "hidden",
+					"name": "fullName",
+					"initial": "=test( lastname && firstName, lastName + ', ' + firstname, null)",
+					"label": "DO NOT DISPLAY!"
+				},
+				{
+					"type": "info",
+					"name": "output",
+					"text": "The saved full name is **{{fullname || 'not set'}}**.",
+					"markdown": true
+				}
+			]
+		}
+	]
+}

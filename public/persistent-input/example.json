@@ -1,0 +1,176 @@
+{
+	"mode": {
+		"localStore": {
+			"id": "1234",
+			"maxAge": 30
+		}
+	},
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"title": "Persistent Input",
+	"description": "Sequence of forms with input persisted locally.",
+	"sequence": [
+		{
+			"name": "first",
+			"label": "First Page",
+			"fields": [
+				{
+					"name": "lastname",
+					"label": "Last Name",
+					"initial": "Müller",
+					"hint": "Put your *last name* here!"
+				},
+				{
+					"name": "firstname",
+					"label": "First Name",
+					"required": "=colours=='blue'"
+				},
+				{
+					"type": "select",
+					"name": "salutation",
+					"options": [
+						{
+							"value": "mr",
+							"label": "Mr."
+						},
+						{
+							"value": "ms",
+							"label": {
+								"de": "Frau",
+								"any": "Ms."
+							}
+						},
+						{
+							"value": "company",
+							"label": {
+								"*": "Company",
+								"de": "Fa."
+							}
+						}
+					],
+					"initial": "mr"
+				},
+				{
+					"type": "info",
+					"text": "Your full name is {{localize(lookup( salutation, 'first.salutation' ))}} {{firstname}} {{lastname}}. Your colour for identification is {{test( length(colours), colours, 'unset' )}} and is{{test(first.reported.confirmed, '', ' **not**')}} confirmed.",
+					"markdown": true
+				},
+				{
+					"type": "radio",
+					"name": "colours",
+					"options": "red, blue",
+					"group": "colours"
+				},
+				{
+					"type": "radio",
+					"name": "no_colour",
+					"options": "none",
+					"group": "colours"
+				},
+				{
+					"type": "group",
+					"name": "reported",
+					"fields": [
+						{
+							"type": "info",
+							"text": "Salutation: {{localize(lookup( salutation, 'first.salutation' ))}}"
+						},
+						{
+							"type": "info",
+							"text": "Last Name: {{lastname}}"
+						},
+						{
+							"type": "info",
+							"text": "Colour: {{first.colours}}"
+						},
+						{
+							"type": "checkbox",
+							"name": "confirmed",
+							"options": "confirmed",
+							"disabled": "=!length(first.colours)"
+						}
+					]
+				},
+				{
+					"name": "fullName",
+					"initial": "{{firstname}} {{lastname}}",
+					"disabled": "=!firstname || !lastname",
+					"hint": "Change the full name here **if proposed name is not right.**",
+					"markdown": true
+				}
+			]
+		},
+		{
+			"name": "second",
+			"label": "Second Page",
+			"fields": [
+				{
+					"name": "fullName",
+					"label": "Full Name",
+					"initial": "=first.lastname + ', ' + first.firstname"
+				},
+				{
+					"name": "address",
+					"label": "Address",
+					"initial": ""
+				},
+				{
+					"name": "zip_locality",
+					"type": "group",
+					"fields": [
+						{
+							"name": "zip",
+							"placeholder": "ZIP",
+							"initial": ""
+						},
+						{
+							"name": "locality",
+							"placeholder": "Locality"
+						}
+					]
+				},
+				{
+					"name": "country",
+					"label": "Country",
+					"type": "select",
+					"options": [
+						{
+							"value": "de-de",
+							"label": "Germany"
+						},
+						{
+							"value": "de-at",
+							"label": "Austria"
+						},
+						{
+							"value": "en-uk",
+							"label": "UK"
+						},
+						{
+							"value": "fr-fr",
+							"label": "France"
+						}
+					],
+					"initial": ""
+				}
+			]
+		},
+		{
+			"name": "third",
+			"label": "Third Page",
+			"fields": [
+				{
+					"name": "lastname",
+					"label": "Last Name"
+				},
+				{
+					"name": "firstname",
+					"label": "First Name"
+				}
+			]
+		}
+	]
+}

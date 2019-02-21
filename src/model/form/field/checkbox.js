@@ -35,18 +35,10 @@ import Options from "../utility/options";
  * Implements field type displaying set of checkboxes to choose one or more from.
  */
 export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
-	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
-	}
-
 	/**
-	 * @param {FormModel} form reference on form this field belongs to
-	 * @param {object} definition definition of field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 * @inheritDoc
 	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo ) {
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			/**
 			 * Generates property descriptor exposing options to choose from in
@@ -106,8 +98,28 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				return {
 					value: definitionValue == null ? qualifiedDefinition.type !== "radio" : Data.normalizeToBoolean( definitionValue ),
 				};
-			}
-		} );
+			},
+
+			group( definitionValue ) {
+				/**
+				 * Provides name of group this control belongs to.
+				 *
+				 * Naming a group is basically useful in combination with radio
+				 * buttons implemented in separate fields. If radio buttons of
+				 * multiple fields are associated with the same group name on
+				 * page then only one button in the whole group can be selected.
+				 *
+				 * @name FormFieldCheckBoxModel#group
+				 * @property string
+				 * @readonly
+				 */
+				return {
+					value: typeof definitionValue === "string" && definitionValue ? definitionValue.trim() : null,
+				};
+			},
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */
@@ -121,63 +133,62 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	initializeReactive( reactiveFieldInfo ) {
-		const initial = super.initializeReactive( reactiveFieldInfo );
+		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
-
-		return initial;
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, type, multiple } = that;
+		const { form: { sequence: { events } }, qualifiedName, group, type } = that;
 
 		return {
 			template: `
-				<span class="checkbox options" :class="multiple ? 'multi' : 'single'">
-					<span class="option" :class="{checked:isSet(item.value)}" v-for="(item, index) in options" :key="index">
+				<span class="checkbox options" :class="fieldClasses">
+					<span class="option" :class="{checked:isSet(item.value), ['no-'+(index+1)]: true}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
-							:id="isRadio || multiple ? name + '.' + index : name"
-							:name="name"
+							:id="individualId( index )"
+							:name="groupName"
 							:value="item.value"
-							v-model="model"
+							:checked="isSet(item.value)"
+							:disabled="disabled"
+							@change="adjust( $event.target.checked, item.value )"
 						/>
-						<label v-if="item.label" :for="isRadio || multiple ? name + '.' + index : name">{{item.label}}</label>
+
+						<label :for="individualId( index )" 
+							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</span>
 			`,
-			data: () => {
-				return {
-					value: readValue( qualifiedName ),
-					name: qualifiedName,
-				};
-			},
+			data: () => reactiveFieldInfo,
 			computed: {
-				options() {
-					return reactiveFieldInfo.options;
-				},
-				model: {
-					get() {
-						return this.value;
-					},
-					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
+				fieldClasses() {
+					const multi = this.supportsMultiSelection;
+					const numOptions = this.options.length;
 
-						const { value: normalized } = that.normalizeValue( newValue );
-
-						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							writeValue( qualifiedName, normalized );
-							this.value = normalized;
-						}
-					},
+					return {
+						"multi-select": multi,
+						"single-select": !multi,
+						multi: numOptions > 1,
+						single: numOptions < 2
+					};
 				},
-				multiple() {
-					return multiple && ( this.options && this.options.length > 1 );
+				normalizedName() {
+					return qualifiedName.replace( /\./g, "_" );
+				},
+				groupName() {
+					return group == null ? qualifiedName : group;
+				},
+				individualId() {
+					return index => `${this.normalizedName}.${index}`;
+				},
+				supportsMultiSelection() {
+					return this.multiple && ( this.options && this.options.length > 1 );
 				},
 				isRadio() {
-					return type === "radio" && this.options && this.options.length > 1;
+					return type === "radio" && !this.multiple && this.options && ( this.options.length > 1 || group != null );
 				},
 			},
 			methods: {
@@ -190,25 +201,69 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 					return current === value;
 				},
+				adjust( added, newValue ) {
+					that.touch();
+
+					const { value } = this;
+
+					if ( group != null && !this.supportsMultiSelection && added ) {
+						events.$emit( `form:group:${group}`, qualifiedName, newValue );
+					}
+
+					if ( Array.isArray( value ) ) {
+						if ( added ) {
+							if ( value.indexOf( newValue ) < 0 ) {
+								value.push( newValue );
+
+								this.$emit( "input", value );
+							}
+						} else {
+							const index = value.indexOf( newValue );
+							if ( index > -1 ) {
+								value.splice( index, 1 );
+
+								this.$emit( "input", value );
+							}
+						}
+					} else if ( added ) {
+						this.$emit( "input", newValue );
+					} else {
+						this.$emit( "input", null );
+					}
+				},
 			},
+			beforeMount() {
+				if ( group && !this.supportsMultiSelection ) {
+					this.__groupChangeListener = fieldName => {
+						if ( fieldName !== qualifiedName && this.value ) {
+							this.adjust( false, null );
+						}
+					};
+
+					events.$on( `form:group:${group}`, this.__groupChangeListener );
+				}
+			},
+			beforeDestroy() {
+				if ( group && !this.supportsMultiSelection ) {
+					events.$off( `form:group:${group}`, this.__groupChangeListener );
+				}
+			}
 		};
 	}
 
 	/** @inheritDoc */
 	normalizeValue( value ) {
-		const options = this.options;
-		const multiOptions = options && options.length > 1;
-		const isRadio = this.type === "radio" && multiOptions;
-		const handlesArrayOfValues = !isRadio && multiOptions;
+		const { multiple, options } = this;
+		const actualMultiple = multiple && options && options.length > 1;
 
-		const mapped = handlesArrayOfValues ? value : value ? isRadio ? [value] : [options[0].value] : [];
+		const mapped = Array.isArray( value ) ? value.slice( 0, multiple ? value.length : 1 ) : value == null ? [] : [value];
 
 		const values = Options.extractOptions( mapped, options );
 		const labels = Options.extractOptions( mapped, options, true );
 
 		return {
-			value: this.multiple ? values : values[0] || null,
-			formattedValue: this.multiple ? labels : labels[0] || null,
+			value: actualMultiple ? values : values.length > 0 ? values[0] : null,
+			formattedValue: actualMultiple ? labels : labels.length > 0 ? labels[0] : null,
 		};
 	}
 
@@ -222,7 +277,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 				if ( !value.length ) {
 					errors.push( "@VALIDATION.MISSING_REQUIRED" );
 				}
-			} else if ( !value ) {
+			} else if ( value == null ) {
 				errors.push( "@VALIDATION.MISSING_REQUIRED" );
 			}
 		}

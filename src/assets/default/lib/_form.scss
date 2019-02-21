@@ -1,4 +1,26 @@
+@mixin mandatoryMark {
+	color: red;
+	font-weight: bold;
+	display: inline-block;
+	transform: scale(1.5);
+	padding: 0 0.1em;
+}
+
 .form {
+	.auxiliary-info {
+		margin: 1em 0;
+
+		.explain-required {
+			.mandatory {
+				@include mandatoryMark;
+			}
+
+			.explanation:before {
+				content: " ";
+			}
+		}
+	}
+
 	.field {
 		position: relative;
 		overflow: hidden;
@@ -17,16 +39,34 @@
 			box-sizing: border-box;
 			padding-right: 0.5em;
 
-			&:after {
-				content: ":\00a0";
+			.mandatory {
+				@include mandatoryMark;
 			}
 
-			.mandatory {
-				color: red;
-				font-weight: bold;
-				display: inline-block;
-				transform: scale(1.5);
-				padding: 0 0.1em;
+			label:after {
+				content: ":\00a0";
+			}
+		}
+
+		&.without-label {
+			> .label > label {
+				display: none;
+			}
+		}
+
+		.hint, .static-info {
+			p {
+				margin: 0;
+
+				+ p {
+					margin-top: 0.5em;
+				}
+			}
+		}
+
+		&.type-group {
+			.field.without-label > .label {
+				display: none;
 			}
 		}
 
@@ -38,8 +78,8 @@
 			-moz-appearance: none;
 			-webkit-appearance: none;
 			appearance: none;
-			background: rgba(0,0,0,0.05);
-			border: 1px solid rgba(0,0,0,0.1);
+			background: rgba(0, 0, 0, 0.05);
+			border: 1px solid rgba(0, 0, 0, 0.1);
 			padding: 0.2em 0.5em;
 			font: normal 1rem sans-serif;
 			line-height: inherit;
@@ -50,12 +90,46 @@
 			-moz-appearance: none;
 			-webkit-appearance: none;
 			appearance: none;
-			background: rgba(0,0,0,0.05);
-			border: 1px solid rgba(0,0,0,0.1);
+			background: rgba(0, 0, 0, 0.05);
+			border: 1px solid rgba(0, 0, 0, 0.1);
 			padding: 0.2em 0.5em;
 			font: inherit;
 			width: 100%;
 			box-sizing: border-box;
+		}
+
+		.hint {
+			display: block;
+			padding: 0.2em 0.5em;
+			font-size: 0.8em;
+			opacity: 0.7;
+		}
+
+		.align-right > input[type=text] {
+			text-align: right;
+		}
+
+		.with-prefix, .with-suffix {
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: center;
+			justify-content: stretch;
+
+			:not(.prefix):not(.suffix) {
+				flex: 1000 1 auto;
+			}
+
+			.prefix, .suffix {
+				flex: 1 0 auto;
+			}
+
+			.prefix {
+				margin-right: 0.5rem;
+			}
+
+			.suffix {
+				margin-left: 0.5rem;
+			}
 		}
 
 		.checkbox > .option {
@@ -76,6 +150,138 @@
 				flex: 1 1 auto;
 			}
 		}
+
+		.upload {
+			.dropContainer {
+				margin-top: 0.5rem;
+				height: 5em;
+				box-sizing: border-box;
+				background-color: rgba(0,0,0,0.025);
+				border: 2px dashed rgba(0, 0, 0, 0.5);
+				transition: border-color 200ms ease, background-color 300ms ease;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				svg {
+					transition: transform 200ms ease;
+					opacity: 0.15;
+					transform: scale(1);
+				}
+
+				&.dragOver {
+					background-color: rgba(0,0,0,0.1);
+					border-color: rgba(0, 0, 0, 0.8);
+
+					svg {
+						transform: scale(1.2);
+					}
+				}
+			}
+
+			.files {
+				margin-top: -0.5rem;
+				margin-bottom: 5px;
+				margin-left: -1rem;
+
+				.preview {
+					&.image {
+						&.background {
+							background-size: cover;
+							background-position: center center;
+							height: 5rem;
+							width: 5rem;
+						}
+
+						&.foreground {
+							img {
+								height: 5rem;
+								width: auto;
+							}
+						}
+
+						background: #FFF;
+						justify-content: flex-end;
+
+						.button {
+							border-left: none;
+						}
+					}
+
+					margin-top: 0.5rem;
+					margin-left: 1rem;
+					display: inline-flex;
+					flex-direction: row;
+					flex-wrap: nowrap;
+					border: 1px solid #0088;
+					background: #00a3;
+					color: black;
+					border-radius: 5px;
+
+					.label {
+						line-height: 1.5;
+						padding: 0 0.5rem;
+					}
+
+					.button {
+						border-left: 1px solid #00a3;
+						line-height: 1.5;
+						cursor: pointer;
+						padding: 0 0.5rem;
+
+						&:hover {
+							background: #0082;
+						}
+					}
+				}
+			}
+
+			button {
+				margin-top: 0.5rem;
+				position: relative;
+
+				input[type=file] {
+					width: auto;
+					max-width: 100%;
+					max-height: 100%;
+					opacity: 0;
+					right: 0;
+					top: 0;
+					bottom: 0;
+					left: 0;
+					position: absolute;
+					display: block;
+				}
+			}
+
+		}
+
+
+		&.type-multi {
+			.multi-field-container {
+				display: flex;
+				padding-bottom: 5px;
+
+				.field {
+					width: 100%;
+				}
+			}
+		}
+
+		&.type-group {
+			.contained-fields {
+				display: flex;
+				flex-flow: row nowrap;
+				justify-content: stretch;
+				margin: 0 0 0 -0.5em;
+
+				> * {
+					flex: 1 1 auto;
+					margin: 0 0 0 0.5em;
+				}
+			}
+		}
+
 
 		&.type-info > .widget {
 			border: 1px solid transparent;

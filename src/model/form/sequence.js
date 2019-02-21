@@ -26,9 +26,9 @@
  * @author: cepharum
  */
 
+import Vue from "vue";
 import FormModel from "./form";
 
-import EventBus from "@/service/events";
 import L10n from "@/service/l10n";
 import Data from "@/service/data";
 
@@ -38,43 +38,36 @@ import Data from "@/service/data";
  */
 export default class FormSequenceModel {
 	/**
+	 * @typedef {object} AuxiliaryInfo
+	 * @param {function():string} locale callback invoked to fetch tag of current locale
+	 * @param {function():LocaleTranslationTree} translations callback invoked to fetch map of current translations
+	 */
+
+	/**
 	 * @param {string} id permanently unique ID of current sequence of forms
 	 * @param {object} definition definition of a sequence of forms
 	 * @param {FormsAPIExtensionsRegistry} registry registry of available types of fields and input processors
-	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
-	 * @param {function():string} localeFn callback invoked to fetch tag of current locale
 	 * @param {function(string):*} read reads value of a named field
+	 * @param {AuxiliaryInfo} auxiliary provides additional information
+	 * @param {string} name temporarily unique ID of current sequence of forms in context of current HTML document
 	 * @param {function(string,*)} write adjusts value of a named field
-	 * @param {object<string,*>} data refers to (read-only) storage managed by `read`/`write`
+	 * @param {function():object<string,*>} data provides up-to-date reference on (read-only) storage managed by `read`/`write`
 	 */
-	constructor( { id, name }, definition, registry, { read, write, data }, localeFn ) {
+	constructor( { id, name }, definition, registry, { read, write, data }, auxiliary ) {
 		const { mode = {}, sequence = [], processors = {} } = definition;
 
 		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
 			forms: new Array( numDefinedForms ),
-			currentIndex: 0,
+			currentIndex: Math.min( numDefinedForms - 1, 0 ),
 		};
 
-		if ( typeof id !== "string" ) {
+		if ( !id || typeof id !== "string" ) {
 			throw new TypeError( "Invalid ID of sequence of forms." );
 		}
 
-		if ( typeof name !== "string" ) {
+		if ( !name || typeof name !== "string" ) {
 			throw new TypeError( "Invalid name of sequence of forms." );
-		}
-
-		const qualifiedNames = new Map();
-
-		for ( let i = 0; i < numDefinedForms; i++ ) {
-			const { name: formName, fields } = sequence[i];
-
-			const numFields = Array.isArray( fields ) ? fields.length : 0;
-			for ( let j = 0; j < numFields; j++ ) {
-				const qualifiedName = `${formName}.${fields[j].name}`;
-
-				qualifiedNames.set( qualifiedName.toLowerCase(), qualifiedName );
-			}
 		}
 
 
@@ -152,7 +145,7 @@ export default class FormSequenceModel {
 			 * @property {object}
 			 * @readonly
 			 */
-			data: { value: data },
+			data: { get: data },
 
 			/**
 			 * Reads value of a field selected by its name from storage.
@@ -189,7 +182,17 @@ export default class FormSequenceModel {
 			 * @property {string}
 			 * @readonly
 			 */
-			locale: { get: localeFn },
+			locale: { get: auxiliary.locale },
+
+			/**
+			 * Exposes current map of translations statically defined as part of
+			 * forms processor.
+			 *
+			 * @name FormSequenceModel#translations
+			 * @property {LocaleTranslationTree}
+			 * @readonly
+			 */
+			translations: { get: auxiliary.translations },
 
 			/**
 			 * Exposes registries of custom types of fields and custom input
@@ -215,18 +218,91 @@ export default class FormSequenceModel {
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
 
 			/**
-			 * Maps all-lowercase version of qualified name of every field in
-			 * every form to the actual qualified name of either field.
+			 * Exposes event bus of current sequence manager.
 			 *
-			 * This is used by FormFieldAbstractModel on qualifying relative
-			 * field names.
+			 * This event bus is used to emit and listen for events related to
+			 * current sequence of forms, only.
 			 *
-			 * @name FormSequenceModel#qualifiedNames
-			 * @property {Map<string,string>}
+			 * @name FormSequenceModel#events
+			 * @property Vue
 			 * @readonly
 			 */
-			qualifiedNames: { value: qualifiedNames },
+			events: { value: new Vue() }
 		} );
+
+
+		const presumedQualifiedNames = {};
+
+		for ( let i = 0; i < numDefinedForms; i++ ) {
+			const { name: _formName, fields } = sequence[i];
+			const formName = _formName.toLowerCase();
+
+			const numFields = Array.isArray( fields ) ? fields.length : 0;
+			for ( let j = 0; j < numFields; j++ ) {
+				const fieldDefinition = fields[j];
+
+				const Manager = this.selectFieldManager( fieldDefinition );
+				if ( Manager ) {
+					const qualifiedNames = Manager.presumeQualifiedNames( this, formName, fieldDefinition, j );
+					if ( Array.isArray( qualifiedNames ) ) {
+						const numQualifiedNames = qualifiedNames.length;
+
+						for ( let k = 0; k < numQualifiedNames; k++ ) {
+							presumedQualifiedNames[qualifiedNames[k]] = true;
+						}
+					}
+				}
+			}
+		}
+
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides dictionary of presumed qualified names of either field
+			 * defined in current sequence.
+			 *
+			 * This is used by FormFieldAbstractModel on qualifying relative
+			 * field names e.g. in terms used in either field's definition. Thus
+			 * qualified names must be collected prematurely.
+			 *
+			 * @name FormSequenceModel#qualifiedNames
+			 * @property {object<string,true>}
+			 * @readonly
+			 */
+			qualifiedNames: { value: presumedQualifiedNames },
+		} );
+
+
+
+		// compile list of form managers (detecting namespace clashes)
+		const numForms = sequence.length;
+		const formManagers = new Array( numForms );
+		const reactiveFormInfos = new Array( numForms );
+		const names = {};
+		let w = 0;
+
+		for ( let r = 0; r < numForms; r++ ) {
+			const formDefinition = sequence[r];
+			const reactiveFormInfo = reactiveFormInfos[w] = {};
+			const formManager = new FormModel( this, formDefinition, w, reactiveFormInfo );
+
+			if ( formManager ) {
+				const formName = formManager.name;
+
+				if ( names.hasOwnProperty( formName ) ) {
+					throw new TypeError( `double definition of form named "${formName}"` );
+				}
+
+				names[formName] = formManager;
+
+				formManagers[w++] = formManager;
+			}
+		}
+
+		formManagers.splice( w );
+		reactiveFormInfos.splice( w );
+
+		reactiveInfo.forms = reactiveFormInfos;
 
 
 
@@ -250,11 +326,7 @@ export default class FormSequenceModel {
 			 * @property {FormModel[]}
 			 * @readonly
 			 */
-			forms: { value: sequence.map( ( formDefinition, index ) => {
-				const reactiveFormInfo = reactiveInfo.forms[index] = {};
-
-				return new FormModel( this, formDefinition, index, reactiveFormInfo );
-			} ) },
+			forms: { value: formManagers },
 		} );
 
 
@@ -289,12 +361,11 @@ export default class FormSequenceModel {
 						return;
 					}
 
-					const forms = this.forms;
-					const numForms = forms.length;
-
+					const { forms } = this;
+					const _numForms = forms.length;
 					const _index = parseInt( index );
 
-					if ( _index < 0 || _index >= numForms || !forms[_index] ) {
+					if ( _index < 0 || _index >= _numForms || !forms[_index] ) {
 						throw new TypeError( `Invalid request for selecting form with index ${_index} out of bounds.` );
 					}
 
@@ -326,11 +397,11 @@ export default class FormSequenceModel {
 			currentName: {
 				get: () => this.forms[reactiveInfo.currentIndex].name,
 				set: newName => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 					let nameIndex = -1;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						if ( forms[i].name === newName ) {
 							nameIndex = i;
 							break;
@@ -354,10 +425,10 @@ export default class FormSequenceModel {
 			 */
 			firstInvalidIndex: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						if ( i > latestVisited ) {
 							break;
 						}
@@ -386,10 +457,10 @@ export default class FormSequenceModel {
 			 */
 			firstUnfinishedIndex: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						const form = forms[i];
 
 						if ( !form.finished || !form.valid ) {
@@ -410,10 +481,10 @@ export default class FormSequenceModel {
 			 */
 			finished: {
 				get: () => {
-					const forms = this.forms;
-					const numForms = forms.length;
+					const { forms } = this;
+					const _numForms = forms.length;
 
-					for ( let i = 0; i < numForms; i++ ) {
+					for ( let i = 0; i < _numForms; i++ ) {
 						const form = forms[i];
 
 						if ( !form.finished || !form.valid ) {
@@ -475,22 +546,93 @@ export default class FormSequenceModel {
 	}
 
 	/**
+	 * Finds field using provided callback to detect desired field.
+	 *
+	 * @param {function(field:AbstractFieldModel):boolean} callback detects if provided field is the desired one
+	 * @param {boolean} getName set true to get found field's name instead of its manager
+	 * @return {?(AbstractFieldModel|string)} manager or name of found field, null if not found
+	 */
+	findField( callback, getName = false ) {
+		if ( typeof callback !== "function" ) {
+			throw new TypeError( "invalid callback for detecting field" );
+		}
+
+		const forms = this.forms;
+		const numForms = forms.length;
+
+		for ( let i = 0; i < numForms; i++ ) {
+			const form = forms[i];
+			const fields = form.fields;
+			const numFields = fields.length;
+
+			for ( let j = 0; j < numFields; j++ ) {
+				const field = fields[j];
+
+				if ( callback( field ) ) {
+					return getName ? field.qualifiedName : field;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Qualifies section of configuration customizing operation modes of forms
 	 * processor.
 	 *
-	 * @param {object} input user-provided configuration of operation modes
+	 * @param {object} mode user-provided configuration of operation modes
 	 * @returns {object} qualified configuration of operation modes
 	 */
-	static qualifyModeConfiguration( input ) {
-		if ( !input.view ) {
-			input.view = {};
+	static qualifyModeConfiguration( mode ) {
+		if ( !mode.view ) {
+			mode.view = {};
 		}
 
-		input.view.progress = Data.normalizeToBoolean( input.view.progress, true );
+		const { view } = mode;
 
-		input.navigation = String( input.navigation || "auto" ).trim().toLowerCase();
+		view.progress = Data.normalizeToBoolean( view.progress, true );
+		view.explainRequired = String( view.explainRequired ).trim().toLowerCase() === "always" ? "always" : Data.normalizeToBoolean( view.explainRequired, true );
 
-		return input;
+		mode.navigation = String( mode.navigation || "auto" ).trim().toLowerCase();
+
+		if ( mode.localStore == null ) {
+			mode.localStore = {
+				enabled: false,
+				id: null,
+			};
+		} else {
+			if ( typeof mode.localStore !== "object" ) {
+				throw new TypeError( "invalid configuration of local store" );
+			}
+
+			const { localStore } = mode;
+
+			localStore.enabled = Data.normalizeToBoolean( localStore.enabled, true );
+
+			if ( !localStore.id ) {
+				localStore.enabled = false;
+			} else if ( localStore.maxAge != null ) {
+				const match = /^\s*(\d+)\s*([smhdw])\s*$/i.exec( localStore.maxAge );
+				if ( match ) {
+					const amount = parseInt( match[1] );
+
+					switch ( match[2].toLowerCase() ) {
+						case "s" : localStore.maxAge = amount * 1000; break;
+						case "m" : localStore.maxAge = amount * 60 * 1000; break;
+						case "h" : localStore.maxAge = amount * 60 * 60 * 1000; break;
+						case "d" : localStore.maxAge = amount * 24 * 60 * 60 * 1000; break;
+						case "w" : localStore.maxAge = amount * 7 * 24 * 60 * 60 * 1000; break;
+					}
+				} else if ( /^\s*\d+\s*$/.test( localStore.maxAge ) ) {
+					localStore.maxAge = parseInt( localStore.maxAge ) * 1000;
+				} else {
+					throw new TypeError( "invalid configuration for maximum age of locally stored input" );
+				}
+			}
+		}
+
+		return mode;
 	}
 
 	/**
@@ -542,7 +684,7 @@ export default class FormSequenceModel {
 		currentForm.finished = true;
 
 		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
-			EventBus.$emit( "form:autofocus" );
+			this.events.$emit( "form:autofocus" );
 			return false;
 		}
 
@@ -717,9 +859,8 @@ export default class FormSequenceModel {
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const fieldName = fieldNames[i];
-			const field = fieldsMap[fieldName];
+			const dependencies = fieldsMap[fieldName].dependsOn;
 
-			const dependencies = field.dependsOn;
 			if ( Array.isArray( dependencies ) ) {
 				const numDependencies = dependencies.length;
 
@@ -741,7 +882,69 @@ export default class FormSequenceModel {
 		for ( let i = 0; i < numKeys; i++ ) {
 			const key = keys[i];
 
+			if ( !fieldsMap.hasOwnProperty( key ) ) {
+				throw new TypeError( `invalid dependency on unknown field ${key}` );
+			}
+
 			fieldsMap[key].dependents = dependentsPerField[key];
+		}
+	}
+
+	/**
+	 * Handles update of named field's value.
+	 *
+	 * @param {string} fieldName qualified name of field with updated value
+	 * @param {*} updatedValue updated value of named field
+	 * @returns {boolean} true if update of field has affected validity of updated field or any of its dependents
+	 */
+	onUpdateValue( fieldName, updatedValue ) {
+		const { fields } = this;
+		const field = fields[fieldName];
+
+		if ( field ) {
+			const containingForms = [];
+
+			if ( field.onUpdateValue( updatedValue ) ) {
+				containingForms.push( field.form );
+			}
+
+			const dependents = field.dependents;
+			const numDependents = dependents.length;
+
+			for ( let i = 0; i < numDependents; i++ ) {
+				const dependent = fields[dependents[i]];
+				if ( dependent ) {
+					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
+						if ( containingForms.indexOf( dependent.form ) > -1 ) {
+							containingForms.push( dependent.form );
+						}
+					}
+				}
+			}
+
+			if ( containingForms.length > 0 ) {
+				for ( let i = 0; i < containingForms.length; i++ ) {
+					containingForms[i].readValidState();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Initializes results of terms in either form of sequence.
+	 *
+	 * @returns {void}
+	 */
+	initializeTerms() {
+		const { fields } = this;
+		const fieldNames = Object.keys( fields );
+		const numFields = fieldNames.length;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
+			const field = fields[fieldName];
+
+			this.onUpdateValue( fieldName, field.value );
 		}
 	}
 
@@ -755,13 +958,15 @@ export default class FormSequenceModel {
 	 */
 	renderComponent( data ) {
 		const that = this;
-		const { forms, showAllForms, fields } = this;
+		const { forms, showAllForms } = this;
 		const numForms = forms.length;
 		const components = new Array( numForms );
 
 		for ( let i = 0; i < numForms; i++ ) {
 			components[i] = forms[i].component;
 		}
+
+		data.__updateLocks = {};
 
 		return {
 			render: function( createElement ) {
@@ -789,33 +994,12 @@ export default class FormSequenceModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 
-						const field = fields[name];
-						if ( field ) {
-							const containingForms = [];
+						if ( !data.__updateLocks[name] ) {
+							data.__updateLocks[name] = true;
 
-							if ( field.onUpdateValue( this.$store, value ) ) {
-								containingForms.push( field.form );
-							}
+							that.onUpdateValue( name, value );
 
-							const dependents = field.dependents;
-							const numDependents = dependents.length;
-
-							for ( let i = 0; i < numDependents; i++ ) {
-								const dependent = fields[dependents[i]];
-								if ( dependent ) {
-									if ( dependent.onUpdateValue( this.$store, value, name ) ) {
-										if ( containingForms.indexOf( dependent.form ) > -1 ) {
-											containingForms.push( dependent.form );
-										}
-									}
-								}
-							}
-
-							if ( containingForms.length > 0 ) {
-								for ( let i = 0; i < containingForms.length; i++ ) {
-									containingForms[i].readValidState();
-								}
-							}
+							data.__updateLocks[name] = false;
 						}
 					}
 				} );
@@ -826,10 +1010,10 @@ export default class FormSequenceModel {
 				}
 			},
 			mounted() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 			updated() {
-				this.$nextTick( () => { EventBus.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
 			},
 		};
 	}
@@ -857,7 +1041,7 @@ export default class FormSequenceModel {
 
 					const classes = ["step"];
 
-					classes.push( formData.pristine ? "pristine" : "affected" );
+					classes.push( formData.pristine ? "pristine" : "touched" );
 					classes.push( formData.valid ? "valid" : "invalid" );
 
 					if ( i === currentIndex ) {
@@ -960,5 +1144,40 @@ export default class FormSequenceModel {
 		processors.splice( write );
 
 		return processors;
+	}
+
+	/**
+	 * Creates manager for field associated w/ provided form.
+	 *
+	 * @param {FormModel} form refers to form created field is going zo belong to
+	 * @param {object} fieldDefinition definition of field to create
+	 * @param {int} fieldIndex index of field in set of containing form's fields
+	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
+	 * @returns {?FormFieldAbstractModel} manager for handling defined field
+	 */
+	createField( form, fieldDefinition, fieldIndex, reactiveFieldInfo ) {
+		const Manager = this.selectFieldManager( fieldDefinition );
+		if ( Manager ) {
+			return new Manager( form, fieldDefinition, fieldIndex, reactiveFieldInfo );
+		}
+
+		console.error( `Missing manager for handling form fields of type ${fieldDefinition.type || "text"}.` ); // eslint-disable-line no-console
+
+		return null;
+	}
+
+	/**
+	 * Selects class implementing manager for type of field described in
+	 * provided definition of a field.
+	 *
+	 * @param {object} fieldDefinition definition of a field
+	 * @return {?class<FormFieldAbstractModel>} implementation of selected type of field, null if type is unknown
+	 */
+	selectFieldManager( fieldDefinition ) {
+		const { type = "text" } = fieldDefinition;
+
+		const normalized = String( type ).trim().toLowerCase();
+
+		return this.registry.fields[normalized] || null;
 	}
 }

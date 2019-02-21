@@ -1,0 +1,60 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"mode": {
+		"navigation": "dumb"
+	},
+	"sequence": [
+		{
+			"name": "step1",
+			"label": "First Page",
+			"fields": [
+				{
+					"name": "field1",
+					"label": "an image",
+					"required": true,
+				  	"dropZone": "no",
+				  	"type": "image"
+				},
+				{
+					"name": "field2",
+					"label": "wrong file type",
+				  	"dropZone": false,
+				  	"type": "image"
+				},
+				{
+					"name": "field3",
+					"label": "deleting an image",
+				  	"dropZone": "false",
+				  	"previewMode": "background",
+				  	"type": "image"
+				},
+			  	{
+					"name": "field4",
+					"label": "with dropZone, without button",
+				  	"button": "no",
+					"type": "image"
+				},
+				{
+					"type": "info",
+					"name": "filecount",
+					"text": "you've selected {{length( field1 )}} file(s) in top-most field"
+				}
+			]
+		},
+		{
+			"name": "step2",
+			"label": "Second Page",
+			"fields": [
+				{
+					"name": "info",
+					"type": "info",
+					"text": "you've selected {{length( field1 )}} file(s) in top-most field"
+				}
+			]
+		}
+	]
+}
