@@ -448,10 +448,15 @@ export default class FormModel {
 					this.valid ? "valid" : "invalid",
 				];
 
-				const blocks = [
-					createElement( "h2", title ),
-					createElement( "p", description ),
-				];
+				const blocks = [];
+
+				if ( String( title ).trim().length > 0 ) {
+					blocks.push( createElement( "h2", title ) );
+				}
+
+				if ( String( description ).trim().length > 0 ) {
+					blocks.push( createElement( "p", description ) );
+				}
 
 				const mode = sequence.mode.view.explainRequired;
 				switch ( mode ) {

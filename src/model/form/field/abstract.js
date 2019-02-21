@@ -997,7 +997,7 @@ export default class FormFieldAbstractModel {
 						`qname-${qualifiedName.replace( /\./g, "_" )}`,
 						this.required ? "mandatory" : "optional",
 						this.pristine ? "pristine" : "touched",
-						this.label ? "with-label" : "without-label",
+						this.label == null ? "without-label" : "with-label",
 						this.valid ? "valid" : this.valid == null ? "validity-unknown" : "invalid",
 						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
@@ -1020,7 +1020,7 @@ export default class FormFieldAbstractModel {
 			template: `
 <div v-if="required || visible" :class="componentClasses">
 	<span class="label" v-if="showLabels">
-		<label>{{label}}<span v-if="required" class="mandatory">*</span></label>
+		<label v-if="label!=null">{{label}}<span v-if="required" class="mandatory">*</span></label>
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" @input="onInput" />
