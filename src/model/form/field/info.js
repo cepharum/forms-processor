@@ -38,7 +38,7 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 		const that = this;
 
 		return {
-			template: `<span class="static-info" v-html="renderedText"></span>`,
+			template: `<span class="static-info" :class="{markdown}" v-html="renderedText"></span>`,
 			data() {
 				return {
 					text: that.text,
@@ -47,7 +47,10 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 			computed: {
 				renderedText() {
 					return that.markdown ? Markdown.getRenderer().render( this.text ) : this.text;
-				}
+				},
+				markdown() {
+					return that.markdown;
+				},
 			},
 			methods: {
 				updateOnDataChanged() {
