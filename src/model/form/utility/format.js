@@ -153,7 +153,7 @@ export default class Format {
 	static ipv4( input, acceptPartial = false, options = {} ) { // eslint-disable-line no-unused-vars
 		const fixedInput = String( input == null ? "" : input ).trim();
 
-		if ( fixedInput.length === 0 ) {
+		if ( fixedInput === "" ) {
 			return { output: "" };
 		}
 
@@ -196,7 +196,7 @@ export default class Format {
 	static mail( input, acceptPartial = false, options = {} ) { // eslint-disable-line no-unused-vars
 		const fixedInput = String( input == null ? "" : input ).trim();
 
-		if ( fixedInput.length === 0 ) {
+		if ( fixedInput === "" ) {
 			return { output: "" };
 		}
 
@@ -230,7 +230,7 @@ export default class Format {
 	static phone( input, acceptPartial = false, options = {} ) { // eslint-disable-line no-unused-vars
 		const fixedInput = String( input == null ? "" : input ).replace( /\s+/g, "" );
 
-		if ( fixedInput.length === 0 ) {
+		if ( fixedInput === "" ) {
 			return { output: "" };
 		}
 
@@ -381,6 +381,10 @@ export default class Format {
 	 */
 	static bic( input, acceptPartial = false, { countryCodes = [] } = {} ) { // eslint-disable-line no-unused-vars
 		const fixedInput = input == null ? "" : String( input ).trim().toUpperCase();
+
+		if ( fixedInput === "" ) {
+			return { output: "" };
+		}
 
 		const regEx = /^([a-z]{4})([a-z]{2})([2-9a-z][a-np-z0-9])([0-9a-wy-z][0-9a-z]{2}|x{0,3})$/i;
 		const partial = /^([a-z]{0,6}|[a-z]{6}(([2-9a-z]|[2-9a-z][a-np-z0-9])?|[2-9a-z][a-np-z0-9]([0-9a-wy-z][0-9a-z]{0,2}|xx{0,2})?))$/i;
