@@ -1169,6 +1169,9 @@ export default class FormFieldAbstractModel {
 						return Boolean( value );
 				}
 
+			case "validity" :
+				return value == null ? null : Boolean( value );
+
 			case "messages" :
 				if ( value == null ) {
 					return null;
@@ -1216,6 +1219,10 @@ export default class FormFieldAbstractModel {
 
 		if ( required && ( value == null || value === "" ) ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		}
+
+		if ( this.validity === false ) {
+			errors.push( "@VALIDATION.INVALID" );
 		}
 
 		return errors;

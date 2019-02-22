@@ -169,6 +169,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 			}
 		}
 
+		if ( this.validity === false ) {
+			errors.push( "@VALIDATION.INVALID" );
+		}
+
 		return errors;
 	}
 }

@@ -47,6 +47,7 @@ export default function() {
 		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
+			INVALID: "Diese Angabe ist ungültig.",
 			MISSING_REQUIRED: "Diese Angabe ist erforderlich.",
 			MISSING_SELECTION: "Bitte treffen Sie hier eine Auswahl!",
 			TOO_SHORT: "Ihre Angabe ist zu kurz.",
