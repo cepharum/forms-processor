@@ -27,6 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import L10n from "@/service/l10n";
 import Data from "../../../service/data";
 import Options from "../utility/options";
 
@@ -120,9 +121,11 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		return {
 			template: `
 				<select v-model="model" v-if="!supportMultiSelect" class="select single" :disabled="disabled">
+					<option disabled value="">{{ singlePrompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 				<select v-model="model" v-else-if="supportMultiSelect" multiple class="select multi" :disabled="disabled">
+					<option disabled value="">{{ multiPrompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
@@ -144,6 +147,12 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				},
 				supportMultiSelect() {
 					return this.multiple && ( this.options && this.options.length > 1 );
+				},
+				singlePrompt() {
+					return L10n.translate( this.$store.getters.l10n, "PROMPT.SELECTOR_SINGLE" );
+				},
+				multiPrompt() {
+					return L10n.translate( this.$store.getters.l10n, "PROMPT.SELECTOR_MULTIPLE" );
 				},
 			},
 		};
