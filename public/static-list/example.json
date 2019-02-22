@@ -13,13 +13,91 @@
 					"name": "stringList",
 					"label": "String List",
 					"type": "select",
-					"options": "one , two, three "
+					"options": "one , two, three ",
+					"prompt": "choose one ..."
 				},
 				{
 					"name": "optionsList",
 					"label": "Options List",
 					"type": "select",
 					"options": [
+						{
+							"value": "",
+							"label": "unselectable"
+						},
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					]
+				},
+				{
+					"name": "optionsListWithPrompt",
+					"label": "Options List w/ Prompt",
+					"type": "select",
+					"prompt": "choose one ...",
+					"options": [
+						{
+							"value": "",
+							"label": "unselectable"
+						},
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					]
+				},
+				{
+					"name": "optionsListWithDefaultPrompt",
+					"label": "Options List w/ Default Prompt",
+					"type": "select",
+					"prompt": "true",
+					"options": [
+						{
+							"value": "",
+							"label": "unselectable"
+						},
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": "three",
+							"label": "Three!"
+						}
+					]
+				},
+				{
+					"name": "optionsListWithDefaultPromptPreselected",
+					"label": "Preselected Options List",
+					"type": "select",
+					"prompt": "true",
+					"initial": "0",
+					"options": [
+						{
+							"value": "0",
+							"label": "default"
+						},
 						{
 							"value": "one",
 							"label": "One!"
@@ -59,7 +137,37 @@
 							"label": "Three!"
 						}
 					],
-					"required": true
+					"required": true,
+					"messages": {
+						"VALIDATION.MISSING_SELECTION": "You need to choose something here!"
+					}
+				},
+				{
+					"name": "customValidityList",
+					"label": "Custom Validity List",
+					"type": "select",
+					"prompt": true,
+					"options": [
+						{
+							"value": "one",
+							"label": "One!"
+						},
+						{
+							"value": "two",
+							"label": "Two!"
+						},
+						{
+							"value": 3,
+							"label": "Three!"
+						}
+					],
+					"validity": "=requiredOptionsList<>customValidityList",
+					"messages": {
+						"VALIDATION.INVALID": {
+							"de": "Sie dürfen hier nicht das gleiche wählen wie in der Liste darüber.",
+							"any": "You need to choose different options here and in list above."
+						}
+					}
 				},
 				{
 					"name": "dependingStringList",
