@@ -923,7 +923,10 @@ export default class FormFieldAbstractModel {
 			// some other field has been updated
 			// -> my initial value might depend on it, so re-assign my initial
 			//    unless field has been adjusted before
-			this.setValue( this.initial );
+			const updatedInitial = this.initial;
+			if ( updatedInitial !== this.value ) {
+				this.setValue( updatedInitial );
+			}
 		}
 
 		// changing current field or some field current one

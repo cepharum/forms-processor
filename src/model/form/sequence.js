@@ -966,8 +966,6 @@ export default class FormSequenceModel {
 			components[i] = forms[i].component;
 		}
 
-		data.__updateLocks = {};
-
 		return {
 			render: function( createElement ) {
 				const formElements = showAllForms ? new Array( numForms ) : [];
@@ -994,13 +992,7 @@ export default class FormSequenceModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 
-						if ( !data.__updateLocks[name] ) {
-							data.__updateLocks[name] = true;
-
-							that.onUpdateValue( name, value );
-
-							data.__updateLocks[name] = false;
-						}
+						that.onUpdateValue( name, value );
 					}
 				} );
 			},
