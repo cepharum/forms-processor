@@ -53,6 +53,26 @@
 					"name": "optionsList",
 					"label": "Options List",
 					"type": "select",
+					"options": [
+						{
+							"value": "=itemA",
+							"label": "=stringList || 'humpty'"
+						},
+						{
+							"value": "=itemB",
+							"label": "=stringList || 'dumpty'"
+						},
+						{
+							"value": "=itemC",
+							"label": "=stringList || 'empty'"
+						}
+					],
+					"hint": "When selecting option in string-controlled list above every option of this list should have equivalent label."
+				},
+				{
+					"name": "optionsListWithPrompt",
+					"label": "Options List",
+					"type": "select",
 					"prompt": "=prompt",
 					"options": [
 						{

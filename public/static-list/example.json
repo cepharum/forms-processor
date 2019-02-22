@@ -13,18 +13,13 @@
 					"name": "stringList",
 					"label": "String List",
 					"type": "select",
-					"options": "one , two, three ",
-					"prompt": "choose one ..."
+					"options": "one , two, three "
 				},
 				{
 					"name": "optionsList",
 					"label": "Options List",
 					"type": "select",
 					"options": [
-						{
-							"value": "",
-							"label": "unselectable"
-						},
 						{
 							"value": "one",
 							"label": "One!"
