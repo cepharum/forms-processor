@@ -42,8 +42,7 @@ export default function() {
 			EXPLAIN_REQUIRED: "= erforderliche Angabe"
 		},
 		PROMPT: {
-			SELECTOR_SINGLE: "Bitte wählen Sie einen Eintrag...",
-			SELECTOR_MULTIPLE: "Bitte wählen Sie einen oder mehrere Einträge...",
+			SELECTOR: "Bitte wählen...",
 		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",

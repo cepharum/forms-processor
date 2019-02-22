@@ -27,6 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import L10n from "../../../service/l10n";
 import Data from "../../../service/data";
 import Options from "../utility/options";
 
@@ -96,7 +97,15 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 						return null;
 					}
 
-					return String( rawValue ).trim();
+					const asBoolean = Data.normalizeToBoolean( rawValue, null );
+					if ( asBoolean === true ) {
+						const { sequence } = this.form;
+
+						return L10n.translate( sequence.translations, "PROMPT.SELECTOR" );
+					}
+
+					const localized = this.selectLocalization( rawValue );
+					return localized == null ? null : String( localized ).trim();
 				} );
 			},
 
@@ -111,6 +120,8 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		if ( !onLocalUpdate ) {
 			reactiveFieldInfo.options = this.options;
 		}
+
+		reactiveFieldInfo.prompt = this.prompt;
 	}
 
 	/** @inheritDoc */
@@ -118,25 +129,33 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
+		reactiveFieldInfo.prompt = this.prompt;
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
-		const { prompt } = this;
-
 		return {
 			template: `
-				<select v-model="value" :multiple="supportMultiSelect" class="select" :class="[supportMultiSelect ? 'multi' : 'single']" :disabled="disabled">
-					<option v-if="prompt" value="">{{ prompt }}</option>
+				<select v-model="value" 
+				        :multiple="multi" 
+				        class="select" 
+				        :class="[multi ? 'multi' : 'single', value == null ? 'prompting' : 'selected']" 
+				        :disabled="disabled" 
+				        @change="updated">
+					<option v-if="prompt" disabled :value="null">{{ prompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
 			data: () => reactiveFieldInfo,
 			computed: {
-				supportMultiSelect() {
+				multi() {
 					return this.multiple && ( this.options && this.options.length > 1 );
 				},
-				prompt: () => prompt,
+			},
+			methods: {
+				updated() {
+					this.$nextTick( () => this.$emit( "input", this.value ) );
+				},
 			},
 		};
 	}
