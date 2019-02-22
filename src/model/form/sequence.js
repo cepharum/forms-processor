@@ -706,6 +706,8 @@ export default class FormSequenceModel {
 
 		index = Math.min( Math.max( index, 0 ), forms.length - 1 );
 
+		this.events.$emit( "sequence:advance", this.currentIndex, index );
+
 		const isAdvancing = index > this.currentIndex;
 		this.currentIndex = index;
 
@@ -718,8 +720,9 @@ export default class FormSequenceModel {
 	 * @returns {boolean} true if current form has been actually rewinded
 	 */
 	rewind() {
-		const index = this.currentIndex;
-		if ( index > 0 ) {
+		if ( this.currentIndex > 0 ) {
+			this.events.$emit( "sequence:rewind", this.currentIndex, this.currentIndex - 1 );
+
 			this.currentIndex--;
 
 			return true;
@@ -743,6 +746,8 @@ export default class FormSequenceModel {
 
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
+		this.events.$emit( "sequence:submitting", originalData );
+
 		return new Promise( ( resolve, reject ) => {
 			/**
 			 * Invokes single processor to handle provided input data.
@@ -754,6 +759,8 @@ export default class FormSequenceModel {
 			 */
 			const _process = ( processors, currentIndex, data ) => {
 				if ( currentIndex >= processors.length ) {
+					this.events.$emit( "sequence:submitted", data );
+
 					resolve( data );
 				} else {
 					Promise.resolve( processors[currentIndex].process( data, this ) )
