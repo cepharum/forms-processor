@@ -375,6 +375,7 @@ export default class FormFieldAbstractModel {
 							} else {
 								switch ( propertyName ) {
 									case "suppress" :
+									case "messages" :
 										break;
 
 									default :
@@ -1048,7 +1049,14 @@ export default class FormFieldAbstractModel {
 						const _lookup = lookup.trim();
 
 						if ( _lookup[0] === "@" ) {
-							return L10n.translate( this.$store.getters.l10n, _lookup.slice( 1 ) );
+							const rawLookUp = _lookup.slice( 1 );
+							const messages = that.messages;
+
+							if ( messages && messages.hasOwnProperty( rawLookUp ) ) {
+								return that.selectLocalization( messages[rawLookUp] );
+							}
+
+							return L10n.translate( this.$store.getters.l10n, rawLookUp );
 						}
 					}
 
@@ -1160,6 +1168,17 @@ export default class FormFieldAbstractModel {
 					default :
 						return Boolean( value );
 				}
+
+			case "messages" :
+				if ( value == null ) {
+					return null;
+				}
+
+				if ( typeof value === "object" ) {
+					return value;
+				}
+
+				throw new TypeError( "invalid set of custom error messages" );
 
 			case "initial" :
 				return this.normalizeValue( value ).value;
