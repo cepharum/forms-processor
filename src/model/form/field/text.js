@@ -419,14 +419,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		if ( this.required && !value.length ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		} else {
-			if ( this.size.isBelowRange( value.length ) ) {
+			if ( !live && this.size.isBelowRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_SHORT" );
 			}
 
 			if ( this.size.isAboveRange( value.length ) ) {
 				errors.push( "@VALIDATION.TOO_LONG" );
 			}
-
 
 			// check for complying with optionally selected format
 			let { format } = this;
