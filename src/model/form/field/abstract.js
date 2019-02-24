@@ -1069,7 +1069,7 @@ export default class FormFieldAbstractModel {
 				},
 			},
 			created() {
-				this.__onGlobalFormAutoFocusEvent = () => {
+				this.__onFormAutoFocusEvent = () => {
 					if ( that.form.autoFocusField === that ) {
 						this.$nextTick( () => {
 							const firstControl = this.$el.querySelector( "input, select, button" );
@@ -1085,10 +1085,10 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				that.form.sequence.events.$on( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				that.form.sequence.events.$on( "form:autofocus", this.__onFormAutoFocusEvent );
 			},
 			beforeMount() {
-				this.__onGlobalFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
+				this.__onFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
 					if ( emittingQualifiedName === qualifiedName ) {
 						const field = this.$refs.fieldComponent;
 						if ( field ) {
@@ -1100,13 +1100,13 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				that.form.sequence.events.$on( "form:update", this.__onGlobalFormUpdateEvent );
+				that.form.sequence.events.$on( "form:update", this.__onFormUpdateEvent );
 			},
 			beforeDestroy() {
 				const { events } = that.form.sequence;
 
-				events.$off( "form:update", this.__onGlobalFormUpdateEvent );
-				events.$off( "form:autofocus", this.__onGlobalFormAutoFocusEvent );
+				events.$off( "form:update", this.__onFormUpdateEvent );
+				events.$off( "form:autofocus", this.__onFormAutoFocusEvent );
 			},
 		};
 	}
