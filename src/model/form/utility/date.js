@@ -26,6 +26,13 @@
  * @author: cepharum
  */
 
+import Range from "./range";
+
+/**
+ * @typedef {String} DateString String that is parsable with new Date(DateString)
+ * @typedef {Date|DateString} DateInput
+ */
+
 /**
  * Implements format validators checking whether some provided textual input is
  * complying with a certain format.
@@ -36,22 +43,66 @@
 export default class DateProcessor {
 	/**
 	 * @inheritDoc
-	 * @param{string} format dateFormat for example: yyyy-mm-dd
+	 * @param{string[]|string} format single or array of dateFormats for example: yyyy-mm-dd
 	 */
 	constructor( format = "yyyy-mm-dd" ) {
-		this.normalizer = new DateNormalizer( format );
-		this.format = format;
+		this.normalizer = {};
+		this.format = [];
+		this.addFormat( format );
 	}
+
+
+	/**
+	 * adds formats and caches corresponding DateNormalizer and DateValidator
+	 * @param{string[]|string} format single or array of dateFormats for example: yyyy-mm-dd
+	 * @returns {void}
+	 */
+	addFormat( format ) {
+		let input = format;
+		if ( typeof input === "string" ) {
+			input = [input];
+		}
+		if( input instanceof Array ) {
+			for( let index = 0, length = input.length; index < length; index++ ) {
+				const formatString = input[index];
+				if( !this.normalizer[formatString] ) {
+					this.format.push( formatString );
+					this.normalizer[formatString] = new DateNormalizer( formatString );
+				}
+			}
+		}
+	}
+
+
 
 
 	/**
 	 * normalize a date for given format
 	 * @param{string} input date to validate for given format
 	 * @param{object} options refers to object selecting optional customizations to date checking
+	 * @param{string[]|string} format single or array of dateFormats for example: yyyy-mm-dd
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	normalize( input, options ) {
-		return this.normalizer.normalize( input, options );
+	normalize( input, options = {} ) {
+		const { format } = options;
+		if( format ) {
+			this.addFormat( format );
+		}
+		let normalized = false;
+		const errors = [];
+		for( let i = 0, l = this.format.length; i < l; i++ ) {
+			const formatString = this.format[i];
+			const normalizer = this.normalizer[formatString];
+			try {
+				normalized = normalizer.normalize( input, options );
+			} catch ( e ) {
+				errors.push( e );
+			}
+		}
+		if( normalized ) {
+			return normalized;
+		}
+		throw new Error( errors );
 	}
 
 	/**
@@ -60,33 +111,21 @@ export default class DateProcessor {
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	validate( input, { min, max, allowededDays } = {} ) {
-		if( !( input instanceof Date ) ) {
-			throw new TypeError( "Input needs to be a Date, use .normalize to normalize a String to Date" );
-		}
-		if( min ) {
-			const minDate = this.normalizeSelector( min );
-			if( input.getTime() % 8.64e+7 < minDate.getTime() % 8.64e+7 ) {
-				throw new Error( "input does not satisfy minDate" );
-			}
-		}
-		if( max ) {
-			const minDate = this.normalizeSelector( max );
-			if( input.getTime() % 8.64e+7 > minDate.getTime() % 8.64e+7 ) {
-				throw new Error( "input does not satisfy minDate" );
-			}
-		}
+	validate( input, options ) {
+		DateValidator.validate( input, options );
 	}
 
 	/**
 	 * normalizes a selector to a Date
 	 * @param{string} selector Date selector
+	 * @param {DateInput[]} allowedWeekdays list of allowed weekDays
+	 * @param {DateInput[]} notAllowedDates list of allowed dates
 	 * @return {Date} normalized Date
 	 */
-	normalizeSelector( selector ) {
+	static normalizeSelector( selector, { allowedWeekdays = [ 1,2,3,4,5 ], notAllowedDates = [] } = {} ) {
 		const date = new Date();
-		if( selector === "now" ) {
-			return new Date();
+		if( selector.toLowerCase() === "now" || selector.toLowerCase() === "today" ) {
+			return date;
 		}
 		if( /^-[0-9]+$/.test( selector ) ) {
 			const offset = Number( selector.replace( "-", "" ) );
@@ -95,18 +134,50 @@ export default class DateProcessor {
 		}
 
 		if( /^\+[0-9]+$/.test( selector ) ) {
-			const offset = Number( selector.replace( "-", "" ) );
+			const offset = Number( selector.replace( "+", "" ) );
 			date.setDate( date.getDate() + offset );
 			return date;
 		}
-		// if( /^-[0-9]+BD$/.test( selector ) ) {
-		// 	const offset = Number( selector.replace( "-", "" ) );
-		// 	const day = date.getDay();
-		// 	if( offset <= day ) {
-		// 		date.setDate( date.getDate() - offset );
-		// 	}
-		// 	return date;
-		// }
+		if( /^-[0-9]+M$/.test( selector ) ) {
+			const offset = Number( selector.replace( "-", "" ).replace( "M", "" ) );
+			date.setMonth( date.getMonth() - offset );
+			date.setDate( 0 );
+			return date;
+		}
+		if( /^\+[0-9]+M$/.test( selector ) ) {
+			const offset = Number( selector.replace( "+", "" ).replace( "M", "" ) );
+			date.setMonth( date.getMonth() + offset );
+			date.setDate( 0 );
+			return date;
+		}
+		if( /^-[0-9]+BD$/.test( selector ) ) {
+			const offset = Number( selector.replace( "-", "" ).replace( "BD", "" ) );
+			let found = 0;
+
+			while( found < offset ) {
+				date.setDate( date.getDate() - 1 );
+				try{
+					DateValidator.validate( date, { allowedWeekdays, notAllowedDates } );
+					found ++;
+				// eslint-disable-next-line no-empty
+				} catch ( e ) {}
+			}
+			return date;
+		}
+		if( /^\+[0-9]+BD$/.test( selector ) ) {
+			const offset = Number( selector.replace( "+", "" ).replace( "BD", "" ) );
+			let found = 0;
+
+			while( found < offset ) {
+				date.setDate( date.getDate() + 1 );
+				try{
+					DateValidator.validate( date, { allowedWeekdays, notAllowedDates } );
+					found ++;
+					// eslint-disable-next-line no-empty
+				} catch ( e ) {}
+			}
+			return date;
+		}
 		throw new Error( "Selector does not match" );
 	}
 }
@@ -120,15 +191,18 @@ export class DateNormalizer {
 	 * @param{string} format format that date should be parsed for
 	 */
 	constructor( format = "yyyy-mm-dd" ) {
-		const separator = extractSeparator( format );
+		const separator = DateNormalizer.extractSeparator( format );
 		const parts = format.split( separator );
+		if( parts.length > 3 ) {
+			throw new Error( "This normalizer that consist of under 4 parts" );
+		}
 		const patterns = {};
 
 		const identifiers = parts.map( part => {
-			const key = getKeyForIdentifier( part );
+			const key = this.getKeyForIdentifier( part );
 			const regExp = {
-				regular: getRegExpForIdentifier( part, false ),
-				acceptPartial: getRegExpForIdentifier( part, true ),
+				regular: this.getRegExpForIdentifier( part, false ),
+				acceptPartial: this.getRegExpForIdentifier( part, true ),
 			};
 			patterns[key] = regExp;
 			return {
@@ -139,20 +213,28 @@ export class DateNormalizer {
 		} );
 
 		const length = identifiers.length;
-		const acceptPartialArray = new Array( length * 3 );
-		for( let index = 0, leftOffset = 0, rightOffset = acceptPartialArray.length - 1; index < length; index ++ ) {
-			const identifier = identifiers[index];
-			acceptPartialArray[leftOffset] = "(?:";
-			leftOffset++;
-			acceptPartialArray[leftOffset] = identifier.regExp.regular.source.slice( 1, -1 );
-			leftOffset++;
-			acceptPartialArray[rightOffset] = ")?";
-			rightOffset--;
+		const acceptPartialArray = new Array( length * 2 );
+		for( let identifierIndex = 0; identifierIndex < length; identifierIndex++ ) {
+			const partialArray = new Array( identifierIndex + 1 );
+
+			for ( let partialIndex = 0; partialIndex <= identifierIndex; partialIndex++ ) {
+				const partialIdentifier = identifiers[partialIndex];
+
+				if ( partialIndex < identifierIndex ) {
+					partialArray[partialIndex] = partialIdentifier.regExp.regular.source.slice( 1,-1 );
+				} else {
+					const writeIndex = identifierIndex * 2;
+					partialArray[partialIndex] = partialIdentifier.regExp.acceptPartial.source.slice( 1,-1 );
+					acceptPartialArray[writeIndex] = partialArray.join( "-" );
+					partialArray[partialIndex] = partialIdentifier.regExp.regular.source.slice( 1,-1 );
+					acceptPartialArray[writeIndex + 1] = partialArray.join( "-" ) + "-?";
+				}
+			}
 		}
 
 		patterns.complete = {
 			regular: new RegExp( "^" + identifiers.map( identifier => `(${identifier.regExp.regular.source.replace( "^","" ).replace( "$", "" )})` ).join( separator ) + "$" ),
-			acceptPartial: new RegExp( acceptPartialArray.join( "" ) ),
+			acceptPartial: new RegExp( "^(" + acceptPartialArray.join( "|" ) + ")$" ),
 		};
 
 
@@ -162,6 +244,7 @@ export class DateNormalizer {
 		this.patterns = patterns;
 	}
 
+
 	/**
 	 * normalizes input that is in the given format to Date
 	 * @param{string} input input that obeys the given format
@@ -169,18 +252,24 @@ export class DateNormalizer {
 	 * @param{number} yearBuffer if "yy" is the year format, this is added to current year to decide which century to use
 	 * @returns {Date} parsed date
 	 */
-	normalize( input = "", { yearBuffer = 0 } = {} ) {
-		let value = null;
-		if( input ) {
-			value = NaN;
+	normalize( input = "", { acceptPartial = false , yearBuffer = 0 } = {} ) {
+		const preparedInput = input.trim();
+		const parts = preparedInput.split( this.separator );
+		const { complete } = this.patterns;
+		const isValid = complete.acceptPartial.test( preparedInput );
+
+		if( !isValid ) {
+			throw new Error( "invalid input provided" );
 		}
-		const formattedInput = input.trim();
-		const parts = formattedInput.split( this.separator );
-		const isValid = this.patterns.complete.acceptPartial.test( formattedInput );
-		const formattedValue = isValid ? formattedInput : false;
-		const isParsable = this.patterns.complete.regular.test( formattedInput ) || parts.length !== this.identifiers.length;
-		if( isParsable ) {
-			const date = new Date;
+
+		const isParsable = complete.regular.test( preparedInput );
+
+		if( !acceptPartial && !isParsable ) {
+			throw new Error( "input is not complete" );
+		}
+
+		const date = new Date;
+		if( ( acceptPartial && isValid ) || isParsable ) {
 			for( let index = 0, length = parts.length; index < length; index++ ) {
 				const part = parts[index];
 				const identifier = this.identifiers[index];
@@ -217,39 +306,210 @@ export class DateNormalizer {
 						throw new TypeError( "invalid input detected" );
 				}
 			}
-			value = date;
 		}
-		return {
-			formattedValue,
-			value
-		};
+		return date;
+	}
+
+	/**
+	 * exracts the seperator for a given format
+	 * @param{string} format string in the date format
+	 * @return {string} seperator of the identifier in a date format;
+	 */
+	static extractSeparator( format ) {
+		/**
+		 * @type {boolean|string}
+		 */
+		let separator = false;
+		for ( let index = 0, length = format.length; index < length; index++ ) {
+			const char = format.charAt( index );
+			if ( !isIdentifier( char ) ) {
+				if ( separator && char !== separator ) {
+					throw new Error( "invalid format provided: separators not uniform" );
+				} else {
+					separator = char;
+				}
+			}
+		}
+		if( !separator ) {
+			throw new Error( "invalid format provided" );
+		}
+		return separator;
+	}
+
+	/**
+	 *
+	 * @param{string} string string that should be parsed
+	 * @param{boolean} acceptPartial if the returned regEx should accept partial String
+	 * @return {RegExp} RegExp that returns a RegEx
+	 */
+	getRegExpForIdentifier( string, acceptPartial = true ) {
+		switch ( string.toLowerCase() ) {
+			case "m" :
+				if( acceptPartial ) {
+					return /^(\d?|0[1-9]|1[0-2])$/;
+				}
+				return /^([1-9]|0[1-9]|1[0-2])$/;
+			case "mm" :
+				if( acceptPartial ) {
+					return this.getRegExpForIdentifier( "m" );
+				}
+				return /^(0[1-9]|1[0-2])$/;
+			case "d" :
+				if( acceptPartial ) {
+					return /^(\d?|0[1-9]|[1-2]\d|3[0-1])$/;
+				}
+				return /^([1-9]|0[1-9]|[1-2]\d|3[0-1])$/;
+			case "dd" :
+				if( acceptPartial ) {
+					return this.getRegExpForIdentifier( "d" );
+				}
+				return /^(0[1-9]|[1-2]\d|3[0-1])$/;
+			case "yy" :
+				if( acceptPartial ) {
+					return /^(\d{0,2})$/;
+				}
+				return /^\d{2}$/;
+			case "yyyy" :
+				if( acceptPartial ) {
+					return /^\d{0,4}$/;
+				}
+				return /^\d{4}$/;
+			default :
+				throw new Error( "unexpected date format identifier" );
+		}
+	}
+
+	/**
+	 *
+	 * @param{string} string string that should be parsed
+	 * @return {String} Key of the identifier
+	 */
+	getKeyForIdentifier( string ) {
+		const identifier = string.toLowerCase();
+		switch ( identifier ) {
+			case "m" :
+			case "mm" :
+				return "month";
+			case "d" :
+			case "dd" :
+				return "day";
+			case "yy" :
+			case "yyyy" :
+				return "year";
+			default :
+				throw new Error( "unexpected date format identifier" );
+		}
 	}
 }
 
+
 /**
- * exracts the seperator for a given format
- * @param{string} format string in the date format
- * @return {string} seperator of the identifier in a date format;
+ * provides the utility to parse a Date for a given Format
  */
-function extractSeparator( format ) {
+export class DateValidator {
 	/**
-	 * @type {boolean|string}
+	 * valide a given date
+	 * @param {DateInput} input date to validate
+	 * @param {object} options refers to object selecting optional customizations to date checking
+	 * @param {DateInput} minDate minimal Date
+	 * @param {DateInput} maxDate maximal Date
+	 * @param {number[]} allowedWeekdays numeric values of the allowed weekdays
+	 * @param {DateInput[]} notAllowedDates numeric values of the allowed weekdays
+	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	let separator = false;
-	for ( let index = 0, length = format.length; index < length; index++ ) {
-		const char = format.charAt( index );
-		if ( !isIdentifier( char ) ) {
-			if ( separator && char !== separator ) {
-				throw new Error( "invalid format provided: separators not uniform" );
-			} else {
-				separator = char;
+	static validate( input, { minDate, maxDate, allowedWeekdays, notAllowedDates } = {} ) {
+		let inputDate = input;
+
+		if( typeof inputDate === "string" ) {
+			inputDate = new Date( inputDate );
+		}
+		if( !( inputDate instanceof Date ) ) {
+			throw new TypeError( "Input needs to be a Date or a parsable dateString" );
+		}
+
+		if( minDate ) {
+			let date = minDate;
+
+			if( typeof minDate === "string" ) {
+				date = new Date( date );
+			}
+			if( !( date instanceof Date ) ) {
+				throw new TypeError( "minDate needs to be a Date or a parsable dateString" );
+			}
+			if( Math.floor( inputDate.getTime() / 8.64e+7 ) < Math.floor( date.getTime() / 8.64e+7 ) ) {
+				throw new Error( "input does not satisfy minDate" );
+			}
+		}
+
+		if( maxDate ) {
+			let date = maxDate;
+
+			if( typeof maxDate === "string" ) {
+				date = new Date( date );
+			}
+			if( !( date instanceof Date ) ) {
+				throw new TypeError( "maxDate needs to be a Date or a parsable dateString" );
+			}
+			if( Math.floor( inputDate.getTime() / 8.64e+7 ) > Math.floor( date.getTime() / 8.64e+7 ) ) {
+				throw new Error( "input does not satisfy maxDate" );
+			}
+		}
+
+		if( allowedWeekdays ) {
+			const weekday = inputDate.getDay();
+			if( allowedWeekdays instanceof Array && allowedWeekdays.length ) {
+				let isOk = false;
+
+				for( let length = allowedWeekdays.length, index = 0; index < length; index++ ) {
+					try {
+						DateValidator.checkWeekday( weekday, allowedWeekdays[index] );
+						isOk = true;
+					// eslint-disable-next-line no-empty
+					} catch ( e ) {}
+				}
+				if( !isOk ) {
+					throw new Error( "this weekday is not allowed" );
+				}
+			}
+			DateValidator.checkWeekday( weekday, allowedWeekdays );
+		}
+
+		if( notAllowedDates ) {
+			for( let length = notAllowedDates.length, index = 0; index < length; index++ ) {
+				let date = notAllowedDates[index];
+
+				if( typeof date === "string" ) {
+					date = new Date( date );
+				}
+				if( !( date instanceof Date ) ) {
+					throw new Error( "each entry of notAllowedDates must be a Date or a parsable dateString" );
+				}
+				if( Math.floor( inputDate.getTime() / 8.64e+7 ) === Math.floor( date.getTime() / 8.64e+7 ) ) {
+					throw new Error( "this date is not allowed" );
+				}
 			}
 		}
 	}
-	if( !separator ) {
-		throw new Error( "invalid format provided" );
+
+	/**
+	 * validates a single weekday against a selector
+	 * @param{Number} weekday the integer presentation of a weekday
+	 * @param{Range|Number} selector selector that describes the limit of an allowed weekday
+	 * @returns {void}
+	 */
+	static checkWeekday( weekday, selector ) {
+		if( typeof selector === "string" ) {
+			const range = new Range( selector );
+			if( range.isAboveRange( weekday ) || range.isBelowRange( weekday ) ) {
+				throw new Error( "this weekday is not allowed" );
+			}
+		}
+		if( typeof selector === "number" ) {
+			if( selector !== weekday ) {
+				throw new Error( "this weekday is not allowed" );
+			}
+		}
 	}
-	return separator;
 }
 
 /**
@@ -260,63 +520,4 @@ function extractSeparator( format ) {
 function isIdentifier( char ) {
 	const identifier = char.toLowerCase();
 	return identifier === "y" || identifier === "m" || identifier === "d";
-}
-
-/**
- *
- * @param{string} string string that should be parsed
- * @param{boolean} acceptPartial if the returned regEx should accept partial String
- * @return {RegExp} RegExp that returns a RegEx
- */
-function getRegExpForIdentifier( string, acceptPartial = true ) {
-	switch ( string.toLowerCase() ) {
-		case "m" :
-			return /^\d|0\d|1[0-2]$/;
-		case "mm" :
-			if( acceptPartial ) {
-				return getRegExpForIdentifier( "m" );
-			}
-			return /^0\d|1[0-2]$/;
-		case "d" :
-			return /^\d|[0-2]\d|3[0-1]$/;
-		case "dd" :
-			if( acceptPartial ) {
-				return getRegExpForIdentifier( "d" );
-			}
-			return /^[0-2]\d|3[0-1]$/;
-		case "yy" :
-			if( acceptPartial ) {
-				return /^\d|\d{1,2}$/;
-			}
-			return /^\d{2}$/;
-		case "yyyy" :
-			if( acceptPartial ) {
-				return new RegExp( `^${getRegExpForIdentifier( "yy" ).source}|\\d{1,3}|\\d{1,4}$` );
-			}
-			return /^\d{4}$/;
-		default :
-			throw new Error( "unexpected date format identifier" );
-	}
-}
-
-/**
- *
- * @param{string} string string that should be parsed
- * @return {String} Key of the identifier
- */
-function getKeyForIdentifier( string ) {
-	const identifier = string.toLowerCase();
-	switch ( identifier ) {
-		case "m" :
-		case "mm" :
-			return "month";
-		case "d" :
-		case "dd" :
-			return "day";
-		case "yy" :
-		case "yyyy" :
-			return "year";
-		default :
-			throw new Error( "unexpected date format identifier" );
-	}
 }

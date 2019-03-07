@@ -33,7 +33,7 @@ import Data from "../../../service/data";
 /**
  * Implements field type that provides date based utility
  */
-export default class FormFieldSelectModel extends FormFieldAbstractModel {
+export default class FormFieldDateModel extends FormFieldAbstractModel {
 	/**
 	 * @param {FormModel} form manages form containing this field
 	 * @param {object} definition properties and constraints of single form field
@@ -43,42 +43,27 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-			/**
-			 * Generates property descriptor exposing format the date should have.
-			 *
-			 * @param {*} definitionValue value of property provided in definition of field
-			 * @param {string} definitionName name of property provided in definition of field
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			format( definitionValue, definitionName ) {
-				if( typeof definitionValue !== "string" ) {
-					throw new TypeError( "String expected" );
-				}
-				return this.createGetter( definitionValue, definitionName );
-			},
 
-			/**
-			 * Generates property descriptor exposing format the date should have.
-			 *
-			 * @param {*} definitionValue value of property provided in definition of field
-			 * @param {string} definitionName name of property provided in definition of field
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			options( definitionValue, definitionName ) {
-				return this.createGetter( definitionValue, definitionName );
+			format( definitionValue, _, __, termHandler ) {
+				/**
+				 * Describes format of date input.
+				 *
+				 * @name FormFieldDateModel#format
+				 * @property string
+				 * @readonly
+				 */
+				return termHandler( definitionValue, rawValue => {
+					if( typeof definitionValue !== "string" ) {
+						throw new TypeError( "String expected" );
+					}
+					return rawValue;
+				} );
 			},
 
 			...customProperties
 		} );
 
 		this.processor = new DateProcessor( this.format );
-	}
-
-	/** @inheritDoc */
-	static get isInteractive() {
-		return true;
 	}
 
 	/** @inheritDoc */
@@ -139,9 +124,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		if()
-
-		return [ ...errors, ...dateErrors ];
+		return [ ...errors ];
 	}
 
 }
