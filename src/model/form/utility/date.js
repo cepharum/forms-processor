@@ -150,6 +150,18 @@ export default class DateProcessor {
 			date.setDate( 0 );
 			return date;
 		}
+		if( /^-[0-9]+Y$/.test( selector ) ) {
+			const offset = Number( selector.replace( "-", "" ).replace( "Y", "" ) );
+			date.setFullYear( date.getFullYear() - offset );
+			date.setDate( 0 );
+			return date;
+		}
+		if( /^\+[0-9]+Y$/.test( selector ) ) {
+			const offset = Number( selector.replace( "+", "" ).replace( "Y", "" ) );
+			date.setFullYear( date.getFullYear() + offset );
+			date.setDate( 0 );
+			return date;
+		}
 		if( /^-[0-9]+BD$/.test( selector ) ) {
 			const offset = Number( selector.replace( "-", "" ).replace( "BD", "" ) );
 			let found = 0;
@@ -346,7 +358,7 @@ export class DateNormalizer {
 		switch ( string.toLowerCase() ) {
 			case "m" :
 				if( acceptPartial ) {
-					return /^(\d?|0[1-9]|1[0-2])$/;
+					return /^([0-1]?|0[1-9]|1[0-2])$/;
 				}
 				return /^([1-9]|0[1-9]|1[0-2])$/;
 			case "mm" :

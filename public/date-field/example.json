@@ -1,0 +1,33 @@
+{
+  "mode": {
+	"localStore": {
+	  "id": "1234",
+	  "maxAge": 30
+	}
+  },
+  "processors": [
+	{
+	  "url": "/"
+	}
+  ],
+  "title": "Persistent Input",
+  "description": "Sequence of forms with input persisted locally.",
+  "sequence": [
+	{
+	  "name": "first",
+	  "label": "First Page",
+	  "fields": [
+		{
+		  "type": "date",
+		  "name": "test"
+		}
+	  ],
+	  "allowedWeekDays": ["1-2", 5],
+	  "notAllowedDates": "24-12-2019",
+	  "format": ["yyyy-mm-dd", "d-m-y"],
+	  "yearbuffer": 20,
+	  "minDate": "-18y",
+	  "maxDate": "today"
+	}
+  ]
+}

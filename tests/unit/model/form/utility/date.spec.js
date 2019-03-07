@@ -129,6 +129,16 @@ describe( "Utility Class DateProcessor", () => {
 				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
 				date2NoTime.should.be.eql( dateNoTime );
 			} );
+			it( "-xY", () => {
+				const date = normalizeSelector( "-9Y" );
+				const date2 = new Date();
+				( date.getFullYear() - date2.getFullYear() ).should.be.eql( -9 );
+			} );
+			it( "+xY", () => {
+				const date = normalizeSelector( "+9Y" );
+				const date2 = new Date();
+				( date.getFullYear() - date2.getFullYear() ).should.be.eql( 9 );
+			} );
 			it( "-xBD", () => {
 				const date = normalizeSelector( "-23BD" );
 			} );

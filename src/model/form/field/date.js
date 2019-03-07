@@ -28,89 +28,100 @@
 
 import FormFieldAbstractModel from "./abstract";
 import DateProcessor from "../utility/date";
-import Data from "../../../service/data";
+import Range from "../utility/range";
 
 /**
  * Implements field type that provides date based utility
  */
 export default class FormFieldDateModel extends FormFieldAbstractModel {
-	/**
-	 * @param {FormModel} form manages form containing this field
-	 * @param {object} definition properties and constraints of single form field
-	 * @param {int} fieldIndex index of field in set of containing form's fields
-	 * @param {object} reactiveFieldInfo provided object to contain reactive information of field
-	 * @param {CustomPropertyMap} customProperties defines custom properties to be exposed using custom property descriptor
-	 */
-	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties ) {
+	/** @inheritDoc */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-
-			format( definitionValue, _, __, termHandler ) {
+			minDate( value, _, __, termHandler ) {
 				/**
-				 * Describes format of date input.
+				 * Defines valid range of a value's length.
 				 *
-				 * @name FormFieldDateModel#format
-				 * @property string
+				 * @name FormFieldTextModel#size
+				 * @property {Range}2
 				 * @readonly
 				 */
-				return termHandler( definitionValue, rawValue => {
-					if( typeof definitionValue !== "string" ) {
-						throw new TypeError( "String expected" );
-					}
-					return rawValue;
-				} );
+				return termHandler( value, rawValue => ( rawValue == null ? null : DateProcessor.normalizeSelector( rawValue ) ) );
+			},
+
+			maxDate( value, _, __, termHandler ) {
+				/**
+				 * Defines valid range of a value's length.
+				 *
+				 * @name FormFieldTextModel#size
+				 * @property {Range}2
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => ( rawValue == null ? null : DateProcessor.normalizeSelector( rawValue ) ) );
 			},
 
 			...customProperties
-		} );
+		}, container );
 
 		this.processor = new DateProcessor( this.format );
 	}
 
 	/** @inheritDoc */
-	normalizeValue( input, options = {} ) {
-		if( this.format !== this.processor.format ) {
-			this.processor = new DateProcessor( this.format, this.options );
-		}
-		return this.processor.normalize( input );
+	normalizeValue( input = "", _ ) {
+		const options = {
+			minDate: this.minDate,
+			maxDate: this.maxDate,
+			format: this.format,
+			yearBuffer: this.yearBuffer,
+			allowedWeekdays: this.allowedWeekdays,
+			notAllowedDates: this.notAllowedDates,
+		};
+		let value = null;
+		let formattedValue = null;
+		try{
+			this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
+			formattedValue = input;
+			// eslint-disable-next-line no-empty
+		} catch ( e ) { console.log( "acceptPartial: false ", e ); }
+		try{
+			value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: false } );
+			// eslint-disable-next-line no-empty
+		} catch ( e ) { console.log( "acceptPartial: false ", e ); }
+		console.log( {
+			value,
+			formattedValue,
+		} );
+		return {
+			value,
+			formattedValue,
+		};
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		const { form: { readValue, writeValue }, qualifiedName, multiple } = that;
+		let lastValue = "";
 
 		return {
 			template: `
-				<input v-model="formattedValue">
+				<input :value="formattedValue" @input="onInput"> 
 			`,
-			data: () => {
-				return {
-					value: readValue( qualifiedName ),
-				};
-			},
-			computed: {
-				options() {
-					return reactiveFieldInfo.options;
-				},
-				model: {
-					get() {
-						return that.normalizeValue( this.value );
-					},
-					set( newValue ) {
-						reactiveFieldInfo.pristine = false;
+			methods: {
+				onInput( event ) {
+					const { value: input, selectionStart } = event.target;
 
-						const normalized = that.normalizeValue( newValue );
+					const { formattedValue } = that.normalizeValue( input );
 
-						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							writeValue( qualifiedName, normalized );
-							this.value = normalized;
-						}
-					},
-				},
-				multiple() {
-					return multiple && ( this.options && this.options.length > 1 );
+					const value = formattedValue || lastValue;
+					console.log( "write", value, lastValue );
+					event.target.value = lastValue = value;
+					event.target.setSelectionRange( selectionStart, selectionStart );
+
+					// re-emit in scope of this field's type-specific
+					// component (containing input element created here)
+					this.$emit( "input", formattedValue || lastValue );
 				},
 			},
+			data: () => reactiveFieldInfo,
 		};
 	}
 
@@ -124,7 +135,13 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		}
 
-		return [ ...errors ];
+		try{
+			this.processor.validate( this.value, { ...this.options, acceptPartial: live } );
+		} catch ( e ) {
+			this.errors.push( e );
+		}
+
+		return [...errors];
 	}
 
 }
