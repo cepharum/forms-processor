@@ -29,6 +29,7 @@
 import FormFieldAbstractModel from "./abstract";
 import Data from "../../../service/data";
 import Options from "../utility/options";
+import Markdown from "../utility/markdown";
 
 
 /**
@@ -131,7 +132,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 			template: `
 				<div class="checkbox options" :class="fieldClasses">
 					<span class="option" :class="{checked:isSet(item.value), ['no-'+(index+1)]: true}" v-for="(item, index) in options" :key="index">
-						<input 
+						<input
 							:type="isRadio ? 'radio' : 'checkbox'"
 							:id="individualId( index )"
 							:name="groupName"
@@ -141,7 +142,9 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							@change="adjust( $event.target.checked, item.value )"
 						/>
 
-						<label :for="individualId( index )" 
+						<label v-if="markdown" class="markdown" :for="individualId( index )"
+							@click="adjust( isRadio || !isSet( item.value ), item.value )" v-html="item.renderedLabel"></label>
+						<label v-else :for="individualId( index )"
 							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</div>
@@ -225,6 +228,17 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					};
 
 					events.$on( `form:group:${group}`, this.__groupChangeListener );
+				}
+
+				if ( this.options && this.markdown ) {
+					for ( let i = 0; i < this.options.length; i++ ) {
+						let label = Markdown.getRenderer( this.markdown === true ? "default" : this.markdown ).render( this.options[i].label || this.options[i].value );
+						const matches = /^\s*<p>(.*)<\/p>\s*$/.exec( label );
+						if ( matches ) {
+							label = matches[1];
+						}
+						this.options[i].renderedLabel = label;
+					}
 				}
 			},
 			beforeDestroy() {

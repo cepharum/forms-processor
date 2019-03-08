@@ -210,7 +210,7 @@ export default class FormFieldAbstractModel {
 		// prepare provided variable space for reactive data of current field's component
 		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.valid =
 		reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = reactiveFieldInfo.label =
-		reactiveFieldInfo.hint = reactiveFieldInfo.disabled = null;
+		reactiveFieldInfo.hint = reactiveFieldInfo.disabled = reactiveFieldInfo.markdown = null;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.errors = [];
 
@@ -917,6 +917,7 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.required = this.required;
 		reactiveFieldInfo.visible = this.visible;
 		reactiveFieldInfo.disabled = this.disabled;
+		reactiveFieldInfo.markdown = this.markdown;
 	}
 
 	/**
@@ -1002,17 +1003,18 @@ export default class FormFieldAbstractModel {
 	 * @note Overload this method to extend list of properties to be
 	 *       re-evaluated per type of field.
 	 *
-	 * @param {object} reactiveFieldInformation contains reactive properties of field
+	 * @param {object} reactiveFieldInfo contains reactive properties of field
 	 * @param {boolean} onLocalUpdate if true method is invoked due to recent change of current field itself,
 	 *        otherwise it's been an update of field this one depends on
 	 * @returns {void}
 	 */
-	updateFieldInformation( reactiveFieldInformation, onLocalUpdate ) { // eslint-disable-line no-unused-vars
-		reactiveFieldInformation.label = this.label;
-		reactiveFieldInformation.hint = this.hint;
-		reactiveFieldInformation.required = this.required;
-		reactiveFieldInformation.visible = this.visible;
-		reactiveFieldInformation.disabled = this.disabled;
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) { // eslint-disable-line no-unused-vars
+		reactiveFieldInfo.label = this.label;
+		reactiveFieldInfo.hint = this.hint;
+		reactiveFieldInfo.required = this.required;
+		reactiveFieldInfo.visible = this.visible;
+		reactiveFieldInfo.disabled = this.disabled;
+		reactiveFieldInfo.markdown = this.markdown;
 	}
 
 	/**
@@ -1212,11 +1214,21 @@ export default class FormFieldAbstractModel {
 			case "required" :
 			case "visible" :
 			case "disabled" :
-			case "markdown" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
 						return boolean == null ? value.trim().length > 0 : boolean;
+					}
+
+					default :
+						return Boolean( value );
+				}
+
+			case "markdown" :
+				switch ( typeof value ) {
+					case "string" : {
+						const boolean = Data.normalizeToBoolean( value );
+						return boolean == null ? value || false : boolean;
 					}
 
 					default :
