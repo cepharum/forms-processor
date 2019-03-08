@@ -117,6 +117,34 @@
 					"name": "counter",
 					"label": "Counter",
 					"counter": true
+				},
+				{
+					"name": "counter_two_units",
+					"label": "Counter with two units",
+					"size": [ "-200 chars", "-50 words" ],
+					"counter": true
+				},
+				{
+					"name": "counter_without_size",
+					"label": "Counter without size",
+					"counter": true
+				},
+				{
+					"name": "countdown",
+					"label": "Countdown",
+					"size": "-200",
+					"counter": "down"
+				},
+				{
+					"name": "countdown_two_units",
+					"label": "Countdown with two units",
+					"size": [ "-200 c", "-50 w" ],
+					"counter": "down"
+				},
+				{
+					"name": "no_countdown_without_size",
+					"label": "No countdown without size",
+					"counter": "down"
 				}
 			]
 		},

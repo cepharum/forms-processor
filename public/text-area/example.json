@@ -135,6 +135,39 @@
 					"label": "Counter",
 					"multiline": true,
 					"counter": true
+				},
+				{
+					"name": "counter_two_units",
+					"label": "Counter with two units",
+					"multiline": true,
+					"size": [ "-200 chars", "-3 lines" ],
+					"counter": true
+				},
+				{
+					"name": "counter_without_size",
+					"label": "Counter without size",
+					"multiline": true,
+					"counter": true
+				},
+				{
+					"name": "countdown",
+					"label": "Countdown",
+					"multiline": true,
+					"size": "-200",
+					"counter": "down"
+				},
+				{
+					"name": "countdown_three_units",
+					"label": "Countdown with three units",
+					"multiline": true,
+					"size": [ "-200 c", "-50 w", "-3 l" ],
+					"counter": "down"
+				},
+				{
+					"name": "no_countdown_without_size",
+					"label": "No countdown without size",
+					"multiline": true,
+					"counter": "down"
 				}
 			]
 		},

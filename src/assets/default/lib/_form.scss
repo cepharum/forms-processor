@@ -141,6 +141,15 @@
 			}
 		}
 
+		.counter {
+			text-align: right;
+			font-size: 0.8em;
+
+			.invalid {
+				color: red;
+			}
+		}
+
 		.checkbox > .option {
 			display: flex;
 			flex-direction: row;

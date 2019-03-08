@@ -47,11 +47,18 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * Defines valid range of a value's length.
 				 *
 				 * @name FormFieldTextModel#size
-				 * @property {Range}
+				 * @property {Range|string|Array} value
+				 *		Examples:
+				 *			10-40			content is valid iff text contains between 10 and 40 characters
+				 *			10-40 chars		content is valid iff text contains between 10 and 40 characters
+				 *			-5 words		content is valid iff text contains up to five words
+				 *			[ "-200 chars", "-3 lines" ]
+				 *							content is valid iff text contains up to 200 characters in up to three lines
 				 * @readonly
 				 */
 
 				const _units = {
+					// "group:singular:plural":	[ <units which can be used in form-config> ]
 					"c:character:characters":	[ "c", "character", "characters" ],
 					"c:char:chars":				[ "char", "chars" ],
 					"w:word:words":				[ "w", "word", "words" ],
@@ -74,28 +81,28 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					for ( let i = 0; i < _values.length; i++ ) {
 						const matches = /^\s*(.+)\s+(\w+)\s*$/.exec( _values[i] );
 						if ( matches ) {
-							// (The current range is followed by a word.)
+							// (The current option ends with a word.)
 							const _unitKeys = Object.keys( _units );
 							let k;
 							for ( k = 0; k < _unitKeys.length; k++ ) {
-								if ( _units[_unitKeys[k]].indexof( matches[2] ) ) {
+								if ( _units[_unitKeys[k]].indexOf( matches[2] ) > -1 ) {
 									break;
 								}
 							}
 							if ( k < _unitKeys.length ) {
 								const _unitInfo = _unitKeys[k].split( ":" );
 								_sizes[_unitInfo[0]] = {	/* eslint-disable key-spacing */
+									range:		termHandler( matches[1], rawValue => new Range( rawValue ) ).value,
 									singular:	_unitInfo[1],
 									plural:		_unitInfo[2],
-									range:		termHandler( matches[1], rawValue => new Range( rawValue ) ).value,
 								};							/* eslint-enable key-spacing */
 								continue;
 							}
 						}
 						_sizes.c = {				/* eslint-disable key-spacing */
+							range:		termHandler( _values[i], rawValue => new Range( rawValue ) ).value,
 							singular:	"character",
 							plural:		"characters",
-							range:		termHandler( _values[i], rawValue => new Range( rawValue ) ).value,
 						};							/* eslint-enable key-spacing */
 					}
 				} else {
@@ -297,63 +304,28 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 			counter( value ) {
 				/**
-				 * Configures field to show the number of used characters/
-				 * words/ lines under the input
+				 * Configures field to show the number of used characters/ words/ lines under the input
+				 *
+				 * The displayed information depends on option 'size'.
 				 *
 				 * @name FormFieldTextModel#counter
 				 * @property {boolean|string} value
 				 *		Known values:
 				 *			false					hide counter
-				 *			true					count characters/ words/ lines (depends on option 'size')
-				 *			up						count characters/ words/ lines (depends on option 'size')
-				 *			down					count remaining characters/ words/ lines (depends on option 'size')
+				 *			true					count characters/ words/ lines
+				 *			up						count characters/ words/ lines
+				 *			down					count remaining characters/ words/ lines
 				 * @readonly
 				 */
-				const _values = String( value ).trim().toLowerCase().split( /\W/ );
-				const _counter = { down: false, chars: false, words: false, lines: false };
+				const _value = String( value ).trim().toLowerCase();
 
-				for ( let i = _values.length - 1; i >= 0; i-- ) {
-					switch ( _values[i] ) {
-						case "up" :
-							_counter.down = false;
-							break;
-						case "down" :
-							_counter.down = true;
-							break;
-						case "char" :
-						case "chars" :
-						case "character" :
-						case "characters" :
-							// eslint-disable-next-line no-extra-parens
-							_counter.chars = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
-							break;
-						case "word" :
-						case "words" :
-							// eslint-disable-next-line no-extra-parens
-							_counter.words = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
-							break;
-						case "line" :
-						case "lines" :
-							// eslint-disable-next-line no-extra-parens
-							_counter.lines = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
-							break;
-						default :
-							if ( ptnAmount.test( _values[i] ) ) {
-								_counter.chars = parseInt( _values[i] );
-								break;
-							}
-							if ( Data.normalizeToBoolean( _values[i] ) ) {
-								return { value: { down: false, chars: true, words: false, lines: false } };
-							}
-							return { value: null };
-					}
+				switch ( _value ) {
+					case "up" :
+					case "down" :
+						return { value: _value };
+					default :
+						return { value: Data.normalizeToBoolean( _value ) };
 				}
-
-				if ( _counter.chars || _counter.words || _counter.lines ) {
-					return { value: _counter };
-				}
-
-				return { value: null };
 			},
 
 			...customProperties,
@@ -475,7 +447,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 
 				const domProps = {
-					// type: "text",
 					value: reactiveFieldInfo.formattedValue,
 				};
 
@@ -487,56 +458,33 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					domProps.placeholder = that.placeholder + ( that.required && !that.label ? "*" : "" );
 				}
 
-				if ( that.multiline ) {
-					elements.push( createElement( "textarea", {
-						domProps,
-						on: {
-							input: event => {
-								const { value: input, selectionStart } = event.target;
-
-								const length = input.length;
-								const options = {
-									removing: lastValue != null && length < lastValue.length,
-									at: selectionStart,
-								};
-
-								const { value, formattedValue } = that.normalizeValue( input, options );
-
-								event.target.value = lastValue = formattedValue;
-								event.target.setSelectionRange( options.at, options.at );
-
-								// re-emit in scope of this field's type-specific
-								// component (containing input element created here)
-								this.$emit( "input", value );
-							},
-						},
-					} ) );
-				} else {
+				if ( !that.multiline ) {
 					domProps.type = "text";
-					elements.push( createElement( "input", {
-						domProps,
-						on: {
-							input: event => {
-								const { value: input, selectionStart } = event.target;
-
-								const length = input.length;
-								const options = {
-									removing: lastValue != null && length < lastValue.length,
-									at: selectionStart,
-								};
-
-								const { value, formattedValue } = that.normalizeValue( input, options );
-
-								event.target.value = lastValue = formattedValue;
-								event.target.setSelectionRange( options.at, options.at );
-
-								// re-emit in scope of this field's type-specific
-								// component (containing input element created here)
-								this.$emit( "input", value );
-							},
-						},
-					} ) );
 				}
+
+				elements.push( createElement( that.multiline ? "textarea" : "input", {
+					domProps,
+					on: {
+						input: event => {
+							const { value: input, selectionStart } = event.target;
+
+							const length = input.length;
+							const options = {
+								removing: lastValue != null && length < lastValue.length,
+								at: selectionStart,
+							};
+
+							const { value, formattedValue } = that.normalizeValue( input, options );
+
+							event.target.value = lastValue = formattedValue;
+							event.target.setSelectionRange( options.at, options.at );
+
+							// re-emit in scope of this field's type-specific
+							// component (containing input element created here)
+							this.$emit( "input", value );
+						},
+					},
+				} ) );
 
 				if ( that.suffix == null ) {
 					classes.push( "without-suffix" );
@@ -547,14 +495,74 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					}, that.suffix ) );
 				}
 
-				if ( that.counter == null ) {
-					return createElement( "div", { class: classes, }, elements );
+				const _counter = [];
+				if ( that.counter ) {
+					const _sizeGroups = Object.keys( that.size );
+
+					let value = String( this.value == null ? "" : this.value ).trim();
+					// apply optional reducer to strip off characters to be ignored on validating
+					const { reducer } = this;
+					if ( reducer ) {
+						// https://stackoverflow.com/a/16046903/3182819
+						const numCaptures = ( new RegExp( reducer.source + "|" ) ).exec( "" ).length - 1;
+						value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
+					}
+
+					if ( that.counter == "down" ) {
+						for ( let i = 0; i < _sizeGroups.length; i++ ) {
+							if ( !isFinite( that.size[_sizeGroups[i]].range.upper ) ) {
+								continue;
+							}
+							// eslint-disable-next-line no-extra-parens
+							let n = that.size[_sizeGroups[i]].range.upper - ( that.size[_sizeGroups[i]].range.upperInclusive ? 0 : 1 );
+							switch ( _sizeGroups[i] ) {
+								default :
+								case "c" :		n -= value.length;										break;
+								case "w" :		n -= ( value.match( /\S+/g ) || [] ).length;			break;
+								case "l" :		n -= ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
+							}
+							if ( _counter.length > 0 ) {
+								_counter.push( ", " );
+							}
+							if ( n < 0 ) {
+								_counter.push( createElement( "span", { class: "invalid" }, `no ${that.size[_sizeGroups[i]].plural}` ) );
+							} else if ( n == 1 ) {
+								_counter.push( `1 ${that.size[_sizeGroups[i]].singular}` );
+							} else {
+								_counter.push( `${n} ${that.size[_sizeGroups[i]].plural}` );
+							}
+						}
+						if ( _counter.length > 0 ) {
+							_counter.unshift( "Remaining: " );
+						}
+					} else {
+						for ( let i = 0; i < _sizeGroups.length; i++ ) {
+							let n;
+							switch ( _sizeGroups[i] ) {
+								default :
+								case "c" :		n = value.length;										break;
+								case "w" :		n = ( value.match( /\S+/g ) || [] ).length;				break;
+								case "l" :		n = ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
+							}
+							if ( _counter.length > 0 ) {
+								_counter.push( ", " );
+							}
+							_counter.push( n == 1 ? `1 ${that.size[_sizeGroups[i]].singular}` : `${n} ${that.size[_sizeGroups[i]].plural}` );
+						}
+						if ( _counter.length > 0 ) {
+							_counter.unshift( "Content: " );
+						}
+					}
 				}
 
-				return createElement( "div", { class: "with-counter" }, [
-					createElement( "div", { class: classes, }, elements ),
-					createElement( "div", { class: "counter" }, that.value.length )
-				] );
+				if ( _counter.length > 0 ) {
+					return createElement( "div", { class: "with-counter" }, [
+						createElement( "div", { class: classes, }, elements ),
+						createElement( "div", { class: "counter" }, _counter )
+					] );
+				}
+
+				return createElement( "div", { class: classes, }, elements );
 			},
 			data: () => reactiveFieldInfo,
 		};
@@ -563,7 +571,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	validate( live ) {
 		const errors = super.validate();
-
 
 		let value = String( this.value == null ? "" : this.value ).trim();
 
