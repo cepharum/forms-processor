@@ -33,7 +33,6 @@ import Format from "../utility/format";
 import Data from "../../../service/data";
 
 const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
-const ptnAmount = /^[1-9]\d*$/;
 
 /**
  * Manages single field of form representing text input.
@@ -57,13 +56,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @readonly
 				 */
 
-				const _units = {
+				const _units = {		/* eslint-disable key-spacing */
 					// "group:singular:plural":	[ <units which can be used in form-config> ]
 					"c:character:characters":	[ "c", "character", "characters" ],
 					"c:char:chars":				[ "char", "chars" ],
 					"w:word:words":				[ "w", "word", "words" ],
 					"l:line:lines":				[ "l", "line", "lines" ],
-				};
+				};						/* eslint-enable key-spacing */
 
 				const _sizes = {};
 
