@@ -95,7 +95,7 @@
 			}
 		}
 
-		input[type=text] {
+		input[type=text], textarea {
 			-moz-appearance: none;
 			-webkit-appearance: none;
 			appearance: none;
@@ -114,7 +114,7 @@
 			opacity: 0.7;
 		}
 
-		.align-right > input[type=text] {
+		.align-right > input[type=text], .align-right > textarea {
 			text-align: right;
 		}
 

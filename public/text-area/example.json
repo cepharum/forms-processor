@@ -7,77 +7,91 @@
 	"sequence": [
 		{
 			"name": "sole",
-			"label": "Single-Line Text Input Fields",
+			"label": "Multi-Line Text Input Fields",
 			"fields": [
 				{
 					"name": "most-simple",
-					"label": "Most Simple"
+					"label": "Most Simple",
+					"multiline": true
 				},
 				{
 					"name": "min-length",
 					"label": "Min. Length 5",
+					"multiline": true,
 					"size": "5-"
 				},
 				{
 					"name": "max-length",
 					"label": "Max. Length 3",
+					"multiline": true,
 					"size": "-3"
 				},
 				{
 					"name": "min-max-length",
 					"label": "Min./Max. Length 3-5",
+					"multiline": true,
 					"size": "3-5"
 				},
 				{
 					"name": "uppercase",
 					"label": "UPPERCASE",
+					"multiline": true,
 					"upperCase": true
 				},
 				{
 					"name": "lowercase",
 					"label": "lowercase",
+					"multiline": true,
 					"lowerCase": true
 				},
 				{
 					"name": "upperlowercase",
 					"label": "UPPERCASE wins",
+					"multiline": true,
 					"upperCase": true,
 					"lowerCase": true
 				},
 				{
 					"name": "patternLimit",
 					"label": "Pattern Limits",
+					"multiline": true,
 					"pattern": "a##?A"
 				},
 				{
 					"name": "patternDecorate",
 					"label": "Pattern Decorates",
+					"multiline": true,
 					"pattern": "a-# #?/A"
 				},
 				{
 					"name": "alignRight",
 					"label": "Align Right",
+					"multiline": true,
 					"align": "right"
 				},
 				{
 					"name": "prefix",
 					"label": "Prefix",
+					"multiline": true,
 					"prefix": "mailto:"
 				},
 				{
 					"name": "suffix",
 					"label": "Suffix",
+					"multiline": true,
 					"suffix": "@example.com"
 				},
 				{
 					"name": "presuffix",
 					"label": "Prefix/Suffix",
+					"multiline": true,
 					"prefix": "mailto:",
 					"suffix": "@example.com"
 				},
 				{
 					"name": "normalization_none",
 					"label": "No normalization",
+					"multiline": true,
 					"normalization": "none"
 				},
 				{
@@ -89,6 +103,7 @@
 				{
 					"name": "normalization_trim",
 					"label": "Trimming",
+					"multiline": true,
 					"normalization": "trim"
 				},
 				{
@@ -100,6 +115,7 @@
 				{
 					"name": "normalization_reduce",
 					"label": "Reducing",
+					"multiline": true,
 					"normalization": "reduce"
 				},
 				{
@@ -111,11 +127,13 @@
 				{
 					"name": "placeholder",
 					"label": "Placeholder",
+					"multiline": true,
 					"placeholder": "Enter something here..."
 				},
 				{
 					"name": "counter",
 					"label": "Counter",
+					"multiline": true,
 					"counter": true
 				}
 			]
@@ -127,7 +145,8 @@
 			"fields": [
 				{
 					"name": "most-simple",
-					"label": "Most Simple"
+					"label": "Most Simple",
+					"multiline": true
 				}
 			]
 		}

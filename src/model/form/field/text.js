@@ -33,6 +33,7 @@ import Format from "../utility/format";
 import Data from "../../../service/data";
 
 const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
+const ptnAmount = /^[1-9]\d*$/;
 
 /**
  * Manages single field of form representing text input.
@@ -49,7 +50,63 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {Range}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => new Range( rawValue ) );
+
+				const _units = {
+					"c:character:characters":	[ "c", "character", "characters" ],
+					"c:char:chars":				[ "char", "chars" ],
+					"w:word:words":				[ "w", "word", "words" ],
+					"l:line:lines":				[ "l", "line", "lines" ],
+				};
+
+				const _sizes = {};
+
+				if ( Array.isArray( value ) && value.every( item => !isNaN( parseFloat( item ) ) && isFinite( item ) ) ) {
+					_sizes.c = {				/* eslint-disable key-spacing */
+						range:		termHandler( value, rawValue => new Range( rawValue ) ).value,
+						singular:	"character",
+						plural:		"characters",
+					};							/* eslint-enable key-spacing */
+					return { value: _sizes };
+				}
+
+				if ( ( Array.isArray( value ) && value.length > 0 ) || typeof value === "string" ) {
+					const _values = Array.isArray( value ) ? value : [value];
+					for ( let i = 0; i < _values.length; i++ ) {
+						const matches = /^\s*(.+)\s+(\w+)\s*$/.exec( _values[i] );
+						if ( matches ) {
+							// (The current range is followed by a word.)
+							const _unitKeys = Object.keys( _units );
+							let k;
+							for ( k = 0; k < _unitKeys.length; k++ ) {
+								if ( _units[_unitKeys[k]].indexof( matches[2] ) ) {
+									break;
+								}
+							}
+							if ( k < _unitKeys.length ) {
+								const _unitInfo = _unitKeys[k].split( ":" );
+								_sizes[_unitInfo[0]] = {	/* eslint-disable key-spacing */
+									singular:	_unitInfo[1],
+									plural:		_unitInfo[2],
+									range:		termHandler( matches[1], rawValue => new Range( rawValue ) ).value,
+								};							/* eslint-enable key-spacing */
+								continue;
+							}
+						}
+						_sizes.c = {				/* eslint-disable key-spacing */
+							singular:	"character",
+							plural:		"characters",
+							range:		termHandler( _values[i], rawValue => new Range( rawValue ) ).value,
+						};							/* eslint-enable key-spacing */
+					}
+				} else {
+					_sizes.c = {				/* eslint-disable key-spacing */
+						range:		termHandler( value, rawValue => new Range( rawValue ) ).value,
+						singular:	"character",
+						plural:		"characters",
+					};							/* eslint-enable key-spacing */
+				}
+
+				return { value: _sizes };
 			},
 
 			upperCase( value, _, __, termHandler ) {
@@ -227,6 +284,78 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				} );
 			},
 
+			multiline( value, _, __, termHandler ) {
+				/**
+				 * Configures field to use a multiline-input
+				 *
+				 * @name FormFieldTextModel#multiline
+				 * @property {boolean}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
+			},
+
+			counter( value ) {
+				/**
+				 * Configures field to show the number of used characters/
+				 * words/ lines under the input
+				 *
+				 * @name FormFieldTextModel#counter
+				 * @property {boolean|string} value
+				 *		Known values:
+				 *			false					hide counter
+				 *			true					count characters/ words/ lines (depends on option 'size')
+				 *			up						count characters/ words/ lines (depends on option 'size')
+				 *			down					count remaining characters/ words/ lines (depends on option 'size')
+				 * @readonly
+				 */
+				const _values = String( value ).trim().toLowerCase().split( /\W/ );
+				const _counter = { down: false, chars: false, words: false, lines: false };
+
+				for ( let i = _values.length - 1; i >= 0; i-- ) {
+					switch ( _values[i] ) {
+						case "up" :
+							_counter.down = false;
+							break;
+						case "down" :
+							_counter.down = true;
+							break;
+						case "char" :
+						case "chars" :
+						case "character" :
+						case "characters" :
+							// eslint-disable-next-line no-extra-parens
+							_counter.chars = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
+							break;
+						case "word" :
+						case "words" :
+							// eslint-disable-next-line no-extra-parens
+							_counter.words = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
+							break;
+						case "line" :
+						case "lines" :
+							// eslint-disable-next-line no-extra-parens
+							_counter.lines = ( i > 0 && ptnAmount.test( _values[i - 1] ) ) ? parseInt( _values[--i] ) : true;
+							break;
+						default :
+							if ( ptnAmount.test( _values[i] ) ) {
+								_counter.chars = parseInt( _values[i] );
+								break;
+							}
+							if ( Data.normalizeToBoolean( _values[i] ) ) {
+								return { value: { down: false, chars: true, words: false, lines: false } };
+							}
+							return { value: null };
+					}
+				}
+
+				if ( _counter.chars || _counter.words || _counter.lines ) {
+					return { value: _counter };
+				}
+
+				return { value: null };
+			},
+
 			...customProperties,
 		}, container );
 	}
@@ -346,7 +475,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 
 				const domProps = {
-					type: "text",
+					// type: "text",
 					value: reactiveFieldInfo.formattedValue,
 				};
 
@@ -358,29 +487,56 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					domProps.placeholder = that.placeholder + ( that.required && !that.label ? "*" : "" );
 				}
 
-				elements.push( createElement( "input", {
-					domProps,
-					on: {
-						input: event => {
-							const { value: input, selectionStart } = event.target;
+				if ( that.multiline ) {
+					elements.push( createElement( "textarea", {
+						domProps,
+						on: {
+							input: event => {
+								const { value: input, selectionStart } = event.target;
 
-							const length = input.length;
-							const options = {
-								removing: lastValue != null && length < lastValue.length,
-								at: selectionStart,
-							};
+								const length = input.length;
+								const options = {
+									removing: lastValue != null && length < lastValue.length,
+									at: selectionStart,
+								};
 
-							const { value, formattedValue } = that.normalizeValue( input, options );
+								const { value, formattedValue } = that.normalizeValue( input, options );
 
-							event.target.value = lastValue = formattedValue;
-							event.target.setSelectionRange( options.at, options.at );
+								event.target.value = lastValue = formattedValue;
+								event.target.setSelectionRange( options.at, options.at );
 
-							// re-emit in scope of this field's type-specific
-							// component (containing input element created here)
-							this.$emit( "input", value );
+								// re-emit in scope of this field's type-specific
+								// component (containing input element created here)
+								this.$emit( "input", value );
+							},
 						},
-					},
-				} ) );
+					} ) );
+				} else {
+					domProps.type = "text";
+					elements.push( createElement( "input", {
+						domProps,
+						on: {
+							input: event => {
+								const { value: input, selectionStart } = event.target;
+
+								const length = input.length;
+								const options = {
+									removing: lastValue != null && length < lastValue.length,
+									at: selectionStart,
+								};
+
+								const { value, formattedValue } = that.normalizeValue( input, options );
+
+								event.target.value = lastValue = formattedValue;
+								event.target.setSelectionRange( options.at, options.at );
+
+								// re-emit in scope of this field's type-specific
+								// component (containing input element created here)
+								this.$emit( "input", value );
+							},
+						},
+					} ) );
+				}
 
 				if ( that.suffix == null ) {
 					classes.push( "without-suffix" );
@@ -391,7 +547,14 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					}, that.suffix ) );
 				}
 
-				return createElement( "div", { class: classes, }, elements );
+				if ( that.counter == null ) {
+					return createElement( "div", { class: classes, }, elements );
+				}
+
+				return createElement( "div", { class: "with-counter" }, [
+					createElement( "div", { class: classes, }, elements ),
+					createElement( "div", { class: "counter" }, that.value.length )
+				] );
 			},
 			data: () => reactiveFieldInfo,
 		};
@@ -404,7 +567,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 		let value = String( this.value == null ? "" : this.value ).trim();
 
-
 		// apply optional reducer to strip off characters to be ignored on validating
 		const { reducer } = this;
 		if ( reducer ) {
@@ -414,17 +576,27 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
 		}
 
+		const counting = {
+			c:	value.length,
+			w:	( value.match( /\S+/g ) || [] ).length,
+			l:	( value.match( /\r\n?|\n/g ) || [] ).length + 1,
+		};
 
 		// perform basic validations
 		if ( this.required && !value.length ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		} else {
-			if ( !live && this.size.isBelowRange( value.length ) ) {
-				errors.push( "@VALIDATION.TOO_SHORT" );
-			}
-
-			if ( this.size.isAboveRange( value.length ) ) {
-				errors.push( "@VALIDATION.TOO_LONG" );
+			const _sizeGroups = Object.keys( this.size );
+			for ( let i = 0; i < _sizeGroups.length; i++ ) {
+				if ( !counting.hasOwnProperty( _sizeGroups[i] ) ) {
+					throw new TypeError( `unknown size-group: ${_sizeGroups[i]}` );
+				}
+				if ( !live && this.size[_sizeGroups[i]].range.isBelowRange( counting[_sizeGroups[i]] ) ) {
+					errors.push( "@VALIDATION.TOO_SHORT" );
+				}
+				if ( this.size[_sizeGroups[i]].range.isAboveRange( counting[_sizeGroups[i]] ) ) {
+					errors.push( "@VALIDATION.TOO_LONG" );
+				}
 			}
 
 			// check for complying with optionally selected format

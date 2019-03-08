@@ -46,6 +46,25 @@ describe( "Range", () => {
 				( () => new Range( [1] ) ).should.not.throw();
 				new Range( [1] ).lower.should.be.equal( 1 );
 			} );
+
+			it( "is accepting double-element array to define boundaries", () => {
+				( () => new Range( [ 1, 2 ] ) ).should.not.throw();
+				new Range( [ 1, 2 ] ).lower.should.be.equal( 1 );
+				new Range( [ 1, 2 ] ).upper.should.be.equal( 2 );
+			} );
+
+			it( "is accepting double-element array to define boundaries in reverse order", () => {
+				( () => new Range( [ 2, 1 ] ) ).should.not.throw();
+				new Range( [ 2, 1 ] ).lower.should.be.equal( 1 );
+				new Range( [ 2, 1 ] ).upper.should.be.equal( 2 );
+			} );
+
+			it( "is rejecting arrays with more than two elements", () => {
+				( () => new Range( [ 1, 2, 3 ] ) ).should.throw();
+				( () => new Range( [ 1, 2, 3, 4 ] ) ).should.throw();
+				( () => new Range( [ 1, 2, 3, 4, 5 ] ) ).should.throw();
+				( () => new Range( [ 1, 2, 3, 4, 5, 6 ] ) ).should.throw();
+			} );
 		} );
 
 		describe( "as a string", () => {

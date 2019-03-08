@@ -106,11 +106,17 @@ function findTrack( element, modifiers ) {
  * @returns {boolean} true unless requesting to cancel further event propagation and default handling
  */
 function onKeyPress( event, element, modifiersNames, method ) {
+
+	let inTextarea = false;
+
 	/*
 	 * Is focus in scope of provided element annotated with directive?
 	 */
 	let iter = document.activeElement;
 	while ( iter ) {
+		if ( iter.nodeName.toLowerCase() === "textarea" ) {
+			inTextarea = true;
+		}
 		if ( iter === element ) {
 			break;
 		}
@@ -145,6 +151,10 @@ function onKeyPress( event, element, modifiersNames, method ) {
 				}
 
 				if ( ( expecting.shift ? 1 : 0 ) ^ ( event.shiftKey ? 1 : 0 ) ) {
+					return true;
+				}
+
+				if ( inTextarea && event.key === "Enter" ) {
 					return true;
 				}
 
