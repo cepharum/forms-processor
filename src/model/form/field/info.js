@@ -34,30 +34,38 @@ import Markdown from "../utility/markdown";
  */
 export default class FormFieldInfoModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
-		const that = this;
-
+	renderFieldComponent( reactiveFieldInfo ) {
 		return {
-			template: `<span class="static-info" :class="{markdown}" v-html="renderedText"></span>`,
-			data() {
-				return {
-					text: that.text,
-				};
-			},
+			template: `
+<span>
+	<span class="static-info markdown" v-if="markdown" v-html="renderedText"></span>
+	<span class="static-info" v-else>{{ text }}</span>
+</span>
+			`,
+			data: () => reactiveFieldInfo,
 			computed: {
 				renderedText() {
-					return that.markdown ? Markdown.getRenderer().render( this.text ) : this.text;
-				},
-				markdown() {
-					return that.markdown;
+					return Markdown.getRenderer( this.markdown === true ? "default" : this.markdown ).render( this.text );
 				},
 			},
-			methods: {
-				updateOnDataChanged() {
-					this.text = that.text;
-				},
-			}
 		};
+	}
+
+	/** @inheritDoc */
+	initializeReactive( reactiveFieldInfo ) {
+		super.initializeReactive( reactiveFieldInfo );
+
+		try {
+			reactiveFieldInfo.text = this.text;
+		} catch ( error ) {	// eslint-disable-line no-empty
+		}
+	}
+
+	/** @inheritDoc */
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
+		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
+
+		reactiveFieldInfo.text = this.text;
 	}
 
 	/** @inheritDoc */

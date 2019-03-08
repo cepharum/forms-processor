@@ -31,7 +31,10 @@ import MarkdownIt from "markdown-it";
 const presets = {
 	default: {
 		html: false,
-	}
+	},
+	html: {
+		html: true,
+	},
 };
 
 const cache = {};
