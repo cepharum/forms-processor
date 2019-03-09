@@ -131,9 +131,10 @@
 					"placeholder": "Enter something here..."
 				},
 				{
-					"name": "counter",
-					"label": "Counter",
+					"name": "counter_with_size",
+					"label": "Counter with size",
 					"multiline": true,
+					"size": "-200 chars",
 					"counter": true
 				},
 				{
@@ -150,8 +151,17 @@
 					"counter": true
 				},
 				{
-					"name": "countdown",
-					"label": "Countdown",
+					"name": "counter_with_hint",
+					"label": "Counter with hint",
+					"multiline": true,
+					"size": "-200",
+					"counter": true,
+					"markdown": true,
+					"hint": "**Hint** with counter."
+				},
+				{
+					"name": "countdown_with_size",
+					"label": "Countdown with size",
 					"multiline": true,
 					"size": "-200",
 					"counter": "down"
@@ -168,6 +178,15 @@
 					"label": "No countdown without size",
 					"multiline": true,
 					"counter": "down"
+				},
+				{
+					"name": "countdown_with_hint",
+					"label": "Countdown with hint",
+					"multiline": true,
+					"size": "-200",
+					"counter": "down",
+					"markdown": true,
+					"hint": "**Hint** with countdown."
 				}
 			]
 		},

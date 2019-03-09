@@ -1019,6 +1019,9 @@ export default class FormFieldAbstractModel {
 				useMarkdown() {
 					return that.markdown;
 				},
+				renderedCounter() {
+					return this.hasOwnProperty( "counter" ) && this.counter.mode ? this.counter.caption : null;
+				},
 				renderedHint() {
 					return Markdown.getRenderer().render( this.hint );
 				},
@@ -1032,6 +1035,7 @@ export default class FormFieldAbstractModel {
 		<FieldComponent ref="fieldComponent" @input="onInput" />
 		<span class="hint" v-if="hint && !useMarkdown">{{ hint }}</span>
 		<span class="hint" v-if="hint && useMarkdown" v-html="renderedHint"></span>
+		<span class="counter" v-if="renderedCounter" v-html="renderedCounter"></span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>

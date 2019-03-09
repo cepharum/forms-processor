@@ -30,6 +30,7 @@ import FormFieldAbstractModel from "./abstract";
 import Range from "../utility/range";
 import Pattern from "../utility/pattern";
 import Format from "../utility/format";
+import L10n from "@/service/l10n";
 import Data from "../../../service/data";
 
 const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
@@ -56,22 +57,16 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @readonly
 				 */
 
-				const _units = {		/* eslint-disable key-spacing */
-					// "group:singular:plural":	[ <units which can be used in form-config> ]
-					"c:character:characters":	[ "c", "character", "characters" ],
-					"c:char:chars":				[ "char", "chars" ],
-					"w:word:words":				[ "w", "word", "words" ],
-					"l:line:lines":				[ "l", "line", "lines" ],
-				};						/* eslint-enable key-spacing */
+				const _units = {
+					CHAR:	[ "c", "character", "characters", "char", "chars" ],
+					WORD:	[ "w", "word", "words" ],
+					LINE:	[ "l", "line", "lines" ],
+				};
 
 				const _sizes = {};
 
 				if ( Array.isArray( value ) && value.every( item => !isNaN( parseFloat( item ) ) && isFinite( item ) ) ) {
-					_sizes.c = {				/* eslint-disable key-spacing */
-						range:		termHandler( value, rawValue => new Range( rawValue ) ).value,
-						singular:	"character",
-						plural:		"characters",
-					};							/* eslint-enable key-spacing */
+					_sizes.CHAR = termHandler( value, rawValue => new Range( rawValue ) ).value;
 					return { value: _sizes };
 				}
 
@@ -81,6 +76,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						const matches = /^\s*(.+)\s+(\w+)\s*$/.exec( _values[i] );
 						if ( matches ) {
 							// (The current option ends with a word.)
+							// Check if word is a known unit:
 							const _unitKeys = Object.keys( _units );
 							let k;
 							for ( k = 0; k < _unitKeys.length; k++ ) {
@@ -89,27 +85,14 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 								}
 							}
 							if ( k < _unitKeys.length ) {
-								const _unitInfo = _unitKeys[k].split( ":" );
-								_sizes[_unitInfo[0]] = {	/* eslint-disable key-spacing */
-									range:		termHandler( matches[1], rawValue => new Range( rawValue ) ).value,
-									singular:	_unitInfo[1],
-									plural:		_unitInfo[2],
-								};							/* eslint-enable key-spacing */
+								_sizes[_unitKeys[k]] = termHandler( matches[1], rawValue => new Range( rawValue ) ).value;
 								continue;
 							}
 						}
-						_sizes.c = {				/* eslint-disable key-spacing */
-							range:		termHandler( _values[i], rawValue => new Range( rawValue ) ).value,
-							singular:	"character",
-							plural:		"characters",
-						};							/* eslint-enable key-spacing */
+						_sizes.CHAR = termHandler( _values[i], rawValue => new Range( rawValue ) ).value;
 					}
 				} else {
-					_sizes.c = {				/* eslint-disable key-spacing */
-						range:		termHandler( value, rawValue => new Range( rawValue ) ).value,
-						singular:	"character",
-						plural:		"characters",
-					};							/* eslint-enable key-spacing */
+					_sizes.CHAR = termHandler( value, rawValue => new Range( rawValue ) ).value;
 				}
 
 				return { value: _sizes };
@@ -321,9 +304,9 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				switch ( _value ) {
 					case "up" :
 					case "down" :
-						return { value: _value };
+						return { value: { mode: _value, caption: null } };
 					default :
-						return { value: Data.normalizeToBoolean( _value ) };
+						return { value: { mode: Data.normalizeToBoolean( _value ), caption: null } };
 				}
 			},
 
@@ -495,8 +478,18 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 
 				const _counter = [];
-				if ( that.counter ) {
+				if ( that.counter.mode ) {
 					const _sizeGroups = Object.keys( that.size );
+
+					const translate = ( id, ...args ) => {
+						const argCount = ( L10n.translate( this.$store.getters.l10n, id ).replace( "%%", "" ).match( /%s|%d|%j/g ) || [] ).length;
+
+						args.splice( argCount );
+						args.unshift( id );
+						args.unshift( this.$store.getters.l10n );
+
+						return L10n.translate.apply( this, args );
+					};
 
 					let value = String( this.value == null ? "" : this.value ).trim();
 					// apply optional reducer to strip off characters to be ignored on validating
@@ -507,58 +500,76 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
 					}
 
-					if ( that.counter == "down" ) {
+					if ( that.counter.mode === "down" ) {
 						for ( let i = 0; i < _sizeGroups.length; i++ ) {
-							if ( !isFinite( that.size[_sizeGroups[i]].range.upper ) ) {
+							if ( !isFinite( that.size[_sizeGroups[i]].upper ) ) {
 								continue;
 							}
 							// eslint-disable-next-line no-extra-parens
-							let n = that.size[_sizeGroups[i]].range.upper - ( that.size[_sizeGroups[i]].range.upperInclusive ? 0 : 1 );
+							let n = that.size[_sizeGroups[i]].upper - ( that.size[_sizeGroups[i]].upperInclusive ? 0 : 1 );
 							switch ( _sizeGroups[i] ) {
-								default :
-								case "c" :		n -= value.length;										break;
-								case "w" :		n -= ( value.match( /\S+/g ) || [] ).length;			break;
-								case "l" :		n -= ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
+								case "CHAR" :	n -= value.length;										break;
+								case "WORD" :	n -= ( value.match( /\S+/g ) || [] ).length;			break;
+								case "LINE" :	n -= ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
+								default :	throw new TypeError( `unknown size-group: ${_sizeGroups[i]}` );
 							}
 							if ( _counter.length > 0 ) {
 								_counter.push( ", " );
 							}
-							if ( n < 0 ) {
-								_counter.push( createElement( "span", { class: "invalid" }, `no ${that.size[_sizeGroups[i]].plural}` ) );
-							} else if ( n == 1 ) {
-								_counter.push( `1 ${that.size[_sizeGroups[i]].singular}` );
-							} else {
-								_counter.push( `${n} ${that.size[_sizeGroups[i]].plural}` );
+							switch ( n ) {
+								case 0 :
+									_counter.push( translate( `COUNTER.${_sizeGroups[i]}_NONE`, n ) );
+									break;
+								case 1 :
+									_counter.push( translate( `COUNTER.${_sizeGroups[i]}_SINGLE`, n ) );
+									break;
+								case -1 :
+									_counter.push( "<span class=\"invalid\">" + translate( `COUNTER.${_sizeGroups[i]}_NEGATIVE_SINGLE`, -n ) + "</span>" );
+									break;
+								default :
+									if ( n < 0 ) {
+										_counter.push( "<span class=\"invalid\">" + translate( `COUNTER.${_sizeGroups[i]}_NEGATIVE_MULTI`, -n ) + "</span>" );
+									} else {
+										_counter.push( translate( `COUNTER.${_sizeGroups[i]}_MULTI`, n ) );
+									}
 							}
 						}
 						if ( _counter.length > 0 ) {
-							_counter.unshift( "Remaining: " );
+							this.counter.caption = translate( "COUNTER.DOWN", _counter.join( "" ) );
 						}
 					} else {
 						for ( let i = 0; i < _sizeGroups.length; i++ ) {
 							let n;
 							switch ( _sizeGroups[i] ) {
 								default :
-								case "c" :		n = value.length;										break;
-								case "w" :		n = ( value.match( /\S+/g ) || [] ).length;				break;
-								case "l" :		n = ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
+								case "CHAR" :	n = value.length;										break;
+								case "WORD" :	n = ( value.match( /\S+/g ) || [] ).length;				break;
+								case "LINE" :	n = ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
 							}
 							if ( _counter.length > 0 ) {
 								_counter.push( ", " );
 							}
-							_counter.push( n == 1 ? `1 ${that.size[_sizeGroups[i]].singular}` : `${n} ${that.size[_sizeGroups[i]].plural}` );
+							let s;
+							switch ( n ) {
+								case 0 :	s = translate( `COUNTER.${_sizeGroups[i]}_NONE`, n );	break;
+								case 1 :	s = translate( `COUNTER.${_sizeGroups[i]}_SINGLE`, n );	break;
+								default :	s = translate( `COUNTER.${_sizeGroups[i]}_MULTI`, n );	break;
+							}
+							if (
+								isFinite( that.size[_sizeGroups[i]].upper ) &&
+								n > ( that.size[_sizeGroups[i]].upper - ( that.size[_sizeGroups[i]].upperInclusive ? 0 : 1 ) )
+							) {
+								_counter.push( `<span class="invalid">${s}</span>` );
+							} else {
+								_counter.push( s );
+							}
 						}
 						if ( _counter.length > 0 ) {
-							_counter.unshift( "Content: " );
+							this.counter.caption = translate( "COUNTER.UP", _counter.join( "" ) );
 						}
 					}
-				}
 
-				if ( _counter.length > 0 ) {
-					return createElement( "div", { class: "with-counter" }, [
-						createElement( "div", { class: classes, }, elements ),
-						createElement( "div", { class: "counter" }, _counter )
-					] );
+					classes.push( "with-counter" );
 				}
 
 				return createElement( "div", { class: classes, }, elements );
@@ -583,9 +594,9 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		}
 
 		const counting = {
-			c:	value.length,
-			w:	( value.match( /\S+/g ) || [] ).length,
-			l:	( value.match( /\r\n?|\n/g ) || [] ).length + 1,
+			CHAR:	value.length,
+			WORD:	( value.match( /\S+/g ) || [] ).length,
+			LINE:	( value.match( /\r\n?|\n/g ) || [] ).length + 1,
 		};
 
 		// perform basic validations
@@ -597,10 +608,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				if ( !counting.hasOwnProperty( _sizeGroups[i] ) ) {
 					throw new TypeError( `unknown size-group: ${_sizeGroups[i]}` );
 				}
-				if ( !live && this.size[_sizeGroups[i]].range.isBelowRange( counting[_sizeGroups[i]] ) ) {
+				if ( !live && this.size[_sizeGroups[i]].isBelowRange( counting[_sizeGroups[i]] ) ) {
 					errors.push( "@VALIDATION.TOO_SHORT" );
 				}
-				if ( this.size[_sizeGroups[i]].range.isAboveRange( counting[_sizeGroups[i]] ) ) {
+				if ( this.size[_sizeGroups[i]].isAboveRange( counting[_sizeGroups[i]] ) ) {
 					errors.push( "@VALIDATION.TOO_LONG" );
 				}
 			}
