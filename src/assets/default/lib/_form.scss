@@ -75,12 +75,13 @@
 
 			display: grid;
 			grid-template-rows: auto auto;
+			grid-auto-flow: column dense;
 			gap: 0 1rem;
 
 			& > * {
 				grid-column: 1 / span 2;
 			}
-			& > .hint {
+			& > .hint, & > .errors {
 				grid-column: 1 / span 1;
 			}
 			& > .counter {
