@@ -8,8 +8,8 @@
   "description": "Sequence of forms",
   "sequence": [
 	{
-	  "name": "first",
-	  "label": "First Page",
+	  "name": "date-field",
+	  "label": "Date Field Test",
 	  "fields": [
 		{
 		  "type": "date",
