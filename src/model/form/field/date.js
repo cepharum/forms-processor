@@ -28,7 +28,6 @@
 
 import FormFieldAbstractModel from "./abstract";
 import DateProcessor from "../utility/date";
-import Range from "../utility/range";
 
 /**
  * Implements field type that provides date based utility
@@ -124,35 +123,37 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 	validate( live ) {
 		const errors = super.validate( live );
 
-		if( this.minDate ) {
-			try {
-				this.processor.validate( this.value, { minDate: this.minDate } );
-			} catch ( e ) {
-				errors.push( "@VALIDATION.DATE.TOO_EARLY" );
+		if( this.value ) {
+			if( this.minDate ) {
+				try {
+					this.processor.validate( this.value, { minDate: this.minDate } );
+				} catch ( e ) {
+					errors.push( "@VALIDATION.DATE.TOO_EARLY" );
+				}
 			}
-		}
 
-		if( this.maxDate ) {
-			try{
-				this.processor.validate( this.value, { maxDate: this.maxDate } );
-			} catch ( e ) {
-				errors.push( "@VALIDATION.DATE.TOO_LATE" );
+			if( this.maxDate ) {
+				try{
+					this.processor.validate( this.value, { maxDate: this.maxDate } );
+				} catch ( e ) {
+					errors.push( "@VALIDATION.DATE.TOO_LATE" );
+				}
 			}
-		}
 
-		if( this.allowedWeekdays ) {
-			try{
-				this.processor.validate( this.value, { allowedWeekdays: this.allowedWeekdays } );
-			} catch ( e ) {
-				errors.push( "@VALIDATION.DATE.DAY_NOT_ALLOWED" );
+			if( this.allowedWeekdays ) {
+				try{
+					this.processor.validate( this.value, { allowedWeekdays: this.allowedWeekdays } );
+				} catch ( e ) {
+					errors.push( "@VALIDATION.DATE.DAY_NOT_ALLOWED" );
+				}
 			}
-		}
 
-		if( this.notAllowedDates ) {
-			try{
-				this.processor.validate( this.value, { notAllowedDates: this.notAllowedDates } );
-			} catch ( e ) {
-				errors.push( "@VALIDATION.DATE.NOT_ALLOWED" );
+			if( this.notAllowedDates ) {
+				try{
+					this.processor.validate( this.value, { notAllowedDates: this.notAllowedDates } );
+				} catch ( e ) {
+					errors.push( "@VALIDATION.DATE.NOT_ALLOWED" );
+				}
 			}
 		}
 
