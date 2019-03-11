@@ -62,10 +62,12 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		}, container );
 
 		this.processor = new DateProcessor( this.format );
+		this.normalizationErrors = [];
 	}
 
 	/** @inheritDoc */
 	normalizeValue( input = "", _ ) {
+		this.normalizationErrors = [];
 		const options = {
 			minDate: this.minDate,
 			maxDate: this.maxDate,
@@ -75,12 +77,21 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 			notAllowedDates: this.notAllowedDates,
 		};
 		let value = null;
-		let formattedValue = null;
-		try{
-			value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
-			formattedValue = input;
-			// eslint-disable-next-line no-empty
-		} catch ( e ) {}
+		let formattedValue = "";
+		if( input ) {
+			try{
+				value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
+				formattedValue = input;
+				// eslint-disable-next-line no-empty
+			} catch ( e ) {}
+
+			try{
+				this.processor.normalize( input, { ...options, format: this.format, acceptPartial: false } );
+			} catch ( e ) {
+				this.normalizationErrors.push( "@VALIDATION.PATTERN_MISMATCH" );
+			}
+		}
+
 		return {
 			value,
 			formattedValue,
@@ -117,12 +128,11 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	validate( live ) {
-		const errors = super.validate();
+		const errors = [];
 
-		try {
-			this.value = this.processor.normalize( this.formattedInput );
-		} catch ( e ) {
-			errors.push( "@VALIDATION.PATTERN_MISMATCH" );
+		if( !live ) {
+			errors.splice( errors.length, 0, ...this.normalizationErrors );
+			errors.splice( errors.length, 0, ...super.validate() );
 		}
 
 		if( this.value ) {
