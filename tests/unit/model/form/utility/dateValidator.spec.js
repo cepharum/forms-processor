@@ -81,7 +81,7 @@ describe( "Utility Class DateValidator", () => {
 				( () => validate( "2012-12-22", { maxDate: "2012-12-12" } ) ).should.throw();
 				( () => validate( "2012-12-13", { maxDate: "2012-12-12" } ) ).should.throw();
 			} );
-			it( "maxDate", () => {
+			it( "minDate", () => {
 				( () => validate( "2013-12-12", { minDate: "2012-12-12" } ) ).should.not.throw();
 				( () => validate( "2012-12-12", { minDate: "2012-12-12" } ) ).should.not.throw();
 				( () => validate( "2012-12-11", { minDate: "2012-12-12" } ) ).should.throw();

@@ -19,15 +19,16 @@
 	  "fields": [
 		{
 		  "type": "date",
-		  "name": "test"
+		  "name": "test",
+		  "allowedWeekDays": ["1-2", 5],
+		  "notAllowedDates": "24-12-2019",
+		  "format": ["yyyy-mm-dd", "d-m-yy"],
+		  "yearbuffer": 20,
+		  "minDate": "-18Y",
+		  "maxDate": "today",
+		  "required": true
 		}
-	  ],
-	  "allowedWeekDays": ["1-2", 5],
-	  "notAllowedDates": "24-12-2019",
-	  "format": ["yyyy-mm-dd", "d-m-y"],
-	  "yearbuffer": 20,
-	  "minDate": "-18y",
-	  "maxDate": "today"
+	  ]
 	}
   ]
 }

@@ -81,15 +81,11 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 			this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
 			formattedValue = input;
 			// eslint-disable-next-line no-empty
-		} catch ( e ) { console.log( "acceptPartial: false ", e ); }
+		} catch ( e ) {}
 		try{
 			value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: false } );
 			// eslint-disable-next-line no-empty
-		} catch ( e ) { console.log( "acceptPartial: false ", e ); }
-		console.log( {
-			value,
-			formattedValue,
-		} );
+		} catch ( e ) {}
 		return {
 			value,
 			formattedValue,
@@ -111,8 +107,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 					const { formattedValue } = that.normalizeValue( input );
 
-					const value = formattedValue || lastValue;
-					console.log( "write", value, lastValue );
+					const value = formattedValue == null ? lastValue : formattedValue;
 					event.target.value = lastValue = value;
 					event.target.setSelectionRange( selectionStart, selectionStart );
 
@@ -127,21 +122,41 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	validate( live ) {
-		const errors = super.validate();
+		const errors = super.validate( live );
 
-		const formattedValue = String( this.formattedValue == null ? "" : this.formattedValue ).trim();
-
-		if ( this.required && ! formattedValue.length ) {
-			errors.push( "@VALIDATION.MISSING_REQUIRED" );
+		if( this.minDate ) {
+			try {
+				this.processor.validate( this.value, { minDate: this.minDate } );
+			} catch ( e ) {
+				errors.push( "@VALIDATION.DATE.TOO_EARLY" );
+			}
 		}
 
-		try{
-			this.processor.validate( this.value, { ...this.options, acceptPartial: live } );
-		} catch ( e ) {
-			this.errors.push( e );
+		if( this.maxDate ) {
+			try{
+				this.processor.validate( this.value, { maxDate: this.maxDate } );
+			} catch ( e ) {
+				errors.push( "@VALIDATION.DATE.TOO_LATE" );
+			}
 		}
 
-		return [...errors];
+		if( this.allowedWeekdays ) {
+			try{
+				this.processor.validate( this.value, { allowedWeekdays: this.allowedWeekdays } );
+			} catch ( e ) {
+				errors.push( "@VALIDATION.DATE.DAY_NOT_ALLOWED" );
+			}
+		}
+
+		if( this.notAllowedDates ) {
+			try{
+				this.processor.validate( this.value, { notAllowedDates: this.notAllowedDates } );
+			} catch ( e ) {
+				errors.push( "@VALIDATION.DATE.NOT_ALLOWED" );
+			}
+		}
+
+		return errors;
 	}
 
 }

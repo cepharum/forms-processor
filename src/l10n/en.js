@@ -55,6 +55,12 @@ export default function() {
 			TOO_BIG_FILES_TOTAL: "The total size of all selected files exceeds permitted maximum.",
 			TOO_SMALL_FILE: "The size of selected file exceeds permitted minimum.",
 			TOO_BIG_FILE: "The size of selected file exceeds permitted maximum.",
+			DATE: {
+				TOO_EARLY: "The chosen date is to far in the past.",
+				TOO_LATE: "The chosen date is to far in the future.",
+				DAY_NOT_ALLOWED: "The chosen weekday is not permitted.",
+				NOT_ALLOWED: "The chosen date is not permitted.",
+			},
 			MIME_MISMATCH: "You've selected wrong type of file.",
 			PATTERN_MISMATCH: "This information does not comply with required format.",
 		},

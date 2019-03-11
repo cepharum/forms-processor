@@ -55,6 +55,12 @@ export default function() {
 			TOO_BIG_FILES_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu hoch.",
 			TOO_SMALL_FILE: "Die Größe der ausgewählten Datei ist zu gering.",
 			TOO_BIG_FILE: "Die Größe der ausgewählten Datei ist zu hoch.",
+			DATE: {
+				TOO_EARLY: "Das gewählte Datum ist liegt zu weit zurück.",
+				TOO_LATE: "Das gewählte Datum ist liegt zu weit in der Zukunft.",
+				DAY_NOT_ALLOWED: "Das gewählte Wochentag ist nicht erlaubt.",
+				NOT_ALLOWED: "Das gewählte Datum ist nicht erlaubt.",
+			},
 			MIME_MISMATCH: "Sie haben eine Datei mit falschem Format ausgewählt.",
 			PATTERN_MISMATCH: "Das Format Ihrer Angabe ist fehlerhaft.",
 		},

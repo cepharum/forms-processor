@@ -358,24 +358,24 @@ export class DateNormalizer {
 		switch ( string.toLowerCase() ) {
 			case "m" :
 				if( acceptPartial ) {
-					return /^([0-1]?|0[1-9]|1[0-2])$/;
+					return /^(\d?|0\d|1[0-2])$/;
 				}
-				return /^([1-9]|0[1-9]|1[0-2])$/;
+				return /^(\d|0\d|1[0-2])$/;
 			case "mm" :
 				if( acceptPartial ) {
-					return this.getRegExpForIdentifier( "m" );
+					return /^([0-1]?|0\d|1[0-2])$/;
 				}
-				return /^(0[1-9]|1[0-2])$/;
+				return /^(0\d|1[0-2])$/;
 			case "d" :
 				if( acceptPartial ) {
-					return /^(\d?|0[1-9]|[1-2]\d|3[0-1])$/;
+					return /^(\d?|[0-2]\d|3[0-1])$/;
 				}
-				return /^([1-9]|0[1-9]|[1-2]\d|3[0-1])$/;
+				return /^(\d|[0-2]\d|3[0-1])$/;
 			case "dd" :
 				if( acceptPartial ) {
-					return this.getRegExpForIdentifier( "d" );
+					return /^([0-3]?|[0-2]\d|3[0-1])$/;
 				}
-				return /^(0[1-9]|[1-2]\d|3[0-1])$/;
+				return /^([0-2]\d|3[0-1])$/;
 			case "yy" :
 				if( acceptPartial ) {
 					return /^(\d{0,2})$/;
