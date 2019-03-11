@@ -361,30 +361,30 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				const { size } = files[i];
 
 				if ( this.size.isBelowRange( size ) ) {
-					errors.push( "@VALIDATION.TOO_SMALL_FILE" );
+					errors.push( "@VALIDATION.FILE.TOO_SMALL" );
 				}
 
 				if ( this.size.isAboveRange( size ) ) {
-					errors.push( "@VALIDATION.TOO_BIG_FILE" );
+					errors.push( "@VALIDATION.FILE.TOO_BIG" );
 				}
 
 				totalSize += size;
 			}
 
 			if ( this.totalSize.isBelowRange( totalSize ) ) {
-				errors.push( "@VALIDATION.TOO_SMALL_FILES_TOTAL" );
+				errors.push( "@VALIDATION.FILE.TOO_SMALL_TOTAL" );
 			}
 
 			if ( this.totalSize.isAboveRange( totalSize ) ) {
-				errors.push( "@VALIDATION.TOO_BIG_FILES_TOTAL" );
+				errors.push( "@VALIDATION.FILE.TOO_BIG_TOTAL" );
 			}
 
 			if ( this.count.isBelowRange( files.length ) ) {
-				errors.push( "@VALIDATION.TOO_LITTLE_FILES" );
+				errors.push( "@VALIDATION.FILE.TOO_LITTLE" );
 			}
 
 			if ( this.count.isAboveRange( files.length ) ) {
-				errors.push( "@VALIDATION.TOO_MANY_FILES" );
+				errors.push( "@VALIDATION.FILE.TOO_MANY" );
 			}
 		}
 
