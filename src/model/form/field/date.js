@@ -77,12 +77,8 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		let value = null;
 		let formattedValue = null;
 		try{
-			this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
+			value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
 			formattedValue = input;
-			// eslint-disable-next-line no-empty
-		} catch ( e ) {}
-		try{
-			value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: false } );
 			// eslint-disable-next-line no-empty
 		} catch ( e ) {}
 		return {
@@ -121,7 +117,13 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	validate( live ) {
-		const errors = super.validate( live );
+		const errors = super.validate();
+
+		try {
+			this.value = this.processor.normalize( this.formattedInput );
+		} catch ( e ) {
+			errors.push( "@VALIDATION.PATTERN_MISMATCH" );
+		}
 
 		if( this.value ) {
 			if( this.minDate ) {

@@ -1,17 +1,11 @@
 {
-  "mode": {
-	"localStore": {
-	  "id": "1234",
-	  "maxAge": 30
-	}
-  },
   "processors": [
 	{
 	  "url": "/"
 	}
   ],
   "title": "Persistent Input",
-  "description": "Sequence of forms with input persisted locally.",
+  "description": "Sequence of forms",
   "sequence": [
 	{
 	  "name": "first",
