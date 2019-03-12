@@ -128,7 +128,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		const that = this;
 		return {
 			template: `
-				<input :value="formattedValue" :disabled="disabled" :placeholder="compiledPlaceholder" @input="onInput"> 
+				<input type="text" :value="formattedValue" :disabled="disabled" :placeholder="compiledPlaceholder" @input="onInput"> 
 			`,
 			computed: {
 				compiledPlaceholder() {
