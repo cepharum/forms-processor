@@ -28,6 +28,45 @@
 
 import Range from "./range";
 
+const SegmentPatterns = {
+	m: /^([1-9]|0[1-9]|1[0-2])$/,
+	mm: /^(0[1-9]|1[0-2])$/,
+	d: /^([1-9]|0[1-9]|[1-2]\d|3[0-1])$/,
+	dd: /^(0[1-9]|[1-2]\d|3[0-1])$/,
+	yy: /^\d{2}$/,
+	yyyy: /^\d{4}$/,
+};
+
+const PartialSegmentPatterns = {
+	m: /^(\d?|0[1-9]|1[0-2])$/,
+	mm: /^([0-1]?|0[1-9]|1[0-2])$/,
+	d: /^(\d?|0[1-9]|[1-2]\d|3[0-1])$/,
+	dd: /^([0-3]?|0[1-9]|[1-2]\d|3[0-1])$/,
+	yy: /^(\d{0,2})$/,
+	yyyy: /^\d{0,4}$/,
+};
+
+const FormatTypeToProperty = {
+	m: "month",
+	mm: "month",
+	d: "day",
+	dd: "day",
+	yy: "year",
+	yyyy: "year",
+};
+
+const DefaultBusinessDays = {
+	1: true,
+	2: true,
+	3: true,
+	4: true,
+	5: true,
+};
+
+const DefaultHolidays = [];
+
+
+
 /**
  * @typedef {String} DateString String that is parsable with new Date(DateString)
  * @typedef {Date|DateString} DateInput
@@ -55,25 +94,25 @@ export class PartialDate extends Date {
 
 		Object.defineProperties( this, {
 			/**
-			 * Indicates if instance provides complete date information.
+			 * Indicates if instance provides incomplete date information.
 			 *
-			 * @name PartialDate#isCompleteDate
+			 * @name PartialDate#isIncompleteDate
 			 * @property boolean
 			 * @readonly
 			 */
-			isCompleteDate: {
-				get: () => !( isNaN( this._date ) || isNaN( this._month ) || isNaN( this._year ) ),
+			isIncompleteDate: {
+				get: () => isNaN( this._date ) || isNaN( this._month ) || isNaN( this._year ),
 			},
 
 			/**
-			 * Indicates if instance provides complete date of time information.
+			 * Indicates if instance provides incomplete date of time information.
 			 *
-			 * @name PartialDate#isCompleteTimeOfDay
+			 * @name PartialDate#isIncompleteTimeOfDay
 			 * @property boolean
 			 * @readonly
 			 */
-			isCompleteTimeOfDay: {
-				get: () => !( isNaN( this._hours ) || isNaN( this._minutes ) || isNaN( this._seconds ) ),
+			isIncompleteTimeOfDay: {
+				get: () => isNaN( this._hours ) || isNaN( this._minutes ) || isNaN( this._seconds ),
 			},
 		} );
 	}
@@ -155,6 +194,42 @@ export class PartialDate extends Date {
 
 		return result;
 	}
+
+	/**
+	 * Detects if provided date describes same day as current instance obeying
+	 * either date probably providing incomplete information limiting comparison
+	 * to existing information.
+	 *
+	 * @param {Date} date date to compare current one with
+	 * @return {boolean} true if both dates describe same day w/o obeying missing information in either date
+	 */
+	isSameDay( date ) {
+		if ( !date || !( date instanceof Date ) ) {
+			return false;
+		}
+
+		let y, m, d;
+
+		if ( date instanceof PartialDate ) {
+			y = date._year;
+			m = date._month;
+			d = date._date;
+		} else {
+			y = date.getFullYear();
+			m = date.getMonth();
+			d = date.getDate();
+		}
+
+		if ( !isNaN( this._year ) && !isNaN( y ) && this._year !== y ) {
+			return false;
+		}
+
+		if ( !isNaN( this._month ) && !isNaN( m ) && this._month !== m ) {
+			return false;
+		}
+
+		return isNaN( this._date ) || isNaN( d ) || this._date === d;
+	}
 }
 
 /**
@@ -176,26 +251,25 @@ export class DateProcessor {
 	}
 
 	/**
-	 * adds formats and caches corresponding DateNormalizer and DateValidator
+	 * Adds formats and caches corresponding DateNormalizer and DateValidator.
+	 *
 	 * @param{string[]|string} format single or array of dateFormats for example: yyyy-mm-dd
-	 * @returns {void}
+	 * @returns {this} fluent interface
 	 */
 	addFormat( format ) {
-		let input = format;
-		if ( typeof input === "string" ) {
-			input = [input];
-		}
+		const _formats = Array.isArray( format ) ? format : [format];
+		const numFormats = _formats.length;
 
-		if ( Array.isArray( input ) ) {
-			for ( let index = 0, length = input.length; index < length; index++ ) {
-				const formatString = input[index];
+		for ( let index = 0; index < numFormats; index++ ) {
+			const _format = _formats[index];
 
-				if ( !this.normalizer[formatString] ) {
-					this.format.push( formatString );
-					this.normalizer[formatString] = new DateNormalizer( formatString );
-				}
+			if ( typeof _format === "string" && _format && !this.normalizer[_format] ) {
+				this.format.push( _format );
+				this.normalizer[_format] = new DateNormalizer( _format );
 			}
 		}
+
+		return this;
 	}
 
 	/**
@@ -211,113 +285,288 @@ export class DateProcessor {
 			this.addFormat( format );
 		}
 
-		let normalized = false;
-		const errors = [];
+		const formats = this.format;
+		const numFormats = formats.length;
+		let firstError = null;
+		let bestIncompleteDate = null;
 
-		for ( let i = 0, l = this.format.length; i < l; i++ ) {
-			const formatString = this.format[i];
-			const normalizer = this.normalizer[formatString];
+		for ( let i = 0, l = numFormats; i < l; i++ ) {
+			const _format = formats[i];
 
 			try {
-				normalized = normalizer.normalize( input, options );
-			} catch ( e ) {
-				errors.push( e );
+				const date = this.normalizer[_format].normalize( input, options );
+				if ( date ) {
+					if ( !date.isIncompleteDate ) {
+						return date;
+					}
+
+					if ( !bestIncompleteDate ) {
+						bestIncompleteDate = date;
+					}
+				}
+			} catch ( error ) {
+				if ( !firstError ) {
+					firstError = error;
+				}
 			}
 		}
 
-		if ( normalized ) {
-			return normalized;
+		if ( bestIncompleteDate ) {
+			return bestIncompleteDate;
 		}
 
-		throw new Error( errors );
+		throw firstError;
 	}
 
 	/**
-	 * normalize a date for given format
+	 * Normalizes a date for given format.
+	 *
 	 * @param{Date} input date to validate for given format
 	 * @param{object} options refers to object selecting optional customizations to date checking
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
 	validate( input, options ) {
-		DateValidator.validate( input, options );
+		return DateValidator.validate( input, options );
 	}
 
 	/**
-	 * normalizes a selector to a Date
-	 * @param{string} selector Date selector
-	 * @param {DateInput[]} allowedWeekdays list of allowed weekDays
-	 * @param {DateInput[]} notAllowedDates list of allowed dates
-	 * @return {Date} normalized Date
+	 * Parses provided input value for definition of business days.
+	 *
+	 * @param {string|string[]|int|int[]} input one or more days of week each selected by its index or its abbreviated English name
+	 * @returns {object<int,boolean>} maps indices of found week days into boolean `true`
 	 */
-	static normalizeSelector( selector, { allowedWeekdays = [ 1, 2, 3, 4, 5 ], notAllowedDates = [] } = {} ) {
-		const date = new Date();
-		if ( selector.toLowerCase() === "now" || selector.toLowerCase() === "today" ) {
-			return date;
-		}
-		if ( /^-[0-9]+$/.test( selector ) ) {
-			const offset = Number( selector.replace( "-", "" ) );
-			date.setDate( date.getDate() - offset );
-			return date;
-		}
+	static parseBusinessDays( input ) {
+		const _days = Array.isArray( input ) ? input : [input];
+		const numDays = _days.length;
+		const parsed = {};
+		const map = {
+			sun: 0,
+			mon: 1,
+			tue: 2,
+			wed: 3,
+			thu: 4,
+			fri: 5,
+			sat: 6
+		};
 
-		if ( /^\+[0-9]+$/.test( selector ) ) {
-			const offset = Number( selector.replace( "+", "" ) );
-			date.setDate( date.getDate() + offset );
-			return date;
-		}
-		if ( /^-[0-9]+M$/.test( selector ) ) {
-			const offset = Number( selector.replace( "-", "" ).replace( "M", "" ) );
-			date.setMonth( date.getMonth() - offset );
-			date.setDate( 0 );
-			return date;
-		}
-		if ( /^\+[0-9]+M$/.test( selector ) ) {
-			const offset = Number( selector.replace( "+", "" ).replace( "M", "" ) );
-			date.setMonth( date.getMonth() + offset );
-			date.setDate( 0 );
-			return date;
-		}
-		if ( /^-[0-9]+Y$/.test( selector ) ) {
-			const offset = Number( selector.replace( "-", "" ).replace( "Y", "" ) );
-			date.setFullYear( date.getFullYear() - offset );
-			date.setDate( 0 );
-			return date;
-		}
-		if ( /^\+[0-9]+Y$/.test( selector ) ) {
-			const offset = Number( selector.replace( "+", "" ).replace( "Y", "" ) );
-			date.setFullYear( date.getFullYear() + offset );
-			date.setDate( 0 );
-			return date;
-		}
-		if ( /^-[0-9]+BD$/.test( selector ) ) {
-			const offset = Number( selector.replace( "-", "" ).replace( "BD", "" ) );
-			let found = 0;
+		for ( let i = 0; i < numDays; i++ ) {
+			const _day = _days[i];
 
-			while ( found < offset ) {
-				date.setDate( date.getDate() - 1 );
-				try {
-					DateValidator.validate( date, { allowedWeekdays, notAllowedDates } );
-					found++;
-					// eslint-disable-next-line no-empty
-				} catch ( e ) {}
+			const range = /^(?:([0-6])|([sunmotewdhfria]+))\s*-\s*(?:([0-6])|([sunmotewdhfria]+))$/i.exec( _day );
+			if ( range ) {
+				const from = range[1] ? parseInt( range[1] ) : map[range[2]];
+				const thru = range[3] ? parseInt( range[3] ) : map[range[4]];
+
+				if ( from > -1 && thru > -1 ) {
+					for ( let j = Math.min( from, thru ); j <= Math.max( from, thru ); j++ ) {
+						parsed[j] = true;
+					}
+				}
+			} else {
+				const index = parseInt( _day );
+				if ( isNaN( index ) ) {
+					const name = String( _day ).trim().toLowerCase();
+					const mapped = map[name];
+
+					if ( mapped != null ) {
+						parsed[mapped] = true;
+					}
+				} else if ( index > -1 && index < 7 ) {
+					parsed[index] = true;
+				}
 			}
-			return date;
 		}
-		if ( /^\+[0-9]+BD$/.test( selector ) ) {
-			const offset = Number( selector.replace( "+", "" ).replace( "BD", "" ) );
-			let found = 0;
 
-			while ( found < offset ) {
-				date.setDate( date.getDate() + 1 );
-				try {
-					DateValidator.validate( date, { allowedWeekdays, notAllowedDates } );
-					found++;
-					// eslint-disable-next-line no-empty
-				} catch ( e ) {}
+		return parsed;
+	}
+
+	/**
+	 * Parses provided input value for definition of one or more holidays.
+	 *
+	 * @param {string|string[]|Date|Date[]} input one or more descriptions of (recurring) holidays
+	 * @returns {PartialDate[]} maps indices of found week days into boolean `true`
+	 */
+	static parseHolidays( input ) {
+		const _holidays = Array.isArray( input ) ? input : [input];
+		const numHolidays = _holidays.length;
+		const parsed = [];
+		let write = 0;
+
+		for ( let i = 0; i < numHolidays; i++ ) {
+			const source = _holidays[i];
+			if ( source instanceof Date ) {
+				parsed[write++] = source;
+				continue;
 			}
+
+			const match = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec( source );
+			if ( match ) {
+				const holiday = new PartialDate();
+
+				if ( match[1] ) {
+					holiday.setFullYear( match[1] );
+				}
+
+				holiday.setMonth( parseInt( match[2] ) - 1 );
+				holiday.setDate( parseInt( match[3] ) );
+
+				parsed[write++] = holiday;
+			}
+		}
+
+		parsed.splice( write );
+
+		return parsed;
+	}
+
+	/**
+	 * Converts description of a date into according instance of Date.
+	 *
+	 * This method supports several input values for selecting/describing a date:
+	 *
+	 *  - Any provided instance of `Date` is returned as is.
+	 *  - `now`, `today`, `tomorrow` and `yesterday` select either day accordingly.
+	 *  - Strings describing timestamps supported by `Date.parse()` are supported.
+	 *  - Providing number of seconds since Unix Epoch is supported.
+	 *  - Relative distances to current date can be provided as string:
+	 *    - Syntax is `+xu` or `-xu` or just `xu` with `x` being sequence of digits and `u` being unit.
+	 *    - Supported units are:
+	 *      - `d` for days (which is default when omitting unit)
+	 *      - `w` for weeks
+	 *      - `m` for months
+	 *      - `y` for years
+	 *    - In addition special units are supported:
+	 *      - `bom` selects first day of month that would be selected when using unit `m`
+	 *      - `eom` selects last day of month that would be selected when using unit `m`
+	 *      - `boy` selects first day of year that would be selected when using unit `y`
+	 *      - `eoy` selects last day of year that would be selected when using unit `y`
+	 *      - `bd` selects _business days_ obeying provided set of weekdays considered business days and a list of holidays
+	 *        - Use `DateProcessor.parseBusinessDays()` to prepare list of weekdays considered business days.
+	 *        - Use `DateProcessor.parseHolidays()` to prepare list of holidays.
+	 *  - All names and units are supported case-insensitively.
+	 *
+	 * @param {string|Date} selector description of a date
+	 * @param {object<int,boolean>} businessDays map of permitted weekdays into boolean `true` for calculating relative business days
+	 * @param {Date[]} holidays list of allowed dates
+	 * @return {Date} instance of Date matching date described by provided selector
+	 */
+	static normalizeSelector( selector, { businessDays = DefaultBusinessDays, holidays = DefaultHolidays } = {} ) {
+		if ( selector instanceof Date ) {
+			return selector;
+		}
+
+
+		const now = new PartialDate();
+		const _selector = selector == null ? null : String( selector ).toLowerCase();
+
+		switch ( _selector ) {
+			case "now" :
+			case "today" :
+				return now;
+
+			case "tomorrow" :
+				return new Date( now.getTime() + 86400000 );
+
+			case "yesterday" :
+				return new Date( now.getTime() - 86400000 );
+		}
+
+
+		const relative = /^([+-])?\s*?(\d+)\s*(d|m|y|bom|eom|boy|eoy|bd)?/.exec( _selector );
+		if ( !relative ) {
+			// does not look like relative description of a  date
+			// -> try parsing as some actual date string
+			const date = Date.parse( selector );
+			if ( isNaN( date ) ) {
+				throw new Error( "Invalid description of date." );
+			}
+
 			return date;
 		}
-		throw new Error( "Selector does not match" );
+
+
+		const [ , sign = "+", amount, unit ] = relative;
+
+		if ( amount.length > 6 && unit == null ) {
+			// got integer value considered number of seconds since Unix Epoch
+			return new Date( parseInt( amount ) * 1000 );
+		}
+
+
+		let value = parseInt( `${sign}${amount}` );
+
+		switch ( unit ) {
+			case "d" :
+			default :
+				now.setDate( now.getDate() + value );
+				return now;
+
+			case "w" :
+				now.setDate( now.getDate() + ( value * 7 ) );
+				return now;
+
+			case "m" :
+				now.setMonth( now.getMonth() + value );
+				return now;
+
+			case "bom" :
+				// choose first day of selected month
+				now.setMonth( now.getMonth() + value );
+				now.setDate( 1 );
+				return now;
+
+			case "eom" :
+				// choose last day of selected month
+				now.setMonth( now.getMonth() + value );
+				now.setMonth( now.getMonth() + 1 );
+				now.setDate( 0 );
+				return now;
+
+			case "y" :
+				now.setFullYear( now.getFullYear() + value );
+				return now;
+
+			case "boy" :
+				// choose first day of selected year
+				now.setFullYear( now.getFullYear() + value );
+				now.setMonth( 0 );
+				now.setDate( 1 );
+				return now;
+
+			case "eoy" :
+				// choose last day of selected year
+				now.setFullYear( now.getFullYear() + value );
+				now.setMonth( 11 );
+				now.setDate( 31 );
+				return now;
+
+			case "bd" : {
+				// iterate over dates looking for some business day with provided distance
+				const step = value < 0 ? -1 : 1;
+				const numHolidays = holidays.length;
+
+				while ( value !== 0 ) {
+					now.setDate( now.getDate() + step );
+
+					if ( businessDays[now.getDay()] ) {
+						let isHoliday = false;
+
+						for ( let i = 0; i < numHolidays; i++ ) {
+							if ( now.isSameDay( holidays[i] ) ) {
+								isHoliday = true;
+								break;
+							}
+						}
+
+						if ( !isHoliday ) {
+							value -= step;
+						}
+					}
+				}
+
+				return now;
+			}
+		}
 	}
 }
 
@@ -333,18 +582,27 @@ export class DateNormalizer {
 		const format = initialFormat.toLowerCase();
 		const separator = DateNormalizer.extractSeparator( format );
 		const parts = format.split( separator );
+
 		if ( parts.length > 3 ) {
-			throw new Error( "This normalizer that consist of under 4 parts" );
+			throw new Error( "Date format descriptor does not consist of up to three parts." );
 		}
+
 		const patterns = {};
 
 		const identifiers = parts.map( part => {
-			const key = this.getKeyForIdentifier( part );
+			const _part = part.toLowerCase();
+			const key = FormatTypeToProperty[_part];
 			const regExp = {
-				regular: this.getRegExpForIdentifier( part, false ),
-				acceptPartial: this.getRegExpForIdentifier( part, true ),
+				regular: SegmentPatterns[_part],
+				acceptPartial: PartialSegmentPatterns[_part],
 			};
+
+			if ( !key || !regExp.regular || !regExp.acceptPartial ) {
+				throw new TypeError( "invalid element in provided format pattern" );
+			}
+
 			patterns[key] = regExp;
+
 			return {
 				regExp,
 				value: part,
@@ -408,7 +666,8 @@ export class DateNormalizer {
 			throw new Error( "input is not complete" );
 		}
 
-		const date = new Date;
+		const date = new PartialDate();
+
 		if ( ( acceptPartial && isValid ) || isParsable ) {
 			for ( let index = 0, length = parts.length; index < length; index++ ) {
 				const part = parts[index];
@@ -417,9 +676,11 @@ export class DateNormalizer {
 					case "day" :
 						date.setDate( Number( part ) );
 						break;
+
 					case "month" :
 						date.setMonth( Number( part ) - 1 );
 						break;
+
 					case "year" :
 						switch ( identifier.value ) {
 							case "yy" : {
@@ -435,110 +696,51 @@ export class DateNormalizer {
 								}
 								break;
 							}
+
 							case "yyyy" :
 								date.setFullYear( Number( part ) );
 								break;
+
 							default :
 								throw new TypeError( "invalid format detected" );
 						}
 						break;
+
 					default :
 						throw new TypeError( "invalid input detected" );
 				}
 			}
 		}
+
 		return date;
 	}
 
 	/**
-	 * exracts the separator for a given format
+	 * Extracts the separator from a given format.
+	 *
 	 * @param{string} format string in the date format
 	 * @return {string} separator of the identifier in a date format;
 	 */
 	static extractSeparator( format ) {
-		/**
-		 * @type {boolean|string}
-		 */
 		let separator = false;
+
 		for ( let index = 0, length = format.length; index < length; index++ ) {
 			const char = format.charAt( index );
+
 			if ( !isIdentifier( char ) ) {
 				if ( separator && char !== separator ) {
-					throw new Error( "invalid format provided: separators not uniform" );
-				} else {
-					separator = char;
+					throw new Error( "Date format definition uses multiple different separators." );
 				}
+
+				separator = char;
 			}
 		}
-		if ( !separator ) {
-			throw new Error( "invalid format provided" );
-		}
-		return separator;
-	}
 
-	/**
-	 *
-	 * @param{string} string string that should be parsed
-	 * @param{boolean} acceptPartial if the returned regEx should accept partial String
-	 * @return {RegExp} RegExp that returns a RegEx
-	 */
-	getRegExpForIdentifier( string, acceptPartial = true ) {
-		switch ( string.toLowerCase() ) {
-			case "m" :
-				if ( acceptPartial ) {
-					return /^(\d?|0[1-9]|1[0-2])$/;
-				}
-				return /^([1-9]|0[1-9]|1[0-2])$/;
-			case "mm" :
-				if ( acceptPartial ) {
-					return /^([0-1]?|0[1-9]|1[0-2])$/;
-				}
-				return /^(0[1-9]|1[0-2])$/;
-			case "d" :
-				if ( acceptPartial ) {
-					return /^(\d?|0[1-9]|[1-2]\d|3[0-1])$/;
-				}
-				return /^([1-9]|0[1-9]|[1-2]\d|3[0-1])$/;
-			case "dd" :
-				if ( acceptPartial ) {
-					return /^([0-3]?|0[1-9]|[1-2]\d|3[0-1])$/;
-				}
-				return /^(0[1-9]|[1-2]\d|3[0-1])$/;
-			case "yy" :
-				if ( acceptPartial ) {
-					return /^(\d{0,2})$/;
-				}
-				return /^\d{2}$/;
-			case "yyyy" :
-				if ( acceptPartial ) {
-					return /^\d{0,4}$/;
-				}
-				return /^\d{4}$/;
-			default :
-				throw new Error( "unexpected date format identifier" );
+		if ( separator ) {
+			return separator;
 		}
-	}
 
-	/**
-	 *
-	 * @param{string} string string that should be parsed
-	 * @return {String} Key of the identifier
-	 */
-	getKeyForIdentifier( string ) {
-		const identifier = string.toLowerCase();
-		switch ( identifier ) {
-			case "m" :
-			case "mm" :
-				return "month";
-			case "d" :
-			case "dd" :
-				return "day";
-			case "yy" :
-			case "yyyy" :
-				return "year";
-			default :
-				throw new Error( "unexpected date format identifier" );
-		}
+		throw new Error( "Date format does not contain any separator." );
 	}
 }
 
@@ -548,24 +750,22 @@ export class DateNormalizer {
  */
 export class DateValidator {
 	/**
-	 * valide a given date
+	 * Checks if a given date complies with an optional set of conditions.
+	 *
 	 * @param {DateInput} input date to validate
-	 * @param {object} options refers to object selecting optional customizations to date checking
 	 * @param {DateInput} minDate minimal Date
 	 * @param {DateInput} maxDate maximal Date
-	 * @param {number[]} allowedWeekdays numeric values of the allowed weekdays
-	 * @param {DateInput[]} notAllowedDates numeric values of the allowed weekdays
+	 * @param {object<int,boolean>} businessDays numeric values of the allowed weekdays
+	 * @param {Date[]} holidays numeric values of the allowed weekdays
 	 * @returns {FormatCheckResult} validated textual input or list of errors if checking failed
 	 */
-	static validate( input, { minDate, maxDate, allowedWeekdays, notAllowedDates } = {} ) {
-		let inputDate = input;
+	static validate( input, { minDate = null, maxDate = null, businessDays = null, holidays = null } = {} ) {
+		if ( typeof input !== "string" && !( input instanceof Date ) ) {
+			throw new TypeError( "Input needs to be a Date or a string containing parsable date." );
+		}
 
-		if ( typeof inputDate === "string" ) {
-			inputDate = new Date( inputDate );
-		}
-		if ( !( inputDate instanceof Date ) ) {
-			throw new TypeError( "Input needs to be a Date or a parsable dateString" );
-		}
+		const inputDate = new PartialDate( input );
+
 
 		if ( minDate ) {
 			let date = minDate;
@@ -577,7 +777,7 @@ export class DateValidator {
 				throw new TypeError( "minDate needs to be a Date or a parsable dateString" );
 			}
 			if ( Math.floor( inputDate.getTime() / 8.64e+7 ) < Math.floor( date.getTime() / 8.64e+7 ) ) {
-				throw new Error( "input does not satisfy minDate" );
+				throw new Error( "Selected day is beyond earliest permitted day." );
 			}
 		}
 
@@ -590,42 +790,20 @@ export class DateValidator {
 			if ( !( date instanceof Date ) ) {
 				throw new TypeError( "maxDate needs to be a Date or a parsable dateString" );
 			}
+
 			if ( Math.floor( inputDate.getTime() / 8.64e+7 ) > Math.floor( date.getTime() / 8.64e+7 ) ) {
-				throw new Error( "input does not satisfy maxDate" );
+				throw new Error( "Selected day is beyond latest permitted day." );
 			}
 		}
 
-		if ( allowedWeekdays ) {
-			const weekday = inputDate.getDay();
-			if ( allowedWeekdays instanceof Array && allowedWeekdays.length ) {
-				let isOk = false;
-
-				for ( let length = allowedWeekdays.length, index = 0; index < length; index++ ) {
-					try {
-						DateValidator.checkWeekday( weekday, allowedWeekdays[index] );
-						isOk = true;
-						// eslint-disable-next-line no-empty
-					} catch ( e ) {}
-				}
-				if ( !isOk ) {
-					throw new Error( "this weekday is not allowed" );
-				}
-			}
-			DateValidator.checkWeekday( weekday, allowedWeekdays );
+		if ( businessDays && !businessDays[inputDate.getDay()] ) {
+			throw new Error( "Selected day of week is not a business day." );
 		}
 
-		if ( notAllowedDates ) {
-			for ( let length = notAllowedDates.length, index = 0; index < length; index++ ) {
-				let date = notAllowedDates[index];
-
-				if ( typeof date === "string" ) {
-					date = new Date( date );
-				}
-				if ( !( date instanceof Date ) ) {
-					throw new Error( "each entry of notAllowedDates must be a Date or a parsable dateString" );
-				}
-				if ( Math.floor( inputDate.getTime() / 8.64e+7 ) === Math.floor( date.getTime() / 8.64e+7 ) ) {
-					throw new Error( "this date is not allowed" );
+		if ( holidays ) {
+			for ( let length = holidays.length, index = 0; index < length; index++ ) {
+				if ( inputDate.isSameDay( holidays[index] ) ) {
+					throw new Error( "Selected day is a holiday." );
 				}
 			}
 		}

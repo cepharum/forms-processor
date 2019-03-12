@@ -28,7 +28,7 @@
 
 import Should from "should";
 
-import DateProcessor from "../../../../../src/model/form/utility/date";
+import { DateProcessor } from "../../../../../src/model/form/utility/date";
 
 describe( "Utility Class DateProcessor", () => {
 	it( "is available", () => {
@@ -121,7 +121,15 @@ describe( "Utility Class DateProcessor", () => {
 				const date = normalizeSelector( "-9M" );
 				const date2 = new Date();
 				date2.setMonth( date2.getMonth() - 9 );
-				date2.setDate( 0 );
+				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
+				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
+				date2NoTime.should.be.eql( dateNoTime );
+			} );
+			it( "-xBOM", () => {
+				const date = normalizeSelector( "-9BOM" );
+				const date2 = new Date();
+				date2.setMonth( date2.getMonth() - 9 );
+				date2.setDate( 1 );
 				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
 				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
 				date2NoTime.should.be.eql( dateNoTime );
@@ -130,7 +138,15 @@ describe( "Utility Class DateProcessor", () => {
 				const date = normalizeSelector( "+9M" );
 				const date2 = new Date();
 				date2.setMonth( date2.getMonth() + 9 );
-				date2.setDate( 0 );
+				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
+				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
+				date2NoTime.should.be.eql( dateNoTime );
+			} );
+			it( "+xBOM", () => {
+				const date = normalizeSelector( "+9BOM" );
+				const date2 = new Date();
+				date2.setMonth( date2.getMonth() + 9 );
+				date2.setDate( 1 );
 				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
 				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
 				date2NoTime.should.be.eql( dateNoTime );

@@ -28,7 +28,7 @@
 
 import Should from "should";
 
-import DateProcessor, { DateNormalizer } from "../../../../../src/model/form/utility/date";
+import { DateProcessor, DateNormalizer } from "../../../../../src/model/form/utility/date";
 
 describe( "Utility Class DateNormalizer", () => {
 	it( "is available", () => {

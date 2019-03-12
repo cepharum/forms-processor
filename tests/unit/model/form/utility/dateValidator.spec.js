@@ -28,7 +28,7 @@
 
 import Should from "should";
 
-import { DateValidator } from "../../../../../src/model/form/utility/date";
+import { DateProcessor, DateValidator } from "../../../../../src/model/form/utility/date";
 
 describe( "Utility Class DateValidator", () => {
 	it( "is available", () => {
@@ -69,7 +69,7 @@ describe( "Utility Class DateValidator", () => {
 			validate.should.have.length( 1 );
 		} );
 
-		it( "accepts Date and parasable dateStrings as input", () => {
+		it( "accepts Date and parsable dateStrings as input", () => {
 			( () => validate( "2012-12-12" ) ).should.not.throw();
 			( () => validate( new Date( "2012-12-12" ) ) ).should.not.throw();
 		} );
@@ -88,16 +88,16 @@ describe( "Utility Class DateValidator", () => {
 				( () => validate( "2012-12-01", { minDate: "2012-12-12" } ) ).should.throw();
 			} );
 			it( "allowedWeekdays", () => {
-				( () => validate( "2013-12-12", { allowedWeekdays: "0-6" } ) ).should.not.throw();
-				( () => validate( "2019-03-06", { allowedWeekdays: 3 } ) ).should.not.throw();
-				( () => validate( "2019-03-06", { allowedWeekdays: [ "0-2", 4, 5, 6 ] } ) ).should.throw();
-				( () => validate( "2019-03-06", { allowedWeekdays: [ "0-2" ,"4-6" ] } ) ).should.throw();
+				( () => validate( "2013-12-12", { businessDays: DateProcessor.parseBusinessDays( "0-6" ) } ) ).should.not.throw();
+				( () => validate( "2019-03-06", { businessDays: DateProcessor.parseBusinessDays( 3 ) } ) ).should.not.throw();
+				( () => validate( "2019-03-06", { businessDays: DateProcessor.parseBusinessDays( [ "0-2", 4, 5, 6 ] ) } ) ).should.throw();
+				( () => validate( "2019-03-06", { businessDays: DateProcessor.parseBusinessDays( [ "0-2" ,"4-6" ] ) } ) ).should.throw();
 			} );
 			it( "notAllowedDates", () => {
-				( () => validate( "2013-12-12", { notAllowedDates: [] } ) ).should.not.throw();
-				( () => validate( "2019-03-06", { notAllowedDates: ["2019-03-09"] } ) ).should.not.throw();
-				( () => validate( "2019-03-06", { notAllowedDates: ["2019-03-06"] } ) ).should.throw();
-				( () => validate( "2019-03-06", { notAllowedDates: [ "2019-03-06", "2019-03-07" ] } ) ).should.throw();
+				( () => validate( "2013-12-12", { holidays: DateProcessor.parseHolidays( [] ) } ) ).should.not.throw();
+				( () => validate( "2019-03-06", { holidays: DateProcessor.parseHolidays( ["2019-03-09"] ) } ) ).should.not.throw();
+				( () => validate( "2019-03-06", { holidays: DateProcessor.parseHolidays( ["2019-03-06"] ) } ) ).should.throw();
+				( () => validate( "2019-03-06", { holidays: DateProcessor.parseHolidays( [ "2019-03-06", "2019-03-07" ] ) } ) ).should.throw();
 			} );
 		} );
 	} );
