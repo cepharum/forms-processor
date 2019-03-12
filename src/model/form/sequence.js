@@ -148,6 +148,15 @@ export default class FormSequenceModel {
 			data: { get: data },
 
 			/**
+			 * Exposes optionally defined set of constants.
+			 *
+			 * @name FormSequenceModel#constants
+			 * @property {object}
+			 * @readonly
+			 */
+			constants: { value: definition.constants || {} },
+
+			/**
 			 * Reads value of a field selected by its name from storage.
 			 *
 			 * @name FormSequenceModel#readValue
@@ -706,6 +715,8 @@ export default class FormSequenceModel {
 
 		index = Math.min( Math.max( index, 0 ), forms.length - 1 );
 
+		this.events.$emit( "sequence:advance", this.currentIndex, index );
+
 		const isAdvancing = index > this.currentIndex;
 		this.currentIndex = index;
 
@@ -718,8 +729,9 @@ export default class FormSequenceModel {
 	 * @returns {boolean} true if current form has been actually rewinded
 	 */
 	rewind() {
-		const index = this.currentIndex;
-		if ( index > 0 ) {
+		if ( this.currentIndex > 0 ) {
+			this.events.$emit( "sequence:rewind", this.currentIndex, this.currentIndex - 1 );
+
 			this.currentIndex--;
 
 			return true;
@@ -743,6 +755,8 @@ export default class FormSequenceModel {
 
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
+		this.events.$emit( "sequence:submitting", originalData );
+
 		return new Promise( ( resolve, reject ) => {
 			/**
 			 * Invokes single processor to handle provided input data.
@@ -754,6 +768,8 @@ export default class FormSequenceModel {
 			 */
 			const _process = ( processors, currentIndex, data ) => {
 				if ( currentIndex >= processors.length ) {
+					this.events.$emit( "sequence:submitted", data );
+
 					resolve( data );
 				} else {
 					Promise.resolve( processors[currentIndex].process( data, this ) )
@@ -966,8 +982,6 @@ export default class FormSequenceModel {
 			components[i] = forms[i].component;
 		}
 
-		data.__updateLocks = {};
-
 		return {
 			render: function( createElement ) {
 				const formElements = showAllForms ? new Array( numForms ) : [];
@@ -994,13 +1008,7 @@ export default class FormSequenceModel {
 					if ( mutation.type === "form/writeInput" ) {
 						const { name, value } = mutation.payload;
 
-						if ( !data.__updateLocks[name] ) {
-							data.__updateLocks[name] = true;
-
-							that.onUpdateValue( name, value );
-
-							data.__updateLocks[name] = false;
-						}
+						that.onUpdateValue( name, value );
 					}
 				} );
 			},

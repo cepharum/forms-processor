@@ -1,5 +1,6 @@
 <template>
 	<div class="form-view" :id="sequenceName"
+	     ref="view"
 	     :class="{result:hasResult, success:hasResultOnSuccess, failure:hasResultOnFailure}"
 	     v-global-key.advance="advance"
 	     v-global-key.rewind="rewind">
@@ -67,6 +68,23 @@ export default {
 		rewind() {
 			this.$store.getters["form/sequenceManager"].rewind();
 		},
-	}
+		scrollToTop() {
+			let iter = this.$refs.view;
+			let y = 0;
+
+			while ( iter ) {
+				y += iter.offsetTop;
+				iter = iter.offsetParent;
+			}
+
+			window.scrollTo( 0, y );
+		},
+	},
+	beforeMount() {
+		this.$store.getters.sequence.events.$on( "sequence:advance", this.scrollToTop );
+	},
+	beforeDestroy() {
+		this.$store.getters.sequence.events.$off( "sequence:advance", this.scrollToTop );
+	},
 };
 </script>

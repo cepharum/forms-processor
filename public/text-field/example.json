@@ -83,7 +83,8 @@
 				{
 					"type": "info",
 					"name": "normalization_none_info",
-					"text": "input is `{{normalization_none}}` ({{length(normalization_none)}})"
+					"text": "input is `{{normalization_none || ' '}}` ({{length(normalization_none)}})",
+					"markdown": true
 				},
 				{
 					"name": "normalization_trim",
@@ -93,7 +94,8 @@
 				{
 					"type": "info",
 					"name": "normalization_trim_info",
-					"text": "input is `{{normalization_trim}}` ({{length(normalization_trim)}})"
+					"text": "input is `{{normalization_trim || ' '}}` ({{length(normalization_trim)}})",
+					"markdown": true
 				},
 				{
 					"name": "normalization_reduce",
@@ -103,12 +105,24 @@
 				{
 					"type": "info",
 					"name": "normalization_reduce_info",
-					"text": "input is `{{normalization_reduce}}` ({{length(normalization_reduce)}})"
+					"text": "input is `{{normalization_reduce || ' '}}` ({{length(normalization_reduce)}})",
+					"markdown": true
 				},
 				{
 					"name": "placeholder",
 					"label": "Placeholder",
 					"placeholder": "Enter something here..."
+				}
+			]
+		},
+		{
+			"name": "additional",
+			"label": "Additional",
+			"title": "Additional Page for Testing Behaviour on Form Switching",
+			"fields": [
+				{
+					"name": "most-simple",
+					"label": "Most Simple"
 				}
 			]
 		}

@@ -41,8 +41,12 @@ export default function() {
 		COMMON: {
 			EXPLAIN_REQUIRED: "= required information"
 		},
+		PROMPT: {
+			SELECTOR: "Please choose...",
+		},
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Validation failed unexpectedly.",
+			INVALID: "This information is invalid.",
 			MISSING_REQUIRED: "This information is required.",
 			MISSING_SELECTION: "Selecting option is required.",
 			TOO_SHORT: "Provided information is too short.",

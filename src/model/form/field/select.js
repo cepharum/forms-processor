@@ -27,6 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import L10n from "../../../service/l10n";
 import Data from "../../../service/data";
 import Options from "../utility/options";
 
@@ -38,18 +39,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
-			/**
-			 * Generates property descriptor exposing options to choose from in
-			 * list control.
-			 *
-			 * @param {*} definitionValue value of property provided in definition of field
-			 * @param {string} definitionName name of property provided in definition of field
-			 * @param {object<string,*>} definitions all properties of qualified definition of field
-			 * @param {CustomPropertyLimitedTermHandler} cbTermHandler term handler detecting computable terms in a provided string returning property map
-			 * @returns {PropertyDescriptor} description on how to expose this property in context of field's instance
-			 * @this {FormFieldSelectModel}
-			 */
-			options( definitionValue, definitionName, definitions, cbTermHandler ) {
+			options( definitionValue, _, __, termHandler ) {
 				/**
 				 * @name FormFieldSelectModel#options
 				 * @property {LabelledOptionsList}
@@ -60,13 +50,13 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 					// support terms in either option's properties
 					return Options.createOptions( definitionValue, null, {
 						localizer: map => this.selectLocalization( map ),
-						termHandler: v => cbTermHandler( v, null, true ),
+						termHandler: v => termHandler( v, null, true ),
 					} );
 				}
 
 				// handling simple definition of options using comma-separated string
 				// support term in whole definition of list
-				return cbTermHandler( definitionValue, computed => {
+				return termHandler( definitionValue, computed => {
 					if ( computed == null ) {
 						return [];
 					}
@@ -84,13 +74,39 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				/**
 				 * Indicates whether user might select multiple options or not.
 				 *
-				 * @name FormFieldCheckBoxModel#multiple
+				 * @name FormFieldSelectModel#multiple
 				 * @property boolean
 				 * @readonly
 				 */
 				return {
 					value: Data.normalizeToBoolean( definitionValue ),
 				};
+			},
+
+			prompt( definitionValue, _, __, termHandler ) {
+				/**
+				 * Provides label for optional list item usually prompting user
+				 * to choose an option.
+				 *
+				 * @name FormFieldSelectModel#prompt
+				 * @property string
+				 * @readonly
+				 */
+				return termHandler( definitionValue, rawValue => {
+					if ( rawValue == null ) {
+						return null;
+					}
+
+					const asBoolean = Data.normalizeToBoolean( rawValue, null );
+					if ( asBoolean === true ) {
+						const { sequence } = this.form;
+
+						return L10n.translate( sequence.translations, "PROMPT.SELECTOR" );
+					}
+
+					const localized = this.selectLocalization( rawValue );
+					return localized == null ? null : String( localized ).trim();
+				} );
 			},
 
 			...customProperties,
@@ -104,6 +120,8 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		if ( !onLocalUpdate ) {
 			reactiveFieldInfo.options = this.options;
 		}
+
+		reactiveFieldInfo.prompt = this.prompt;
 	}
 
 	/** @inheritDoc */
@@ -111,39 +129,32 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		super.initializeReactive( reactiveFieldInfo );
 
 		reactiveFieldInfo.options = this.options;
+		reactiveFieldInfo.prompt = this.prompt;
 	}
 
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
-		const that = this;
-
 		return {
 			template: `
-				<select v-model="model" v-if="!supportMultiSelect" class="select single" :disabled="disabled">
-					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
-				</select>
-				<select v-model="model" v-else-if="supportMultiSelect" multiple class="select multi" :disabled="disabled">
+				<select v-model="value" 
+				        :multiple="multi" 
+				        class="select" 
+				        :class="[multi ? 'multi' : 'single', value == null ? 'prompting' : 'selected']" 
+				        :disabled="disabled" 
+				        @change="updated">
+					<option v-if="prompt" disabled :value="null">{{ prompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
 			data: () => reactiveFieldInfo,
 			computed: {
-				model: {
-					get() {
-						return this.value;
-					},
-					set( newValue ) {
-						that.touch();
-
-						const { value: normalized } = that.normalizeValue( newValue );
-
-						if ( !Data.isEquivalentArray( normalized, this.value ) ) {
-							this.$emit( "input", normalized );
-						}
-					},
-				},
-				supportMultiSelect() {
+				multi() {
 					return this.multiple && ( this.options && this.options.length > 1 );
+				},
+			},
+			methods: {
+				updated() {
+					this.$nextTick( () => this.$emit( "input", this.value ) );
 				},
 			},
 		};
@@ -175,6 +186,10 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 			} else if ( !value ) {
 				errors.push( "@VALIDATION.MISSING_SELECTION" );
 			}
+		}
+
+		if ( this.validity === false ) {
+			errors.push( "@VALIDATION.INVALID" );
 		}
 
 		return errors;
