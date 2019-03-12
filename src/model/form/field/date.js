@@ -83,7 +83,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	normalizeValue( input = "", _ ) {
+	normalizeValue( input = "" ) {
 		if( input === "" ) {
 			return {
 				value: null,
@@ -128,11 +128,11 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		const that = this;
 		return {
 			template: `
-				<input :value="formattedValue" :disabled="disabled" :placeholder="placeholder" @input="onInput"> 
+				<input :value="formattedValue" :disabled="disabled" :placeholder="compiledPlaceholder" @input="onInput"> 
 			`,
 			computed: {
-				placeholder() {
-					return that.placeholder ? that.placeholder + ( this.required && !this.label ? "*" : "" ) : null;
+				compiledPlaceholder() {
+					return this.placeholder ? this.placeholder + ( this.required && !this.label ? "*" : "" ) : null;
 				},
 			},
 			methods: {
@@ -199,5 +199,4 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 		return errors;
 	}
-
 }
