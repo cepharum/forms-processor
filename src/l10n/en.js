@@ -62,8 +62,8 @@ export default function() {
 				TOO_BIG: "The size of selected file exceeds permitted maximum.",
 			},
 			DATE: {
-				TOO_EARLY: "The chosen date is to far in the past.",
-				TOO_LATE: "The chosen date is to far in the future.",
+				TOO_EARLY: "The chosen date is too far in the past.",
+				TOO_LATE: "The chosen date is too far in the future.",
 				DAY_NOT_ALLOWED: "The chosen weekday is not permitted.",
 				NOT_ALLOWED: "The chosen date is not permitted.",
 			},
