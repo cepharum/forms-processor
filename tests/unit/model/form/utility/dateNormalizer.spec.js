@@ -28,7 +28,7 @@
 
 import Should from "should";
 
-import { DateNormalizer } from "../../../../../src/model/form/utility/date";
+import DateProcessor, { DateNormalizer } from "../../../../../src/model/form/utility/date";
 
 describe( "Utility Class DateNormalizer", () => {
 	it( "is available", () => {
@@ -133,7 +133,8 @@ describe( "Utility Class DateNormalizer", () => {
 			it( "dd acceptPartial", () => {
 				dd.acceptPartial.test( "" ).should.be.true( "" );
 				dd.acceptPartial.test( "0" ).should.be.true( "0" );
-				dd.acceptPartial.test( "9" ).should.be.true( "9" );
+				dd.acceptPartial.test( "3" ).should.be.true( "3" );
+				dd.acceptPartial.test( "9" ).should.be.not.true( "9" );
 				dd.acceptPartial.test( "10" ).should.be.true( "10" );
 				dd.acceptPartial.test( "19" ).should.be.true( "19" );
 				dd.acceptPartial.test( "20" ).should.be.true( "20" );
@@ -200,7 +201,7 @@ describe( "Utility Class DateNormalizer", () => {
 				mm.acceptPartial.test( "" ).should.be.true( "" );
 				mm.acceptPartial.test( "0" ).should.be.true( "0" );
 				mm.acceptPartial.test( "1" ).should.be.true( "1" );
-				mm.acceptPartial.test( "9" ).should.be.true( "9" );
+				mm.acceptPartial.test( "9" ).should.be.not.true( "9" );
 				mm.acceptPartial.test( "01" ).should.be.true( "01" );
 				mm.acceptPartial.test( "09" ).should.be.true( "09" );
 				mm.acceptPartial.test( "10" ).should.be.true( "10" );
@@ -302,8 +303,13 @@ describe( "Utility Class DateNormalizer", () => {
 	} );
 
 	describe( "it has a normalize method", () => {
-		const normalizer = new DateNormalizer( "yyyy-mm-dd" );
-		Should.exist( normalizer.normalize );
+		let normalizer = false;
+
+		it( "that is not static", () => {
+			normalizer = new DateNormalizer( "yyyy-mm-dd" );
+			Should.exist( normalizer.normalize );
+		} );
+
 		it( "that turns a string into a date", () => {
 			const parsedDate = normalizer.normalize( "2012-12-12" );
 			parsedDate.should.be.instanceof( Date );
@@ -338,9 +344,10 @@ describe( "Utility Class DateNormalizer", () => {
 			} );
 		} );
 
-		describe( "parses date with format 'yyyy-mm-dd'", () => {
-			const date = new DateNormalizer( "yyyy-mm-dd" ).normalize( "2012-09-12" );
+		describe( "parses date with format 'yyyy.mm.dd'", () => {
+			let date = false;
 			it( "is instance of Date", () => {
+				date = new DateNormalizer( "yyyy.mm.dd" ).normalize( "2012.09.12" );
 				date.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {
@@ -351,6 +358,23 @@ describe( "Utility Class DateNormalizer", () => {
 			} );
 			it( "has the right year", () => {
 				date.getFullYear().should.be.eql( 2012 );
+			} );
+		} );
+
+		describe( "parses date with format 'M.d.YY'", () => {
+			let date = false;
+			it( "is instance of Date", () => {
+				date = new DateNormalizer( "M.d.YY" ).normalize( "12.09.30" );
+				date.should.be.instanceof( Date );
+			} );
+			it( "has the right day", () => {
+				date.getDate().should.be.eql( 9 );
+			} );
+			it( "has the right month", () => {
+				date.getMonth().should.be.eql( 11 );
+			} );
+			it( "has the right year", () => {
+				date.getFullYear().should.be.eql( 1930 );
 			} );
 		} );
 

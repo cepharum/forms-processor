@@ -200,9 +200,10 @@ export default class DateProcessor {
  */
 export class DateNormalizer {
 	/**
-	 * @param{string} format format that date should be parsed for
+	 * @param{string} initialFormat format that date should be parsed for
 	 */
-	constructor( format = "yyyy-mm-dd" ) {
+	constructor( initialFormat = "yyyy-mm-dd" ) {
+		const format = initialFormat.toLowerCase();
 		const separator = DateNormalizer.extractSeparator( format );
 		const parts = format.split( separator );
 		if( parts.length > 3 ) {
@@ -237,9 +238,9 @@ export class DateNormalizer {
 				} else {
 					const writeIndex = identifierIndex * 2;
 					partialArray[partialIndex] = partialIdentifier.regExp.acceptPartial.source.slice( 1,-1 );
-					acceptPartialArray[writeIndex] = partialArray.join( "-" );
+					acceptPartialArray[writeIndex] = partialArray.join( separator );
 					partialArray[partialIndex] = partialIdentifier.regExp.regular.source.slice( 1,-1 );
-					acceptPartialArray[writeIndex + 1] = partialArray.join( "-" ) + "-?";
+					acceptPartialArray[writeIndex + 1] = partialArray.join( separator ) + separator + "?";
 				}
 			}
 		}
@@ -358,24 +359,24 @@ export class DateNormalizer {
 		switch ( string.toLowerCase() ) {
 			case "m" :
 				if( acceptPartial ) {
-					return /^(\d?|0\d|1[0-2])$/;
+					return /^(\d?|0[1-9]|1[0-2])$/;
 				}
-				return /^(\d|0\d|1[0-2])$/;
+				return /^([1-9]|0[1-9]|1[0-2])$/;
 			case "mm" :
 				if( acceptPartial ) {
-					return /^([0-1]?|0\d|1[0-2])$/;
+					return /^([0-1]?|0[1-9]|1[0-2])$/;
 				}
-				return /^(0\d|1[0-2])$/;
+				return /^(0[1-9]|1[0-2])$/;
 			case "d" :
 				if( acceptPartial ) {
-					return /^(\d?|[0-2]\d|3[0-1])$/;
+					return /^(\d?|0[1-9]|[1-2]\d|3[0-1])$/;
 				}
-				return /^(\d|[0-2]\d|3[0-1])$/;
+				return /^([1-9]|0[1-9]|[1-2]\d|3[0-1])$/;
 			case "dd" :
 				if( acceptPartial ) {
-					return /^([0-3]?|[0-2]\d|3[0-1])$/;
+					return /^([0-3]?|0[1-9]|[1-2]\d|3[0-1])$/;
 				}
-				return /^([0-2]\d|3[0-1])$/;
+				return /^(0[1-9]|[1-2]\d|3[0-1])$/;
 			case "yy" :
 				if( acceptPartial ) {
 					return /^(\d{0,2})$/;
