@@ -113,6 +113,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		}, container );
 	}
 
+	// TODO inspect why select.js requires this explicit update of reactiveFieldInfo whereas checkbox.js is working without ... if it is working ...
 	/** @inheritDoc */
 	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
 		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
@@ -124,6 +125,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		reactiveFieldInfo.prompt = this.prompt;
 	}
 
+	// TODO inspect why select.js requires this explicit update of reactiveFieldInfo whereas checkbox.js is working without ... if it is working ...
 	/** @inheritDoc */
 	initializeReactive( reactiveFieldInfo ) {
 		super.initializeReactive( reactiveFieldInfo );
