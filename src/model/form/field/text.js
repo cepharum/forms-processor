@@ -350,7 +350,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					value: reactiveFieldInfo.formattedValue,
 				};
 
-				if ( that.disabled ) {
+				if ( this.disabled ) {
 					domProps.disabled = true;
 				}
 
