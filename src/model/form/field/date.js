@@ -30,7 +30,7 @@ import FormFieldAbstractModel from "./abstract";
 import DateProcessor from "../utility/date";
 
 /**
- * Implements field type that provides date based utility
+ * Implements field type managing input and validation of single date.
  */
 export default class FormFieldDateModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
@@ -38,10 +38,10 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			minDate( value, _, __, termHandler ) {
 				/**
-				 * Defines valid range of a value's length.
+				 * Defines minimum date accepted by field.
 				 *
-				 * @name FormFieldTextModel#size
-				 * @property {Range}2
+				 * @name FormFieldDateModel#minDate
+				 * @property {?Date}
 				 * @readonly
 				 */
 				return termHandler( value, rawValue => ( rawValue == null ? null : DateProcessor.normalizeSelector( rawValue ) ) );
@@ -49,13 +49,29 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 			maxDate( value, _, __, termHandler ) {
 				/**
-				 * Defines valid range of a value's length.
+				 * Defines maximum date accepted by field.
 				 *
-				 * @name FormFieldTextModel#size
-				 * @property {Range}2
+				 * @name FormFieldDateModel#maxDate
+				 * @property {?Date}
 				 * @readonly
 				 */
 				return termHandler( value, rawValue => ( rawValue == null ? null : DateProcessor.normalizeSelector( rawValue ) ) );
+			},
+
+			placeholder( value, _, __, termHandler ) {
+				/**
+				 * Defines some text to be displayed in bounds of text input
+				 * control unless user has entered some text already.
+				 *
+				 * @name FormFieldDateModel#placeholder
+				 * @property {?string}
+				 * @readonly
+				 */
+				return termHandler( value, rawValue => {
+					const localized = this.selectLocalization( rawValue );
+
+					return localized == null ? null : String( localized ).trim() || null;
+				} );
 			},
 
 			...customProperties
@@ -75,6 +91,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 			};
 		}
 		this.normalizationErrors = [];
+
 		const options = {
 			minDate: this.minDate,
 			maxDate: this.maxDate,
@@ -111,8 +128,13 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		const that = this;
 		return {
 			template: `
-				<input :value="formattedValue" @input="onInput"> 
+				<input :value="formattedValue" :disabled="disabled" :placeholder="placeholder" @input="onInput"> 
 			`,
+			computed: {
+				placeholder() {
+					return that.placeholder ? that.placeholder + ( this.required && !this.label ? "*" : "" ) : null;
+				},
+			},
 			methods: {
 				onInput( event ) {
 					const { value: input, selectionStart } = event.target;
