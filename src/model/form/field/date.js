@@ -27,7 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import DateProcessor from "../utility/date";
+import { DateProcessor } from "../utility/date";
 
 /**
  * Implements field type managing input and validation of single date.
