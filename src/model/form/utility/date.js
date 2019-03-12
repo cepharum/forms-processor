@@ -34,6 +34,130 @@ import Range from "./range";
  */
 
 /**
+ * Implements representation of date/time supporting partially available
+ * information.
+ */
+export class PartialDate extends Date {
+	/** @inheritDoc */
+	constructor( ...args ) {
+		super( ...args );
+
+		if ( args.length > 0 ) {
+			this._year = this.getFullYear();
+			this._month = this.getMonth();
+			this._date = this.getDate();
+			this._hours = this.getHours();
+			this._minutes = this.getMinutes();
+			this._seconds = this.getSeconds();
+		} else {
+			this._year = this._month = this._date = this._hours = this._minutes = this._seconds = NaN;
+		}
+
+		Object.defineProperties( this, {
+			/**
+			 * Indicates if instance provides complete date information.
+			 *
+			 * @name PartialDate#isCompleteDate
+			 * @property boolean
+			 * @readonly
+			 */
+			isCompleteDate: {
+				get: () => !( isNaN( this._date ) || isNaN( this._month ) || isNaN( this._year ) ),
+			},
+
+			/**
+			 * Indicates if instance provides complete date of time information.
+			 *
+			 * @name PartialDate#isCompleteTimeOfDay
+			 * @property boolean
+			 * @readonly
+			 */
+			isCompleteTimeOfDay: {
+				get: () => !( isNaN( this._hours ) || isNaN( this._minutes ) || isNaN( this._seconds ) ),
+			},
+		} );
+	}
+
+	/** @inheritDoc */
+	setFullYear( ...args ) {
+		const result = super.setFullYear( ...args );
+
+		this._year = this.getFullYear();
+
+		if ( args.length > 1 ) {
+			this._month = this.getMonth();
+		}
+
+		if ( args.length > 2 ) {
+			this._date = this.getDate();
+		}
+
+		return result;
+	}
+
+	/** @inheritDoc */
+	setMonth( ...args ) {
+		const result = super.setMonth( ...args );
+
+		this._month = this.getMonth();
+
+		if ( args.length > 1 ) {
+			this._date = this.getDate();
+		}
+
+		return result;
+	}
+
+	/** @inheritDoc */
+	setDate( ...args ) {
+		const result = super.setDate( ...args );
+
+		this._date = this.getDate();
+
+		return result;
+	}
+
+	/** @inheritDoc */
+	setHours( ...args ) {
+		const result = super.setHours( ...args );
+
+		this._hours = this.getHours();
+
+		if ( args.length > 1 ) {
+			this._minutes = this.getMinutes();
+		}
+
+		if ( args.length > 2 ) {
+			this._seconds = this.getSeconds();
+		}
+
+		return result;
+	}
+
+	/** @inheritDoc */
+	setMinutes( ...args ) {
+		const result = super.setMinutes( ...args );
+
+		this._minutes = this.getMinutes();
+
+		if ( args.length > 1 ) {
+			this._seconds = this.getSeconds();
+		}
+
+		return result;
+	}
+
+	/** @inheritDoc */
+	setSeconds( ...args ) {
+		const result = super.setSeconds( ...args );
+
+		this._seconds = this.getSeconds();
+
+		return result;
+	}
+}
+
+/**
  * Implements format validators checking whether some provided textual input is
  * complying with a certain format.
  *
@@ -50,7 +174,6 @@ export class DateProcessor {
 
 		this.addFormat( format );
 	}
-
 
 	/**
 	 * adds formats and caches corresponding DateNormalizer and DateValidator
@@ -74,9 +197,6 @@ export class DateProcessor {
 			}
 		}
 	}
-
-
-
 
 	/**
 	 * Normalizes provided date information.
