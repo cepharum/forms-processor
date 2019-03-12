@@ -123,22 +123,6 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
-		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
-
-		if ( !onLocalUpdate ) {
-			reactiveFieldInfo.options = this.options;
-		}
-	}
-
-	/** @inheritDoc */
-	initializeReactive( reactiveFieldInfo ) {
-		super.initializeReactive( reactiveFieldInfo );
-
-		reactiveFieldInfo.options = this.options;
-	}
-
-	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { form: { sequence: { events } }, qualifiedName, group, type } = that;
