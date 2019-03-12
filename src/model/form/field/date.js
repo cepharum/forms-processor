@@ -27,7 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import { DateProcessor } from "../utility/date";
+import { DateProcessor, PartialDate } from "../utility/date";
 
 /**
  * Implements field type managing input and validation of single date.
@@ -198,5 +198,32 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		}
 
 		return errors;
+	}
+
+	/** @inheritDoc */
+	static serialize( data ) {
+		if ( data instanceof PartialDate ) {
+			return data.serialize();
+		}
+
+		if ( data instanceof Date ) {
+			return data.toISOString();
+		}
+
+		return null;
+	}
+
+	/** @inheritDoc */
+	static deserialize( data ) {
+		if ( typeof data === "string" ) {
+			const parsed = new Date( data );
+			return isNaN( parsed ) || !parsed ? null : parsed;
+		}
+
+		if ( typeof data === "object" && data ) {
+			return PartialDate.deserialize( data );
+		}
+
+		return null;
 	}
 }

@@ -169,26 +169,21 @@ export default {
 			}
 		},
 
-		loadInput( state, { input, touched } ) {
-			if ( state.model && input && typeof input === "object" ) {
+		loadInput( state, { data } ) {
+			if ( state.model && data && typeof data === "object" ) {
 				const { fields } = state.model;
-				const names = Object.keys( fields );
+				const names = Object.keys( data );
 				const numFields = names.length;
-				const missing = {};
 
 				for ( let i = 0; i < numFields; i++ ) {
 					const name = names[i];
 					const field = fields[name];
 
-					if ( field.constructor.isInteractive ) {
-						const storedValue = Storage.read( input, name, missing );
-						if ( storedValue !== missing ) {
-							field.setValue( storedValue );
+					if ( field && field.constructor.isInteractive ) {
+						const recoveredData = field.constructor.deserialize( data[name] );
 
-							if ( touched && touched[name] ) {
-								field.touch();
-							}
-						}
+						field.setValue( recoveredData );
+						field.touch();
 					}
 				}
 			}
@@ -204,24 +199,24 @@ export default {
 
 				const saver = () => {
 					const { fields } = state.model;
+					const { input } = state;
 					const names = Object.keys( fields );
 					const numFields = names.length;
 
-					const touched = {};
+					const serialized = {};
 
 					for ( let i = 0; i < numFields; i++ ) {
 						const fieldName = names[i];
 						const field = fields[fieldName];
 
 						if ( !field.pristine ) {
-							touched[fieldName] = 1;
+							serialized[fieldName] = field.constructor.serialize( Storage.read( input, fieldName ) );
 						}
 					}
 
 					localStorage.setItem( state.localStoreId, JSON.stringify( {
 						timestamp: Date.now(),
-						input: state.input,
-						touched,
+						data: serialized,
 					} ) );
 				};
 

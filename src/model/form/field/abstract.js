@@ -1319,4 +1319,58 @@ export default class FormFieldAbstractModel {
 
 		return false;
 	}
+
+	/**
+	 * Retrieves description of current value suitable for storing in a persistent
+	 * storage that does not support all data types of Javascript available at
+	 * runtime.
+	 *
+	 * @param  {*} data value to be serialized
+	 * @returns {string|int|boolean|object} description of field's current value
+	 */
+	static serialize( data ) {
+		switch ( typeof data ) {
+			case "string" :
+			case "boolean" :
+			case "number" :
+				return data;
+
+			case "undefined" :
+				return null;
+
+			case "function" :
+				throw new TypeError( "serializing function not supported" );
+
+			case "object" :
+				if ( !data ) {
+					return null;
+				}
+
+				// falls through
+			default : {
+				const names = Object.keys( data );
+				const numNames = names.length;
+				const copy = {};
+
+				for ( let i = 0; i < numNames; i++ ) {
+					const name = names[i];
+
+					copy[name] = this.serialize( data[name] );
+				}
+
+				return copy;
+			}
+		}
+	}
+
+	/**
+	 * Recovers data suitable as value of current field from a serialized
+	 * representation e.g. loaded from a persistent storage.
+	 *
+	 * @param {string|int|boolean|object} serialized serialized data
+	 * @returns {*} recovered data
+	 */
+	static deserialize( serialized ) {
+		return serialized;
+	}
 }

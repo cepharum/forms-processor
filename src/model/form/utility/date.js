@@ -82,11 +82,22 @@ export class PartialDate extends Date {
 		super( ...args );
 
 		if ( args.length > 0 ) {
+			/** @property int @readonly @protected */
 			this._year = this.getFullYear();
+
+			/** @property int @readonly @protected */
 			this._month = this.getMonth();
+
+			/** @property int @readonly @protected */
 			this._date = this.getDate();
+
+			/** @property int @readonly @protected */
 			this._hours = this.getHours();
+
+			/** @property int @readonly @protected */
 			this._minutes = this.getMinutes();
+
+			/** @property int @readonly @protected */
 			this._seconds = this.getSeconds();
 		} else {
 			this._year = this._month = this._date = this._hours = this._minutes = this._seconds = NaN;
@@ -229,6 +240,77 @@ export class PartialDate extends Date {
 		}
 
 		return isNaN( this._date ) || isNaN( d ) || this._date === d;
+	}
+
+	/**
+	 * Describes current date using simple Javascript data suitable for
+	 * serialization.
+	 *
+	 * @return {object} serialized data
+	 */
+	serialize() {
+		const serialized = {};
+
+		if ( !isNaN( this._year ) ) {
+			serialized.y = this._year;
+		}
+
+		if ( !isNaN( this._month ) ) {
+			serialized.m = this._month;
+		}
+
+		if ( !isNaN( this._date ) ) {
+			serialized.d = this._date;
+		}
+
+		if ( !isNaN( this._hours ) ) {
+			serialized.h = this._hours;
+		}
+
+		if ( !isNaN( this._minutes ) ) {
+			serialized.i = this._minutes;
+		}
+
+		if ( !isNaN( this._seconds ) ) {
+			serialized.s = this._seconds;
+		}
+
+		return serialized;
+	}
+
+	/**
+	 * Restores instance of `PartialDate` from a serialized description of a
+	 * date.
+	 *
+	 * @param {object<string,int>} serialized serializable description of a partial date
+	 * @return {PartialDate|null} recovered instance of `PartialDate`
+	 */
+	static deserialize( serialized ) {
+		if ( serialized && typeof serialized === "object" ) {
+			const names = "ymdhis";
+			const numNames = names.length;
+			const date = new PartialDate();
+
+			for ( let i = 0; i < numNames; i++ ) {
+				const name = names[i];
+				const value = parseInt( serialized[name] );
+
+				if ( !isNaN( value ) ) {
+					switch ( name ) {
+						case "y" : date.setFullYear( value ); break;
+						case "m" : date.setMonth( value ); break;
+						case "d" : date.setDate( value ); break;
+						case "h" : date.setHours( value ); break;
+						case "i" : date.setMinutes( value ); break;
+						case "s" : date.setSeconds( value ); break;
+					}
+				}
+			}
+
+			return date;
+		}
+
+		return null;
 	}
 }
 
