@@ -238,9 +238,9 @@ export class DateNormalizer {
 				} else {
 					const writeIndex = identifierIndex * 2;
 					partialArray[partialIndex] = partialIdentifier.regExp.acceptPartial.source.slice( 1,-1 );
-					acceptPartialArray[writeIndex] = partialArray.join( separator );
+					acceptPartialArray[writeIndex] = partialArray.join( "\\" + separator );
 					partialArray[partialIndex] = partialIdentifier.regExp.regular.source.slice( 1,-1 );
-					acceptPartialArray[writeIndex + 1] = partialArray.join( separator ) + separator + "?";
+					acceptPartialArray[writeIndex + 1] = partialArray.join( "\\" + separator ) + "\\" + separator + "?";
 				}
 			}
 		}
@@ -324,9 +324,9 @@ export class DateNormalizer {
 	}
 
 	/**
-	 * exracts the seperator for a given format
+	 * exracts the separator for a given format
 	 * @param{string} format string in the date format
-	 * @return {string} seperator of the identifier in a date format;
+	 * @return {string} separator of the identifier in a date format;
 	 */
 	static extractSeparator( format ) {
 		/**

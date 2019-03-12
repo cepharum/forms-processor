@@ -22,6 +22,17 @@
 		  "minDate": "-18Y",
 		  "maxDate": "today",
 		  "required": true
+		},
+		{
+		  "type": "date",
+		  "name": "test2",
+		  "allowedWeekDays": ["1-2", 5],
+		  "notAllowedDates": "24-12-2019",
+		  "placeholder": "yyyy-mm-dd",
+		  "yearbuffer": 20,
+		  "minDate": "-18Y",
+		  "maxDate": "today",
+		  "required": true
 		}
 	  ]
 	}

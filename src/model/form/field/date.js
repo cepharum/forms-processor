@@ -164,7 +164,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		}
 
 		if( this.value ) {
-			if( this.minDate ) {
+			if( this.minDate && !this.normalizationErrors.length ) {
 				try {
 					this.processor.validate( this.value, { minDate: this.minDate } );
 				} catch ( e ) {
@@ -172,7 +172,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 				}
 			}
 
-			if( this.maxDate ) {
+			if( this.maxDate && !this.normalizationErrors.length ) {
 				try{
 					this.processor.validate( this.value, { maxDate: this.maxDate } );
 				} catch ( e ) {
