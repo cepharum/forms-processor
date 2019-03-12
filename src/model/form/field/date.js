@@ -63,10 +63,17 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 
 		this.processor = new DateProcessor( this.format );
 		this.normalizationErrors = [];
+		this.lastValue = "";
 	}
 
 	/** @inheritDoc */
 	normalizeValue( input = "", _ ) {
+		if( input === "" ) {
+			return {
+				value: null,
+				formattedValue: input,
+			};
+		}
 		this.normalizationErrors = [];
 		const options = {
 			minDate: this.minDate,
@@ -77,15 +84,16 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 			notAllowedDates: this.notAllowedDates,
 		};
 		let value = null;
-		let formattedValue = "";
+		let formattedValue = this.lastValue;
 		if( input ) {
-			try{
+			try {
 				value = this.processor.normalize( input, { ...options, format: this.format, acceptPartial: true } );
 				formattedValue = input;
 				// eslint-disable-next-line no-empty
-			} catch ( e ) {}
+			} catch ( e ) {
+			}
 
-			try{
+			try {
 				this.processor.normalize( input, { ...options, format: this.format, acceptPartial: false } );
 			} catch ( e ) {
 				this.normalizationErrors.push( "@VALIDATION.PATTERN_MISMATCH" );
@@ -101,8 +109,6 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
-		let lastValue = "";
-
 		return {
 			template: `
 				<input :value="formattedValue" @input="onInput"> 
@@ -112,14 +118,12 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 					const { value: input, selectionStart } = event.target;
 
 					const { formattedValue } = that.normalizeValue( input );
-
-					const value = formattedValue == null ? lastValue : formattedValue;
-					event.target.value = lastValue = value;
+					event.target.value = that.lastValue = formattedValue;
 					event.target.setSelectionRange( selectionStart, selectionStart );
 
 					// re-emit in scope of this field's type-specific
 					// component (containing input element created here)
-					this.$emit( "input", formattedValue || lastValue );
+					this.$emit( "input", formattedValue );
 				},
 			},
 			data: () => reactiveFieldInfo,
@@ -131,7 +135,9 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 		const errors = [];
 
 		if( !live ) {
-			errors.splice( errors.length, 0, ...this.normalizationErrors );
+			if( this.value ) {
+				errors.splice( errors.length, 0, ...this.normalizationErrors );
+			}
 			errors.splice( errors.length, 0, ...super.validate() );
 		}
 
