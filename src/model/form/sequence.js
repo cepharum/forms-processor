@@ -148,6 +148,15 @@ export default class FormSequenceModel {
 			data: { get: data },
 
 			/**
+			 * Exposes optionally defined set of constants.
+			 *
+			 * @name FormSequenceModel#constants
+			 * @property {object}
+			 * @readonly
+			 */
+			constants: { value: definition.constants || {} },
+
+			/**
 			 * Reads value of a field selected by its name from storage.
 			 *
 			 * @name FormSequenceModel#readValue

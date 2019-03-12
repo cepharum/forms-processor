@@ -192,6 +192,7 @@ export default class FormFieldAbstractModel {
 	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
+		const that = this;
 		const { name } = definition;
 
 		// assume qualified names have been presumed before using
@@ -590,9 +591,6 @@ export default class FormFieldAbstractModel {
 		} );
 
 
-		const that = this;
-
-
 		/**
 		 * Resolves variable name found in terms used in definition converting
 		 * local references into global ones using a field's qualified name.
@@ -656,6 +654,23 @@ export default class FormFieldAbstractModel {
 
 				localize( input ) {
 					return that.selectLocalization( input );
+				},
+
+				cookie( _name, testExistence = false ) {
+					if ( /^[a-zA-Z0-9_]+$/.test( _name ) ) {
+						const match = new RegExp( "(?:^|;)\\s*" + _name + "\\s*=\\s*([^;\\s]+)" ).exec( document.cookie );
+						if ( match ) {
+							return testExistence ? true : match[1];
+						}
+					}
+
+					return testExistence ? false : null;
+				},
+
+				constant( _name, testExistence = false ) {
+					const { constants } = that.form.sequence;
+
+					return constants.hasOwnProperty( _name ) ? testExistence ? true : constants[_name] : testExistence ? false : null;
 				},
 			};
 
