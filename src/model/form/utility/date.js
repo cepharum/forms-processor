@@ -266,7 +266,7 @@ export class DateNormalizer {
 	 * @returns {Date} parsed date
 	 */
 	normalize( input = "", { acceptPartial = false , yearBuffer = 0 } = {} ) {
-		const preparedInput = input.trim();
+		const preparedInput = input;
 		const parts = preparedInput.split( this.separator );
 		const { complete } = this.patterns;
 		const isValid = complete.acceptPartial.test( preparedInput );
