@@ -1,7 +1,7 @@
 {
   "name": "forms-processor",
   "description": "processes description of forms in browsers",
-  "version": "0.1.19",
+  "version": "0.1.23",
   "license": "MIT",
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "markdown-it": "^8.4.2",
-    "simple-terms": "^0.0.5",
+    "simple-terms": "^0.0.6",
     "vue": "^2.5.22",
     "vuex": "^3.0.1"
   },

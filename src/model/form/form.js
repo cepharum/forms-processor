@@ -328,16 +328,23 @@ export default class FormModel {
 				get: () => {
 					const { fields: _fields } = this;
 					const _numFields = _fields.length;
+					let firstInteractive = null;
 
 					for ( let i = 0; i < _numFields; i++ ) {
 						const field = _fields[i];
 
-						if ( !field.valid ) {
-							return field;
+						if ( field.constructor.isInteractive && ( field.visible || !field.valid ) ) {
+							if ( firstInteractive == null ) {
+								firstInteractive = field;
+							}
+
+							if ( !field.valid ) {
+								return field;
+							}
 						}
 					}
 
-					return _fields[0] || null;
+					return firstInteractive;
 				},
 			},
 

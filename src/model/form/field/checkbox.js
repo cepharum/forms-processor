@@ -145,7 +145,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 		return {
 			template: `
-				<span class="checkbox options" :class="fieldClasses">
+				<div class="checkbox options" :class="fieldClasses">
 					<span class="option" :class="{checked:isSet(item.value), ['no-'+(index+1)]: true}" v-for="(item, index) in options" :key="index">
 						<input 
 							:type="isRadio ? 'radio' : 'checkbox'"
@@ -160,7 +160,7 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						<label :for="individualId( index )" 
 							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
-				</span>
+				</div>
 			`,
 			data: () => reactiveFieldInfo,
 			computed: {
@@ -280,6 +280,10 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 			} else if ( value == null ) {
 				errors.push( "@VALIDATION.MISSING_REQUIRED" );
 			}
+		}
+
+		if ( this.validity === false ) {
+			errors.push( "@VALIDATION.INVALID" );
 		}
 
 		return errors;

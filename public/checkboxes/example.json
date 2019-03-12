@@ -147,10 +147,38 @@
 							"value": "=simpleNoLabel&&2||'4'"
 						},
 						{
-							"label": "three",
+							"label": "three (also reveals visibility-controlled field below)",
 							"value": 3
 						}
 					]
+				},
+				{
+					"name": "visibilityController",
+					"label": "Control Visibility",
+					"type": "radio",
+					"options": [
+						{
+							"label": "The controlled field is visible.",
+							"value": 1
+						},
+						{
+							"label": "The controlled field is invisible.",
+							"value": 0
+						}
+					]
+				},
+				{
+					"name": "visibilityControlled",
+					"label": "Visibility-Controlled",
+					"type": "checkbox",
+					"options": [
+						{
+							"label": "You can check this.",
+							"value": 1
+						}
+					],
+					"required": "=checkboxes.visibilityController==1 || checkboxes.multipleDynamicRadio==3",
+					"visible": "=checkboxes.visibilityController==1 || checkboxes.multipleDynamicRadio==3"
 				}
 			]
 		}

@@ -1,0 +1,134 @@
+{
+	"processors": [
+		{
+			"url": "/"
+		}
+	],
+	"sequence": [
+		{
+			"name": "first",
+			"label": "First Form",
+			"fields": [
+				{
+					"name": "text",
+					"label": "Some Text"
+				}
+			],
+			"buttons": [
+				{
+					"name": "next",
+					"visible": false
+				},
+				{
+					"name": "submit",
+					"visible": true
+				},
+				{
+					"name": "previous",
+					"visible": true
+				},
+				{
+					"name": "continue",
+					"visible": true
+				},
+				{
+					"name": "jump",
+					"label": "Jump to fourth form",
+					"target": "fourth"
+				},
+				{
+					"name": "jump",
+					"label": "Jump to third form",
+					"target": "third"
+				}
+			]
+		},
+		{
+			"name": "second",
+			"label": "Second Form",
+			"fields": [
+				{
+					"name": "text",
+					"label": "Some Text"
+				}
+			],
+			"buttons": [
+				{
+					"name": "next",
+					"visible": false
+				},
+				{
+					"name": "submit",
+					"visible": true
+				},
+				{
+					"name": "previous",
+					"visible": false
+				},
+				{
+					"name": "continue",
+					"visible": true
+				},
+				{
+					"name": "jump",
+					"label": "Jump to fourth form",
+					"target": "fourth"
+				},
+				{
+					"name": "jump",
+					"label": "Jump to first form",
+					"target": "first"
+				}
+			]
+		},
+		{
+			"name": "third",
+			"label": "Third Form",
+			"fields": [
+				{
+					"name": "text",
+					"label": "Some Required Text",
+					"required": true
+				}
+			],
+			"buttons": [
+				{
+					"name": "next",
+					"visible": false
+				},
+				{
+					"name": "submit",
+					"visible": true
+				},
+				{
+					"name": "previous",
+					"visible": false
+				},
+				{
+					"name": "continue",
+					"visible": true
+				},
+				{
+					"name": "jump",
+					"label": "Jump to fourth form",
+					"target": "fourth"
+				},
+				{
+					"name": "jump",
+					"label": "Jump to first form",
+					"target": "first"
+				}
+			]
+		},
+		{
+			"name": "fourth",
+			"label": "Fourth Form",
+			"fields": [
+				{
+					"name": "text",
+					"label": "Some Text"
+				}
+			]
+		}
+	]
+}

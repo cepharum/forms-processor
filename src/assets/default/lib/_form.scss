@@ -84,6 +84,15 @@
 			font: normal 1rem sans-serif;
 			line-height: inherit;
 			width: 100%;
+			color: black;
+
+			&.prompting {
+				color: #888;
+			}
+
+			option:not([disabled]) {
+				color: black;
+			}
 		}
 
 		input[type=text] {

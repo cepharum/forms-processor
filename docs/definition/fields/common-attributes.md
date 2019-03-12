@@ -103,6 +103,10 @@ The attribute is a boolean. It can be computed. By default fields aren't requiri
 This attribute makes it possible to control whether some field is visible at all. 
 
 ::: warning Note!
+This attribute is ignored on required fields, thus you can't have invisible required fields. Use the same term on attributes `required` and `visible` if you need a required field that's optionally visible only.
+:::
+
+::: warning Note!
 In opposition to most other attributes this one does not make sense unless using a computed term. Nonetheless it is required to write computable terms explicitly.
 :::
 

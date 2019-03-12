@@ -13,31 +13,41 @@
 					"name": "items",
 					"label": "Items",
 					"type": "text",
-					"initial": "one , two, three "
+					"initial": "one , two, three ",
+					"hint": "Contains comma-separated list used for generating options available in following list field."
 				},
 				{
 					"name": "stringList",
 					"label": "String List",
 					"type": "select",
-					"options": "=items"
+					"options": "=items",
+					"hint": "Controls label of all items in list at bottom of form."
+				},
+				{
+					"name": "prompt",
+					"label": "Prompt",
+					"hint": "Controls prompt displayed used in list below."
 				},
 				{
 					"name": "itemA",
 					"label": "Item A",
 					"type": "text",
-					"initial": "one"
+					"initial": "one",
+					"hint": "Controls value of first option in list below."
 				},
 				{
 					"name": "itemB",
 					"label": "Item B",
 					"type": "text",
-					"initial": "two"
+					"initial": "two",
+					"hint": "Controls value of second option in list below."
 				},
 				{
 					"name": "itemC",
 					"label": "Item C",
 					"type": "text",
-					"initial": "three"
+					"initial": "three",
+					"hint": "Controls value of third option in list below."
 				},
 				{
 					"name": "optionsList",
@@ -56,7 +66,33 @@
 							"value": "=itemC",
 							"label": "=stringList || 'empty'"
 						}
-					]
+					],
+					"hint": "When selecting option in string-controlled list above every option of this list should have equivalent label."
+				},
+				{
+					"name": "optionsListWithPrompt",
+					"label": "Options List",
+					"type": "select",
+					"prompt": "=prompt",
+					"options": [
+						{
+							"value": "=itemA",
+							"label": "=stringList || 'humpty'"
+						},
+						{
+							"value": "=itemB",
+							"label": "=stringList || 'dumpty'"
+						},
+						{
+							"value": "=itemC",
+							"label": "=stringList || 'empty'"
+						}
+					],
+					"hint": "When selecting option in string-controlled list above every option of this list should have equivalent label."
+				},
+				{
+					"type": "info",
+					"text": "You've selected: {{optionsList || '-'}}"
 				}
 			]
 		}

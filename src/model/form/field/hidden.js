@@ -40,4 +40,10 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 
 		return info;
 	}
+
+	/** @inheritDoc */
+	touch() {
+		// prevent hidden fields from ever being marked touched so their initial
+		// value keep updating
+	}
 }
