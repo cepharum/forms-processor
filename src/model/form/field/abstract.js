@@ -318,6 +318,7 @@ export default class FormFieldAbstractModel {
 		const qualifiedDefinition = Object.assign( {}, defaultProperties, definition );
 
 
+
 		Object.defineProperties( this, {
 			/**
 			 * Creates getter for provided value which might contain a computable
@@ -345,10 +346,16 @@ export default class FormFieldAbstractModel {
 		{
 			const propNames = Object.keys( qualifiedDefinition );
 			const numProps = propNames.length;
+			const ptnConstantRef = /^\s*=\s*\$constants?\.([^.\s]+)\s*$/i;
 
 			for ( let pni = 0; pni < numProps; pni++ ) {
 				const propertyName = propNames[pni];
 				let propertyValue = qualifiedDefinition[propertyName];
+
+				const constantRef = ptnConstantRef.exec( propertyValue );
+				if ( constantRef ) {
+					propertyValue = form.sequence.constants[constantRef[1]] || null;
+				}
 
 				switch ( propertyName ) {
 					case "type" :
@@ -630,6 +637,15 @@ export default class FormFieldAbstractModel {
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
 			const customFunctions = {
+				/**
+				 * Looks up label of option matching given value in a set of
+				 * options defined on a named.
+				 *
+				 * @param {*} fieldValue value matching option to look up
+				 * @param {string} fieldName name of field options are defined on
+				 * @param {string} fieldProperty property of field's definition containing set of options
+				 * @return {null|string|object<string,string>} immediate or internationalized label of found option, null otherwise
+				 */
 				lookup( fieldValue, fieldName, fieldProperty = "options" ) {
 					const fieldKey = fieldName.toLowerCase();
 					const field = form.sequence.fields[fieldKey];
@@ -652,10 +668,25 @@ export default class FormFieldAbstractModel {
 					return map;
 				},
 
+				/**
+				 * Resolves optionally provided object with different translations
+				 * in separate properties with value of property matching current
+				 * locale.
+				 *
+				 * @param {int|string|object<string,*>} input some scalar to be passed, some object with properties per supported locale
+				 * @return {*} provided scalar value or value of given object's property matching current locale
+				 */
 				localize( input ) {
 					return that.selectLocalization( input );
 				},
 
+				/**
+				 * Provides read-access on cookies.
+				 *
+				 * @param {string} _name name of cookie to read
+				 * @param {boolean} testExistence true to check if named cookie is set instead of actually reading it
+				 * @return {boolean|*} true/false on testing if some cookie exists, found cookie's value or null otherwise
+				 */
 				cookie( _name, testExistence = false ) {
 					if ( /^[a-zA-Z0-9_]+$/.test( _name ) ) {
 						const match = new RegExp( "(?:^|;)\\s*" + _name + "\\s*=\\s*([^;\\s]+)" ).exec( document.cookie );
@@ -667,6 +698,14 @@ export default class FormFieldAbstractModel {
 					return testExistence ? false : null;
 				},
 
+				/**
+				 * Provides read-access on constants defined in context of
+				 * current sequence of forms.
+				 *
+				 * @param {string} _name name of constant to read
+				 * @param {boolean} testExistence true to check if named constant exists instead of reading it
+				 * @return {boolean|*} true/false on testing if some constant exists, found constant's value or null otherwise
+				 */
 				constant( _name, testExistence = false ) {
 					const { constants } = that.form.sequence;
 
