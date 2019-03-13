@@ -929,7 +929,7 @@ export default class FormSequenceModel {
 
 			for ( let i = 0; i < numDependents; i++ ) {
 				const dependent = fields[dependents[i]];
-				if ( dependent ) {
+				if ( dependent && dependent !== field ) {
 					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
 						if ( containingForms.indexOf( dependent.form ) > -1 ) {
 							containingForms.push( dependent.form );
