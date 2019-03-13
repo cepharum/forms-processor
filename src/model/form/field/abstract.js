@@ -40,9 +40,13 @@ const termCache = new Map();
  * @type {object<string,string>}
  */
 const defaultProperties = {
+	type: "text",
 	required: "false",
 	visible: "true",
-	type: "text",
+	disabled: null,
+	markdown: null,
+	label: null,
+	hint: null,
 };
 
 /**
@@ -208,9 +212,7 @@ export default class FormFieldAbstractModel {
 		const qualifiedName = `${formName}.${normalizedName}`;
 
 		// prepare provided variable space for reactive data of current field's component
-		reactiveFieldInfo.required = reactiveFieldInfo.visible = reactiveFieldInfo.valid =
-		reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = reactiveFieldInfo.label =
-		reactiveFieldInfo.hint = reactiveFieldInfo.disabled = reactiveFieldInfo.markdown = null;
+		reactiveFieldInfo.valid = reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = null;
 		reactiveFieldInfo.pristine = true;
 		reactiveFieldInfo.errors = [];
 
@@ -390,7 +392,9 @@ export default class FormFieldAbstractModel {
 										propertyValue = L10n.selectLocalized( propertyValue, form.locale );
 								}
 
-								if ( propertyValue != null ) {
+								if ( propertyValue == null ) {
+									reactiveFieldInfo[propertyName] = null;
+								} else {
 									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
 										reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 								}
@@ -432,6 +436,7 @@ export default class FormFieldAbstractModel {
 				default :
 					propertyValue = L10n.selectLocalized( propertyValue, form.locale );
 					if ( propertyValue == null ) {
+						reactiveFieldInfo[propertyName] = null;
 						deferredGetters[propertyName] = { value: null };
 					} else {
 						deferredGetters[propertyName] = handleComputableValue( propertyValue, propertyName,
@@ -731,6 +736,10 @@ export default class FormFieldAbstractModel {
 				}
 
 				if ( hasTerm ) {
+					if ( data ) {
+						data[key] = null;
+					}
+
 					// value _is containing_ one or more computable terms
 					return { get: () => {
 						const rendered = new Array( numSlices );
@@ -759,6 +768,10 @@ export default class FormFieldAbstractModel {
 			if ( compiled instanceof Processor ) {
 				// value completely consists of a sole term's source
 				terms.push( compiled );
+
+				if ( data ) {
+					data[key] = null;
+				}
 
 				return { get: () => {
 					const computed = compiled.evaluate( form.sequence.data );
@@ -911,13 +924,34 @@ export default class FormFieldAbstractModel {
 	 * @returns {void}
 	 * @protected
 	 */
-	initializeReactive( reactiveFieldInfo ) {
-		reactiveFieldInfo.label = this.label;
-		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.required = this.required;
-		reactiveFieldInfo.visible = this.visible;
-		reactiveFieldInfo.disabled = this.disabled;
-		reactiveFieldInfo.markdown = this.markdown;
+	initializeReactive( reactiveFieldInfo ) { // eslint-disable-line no-unused-vars
+		// apply custom initialization for reactive data observed by Vue to detect change of state
+	}
+
+	/**
+	 * Updates reactive information on current field probably re-evaluating
+	 * terms used in definition of that information.
+	 *
+	 * @note Overload this method to extend list of properties to be
+	 *       re-evaluated per type of field.
+	 *
+	 * @param {object} reactiveFieldInfo contains reactive properties of field
+	 * @param {boolean} onLocalUpdate if true method is invoked due to recent change of current field itself,
+	 *        otherwise it's been an update of field this one depends on
+	 * @returns {void}
+	 */
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) { // eslint-disable-line no-unused-vars
+		let dummy; // eslint-disable-line no-unused-vars
+
+		// read out several definition values implicitly updating reactive data
+		dummy = this.label;
+		dummy = this.hint;
+		dummy = this.required;
+		dummy = this.visible;
+		dummy = this.disabled;
+		dummy = this.markdown;
+
+		// apply custom updates of reactive data observed by Vue to detect change of state
 	}
 
 	/**
@@ -994,27 +1028,6 @@ export default class FormFieldAbstractModel {
 		this.form.sequence.events.$emit( "form:update", this.qualifiedName, updatedFieldName || null, newValue );
 
 		return oldValidity !== data.valid;
-	}
-
-	/**
-	 * Updates reactive information on current field probably re-evaluating
-	 * terms used in definition of that information.
-	 *
-	 * @note Overload this method to extend list of properties to be
-	 *       re-evaluated per type of field.
-	 *
-	 * @param {object} reactiveFieldInfo contains reactive properties of field
-	 * @param {boolean} onLocalUpdate if true method is invoked due to recent change of current field itself,
-	 *        otherwise it's been an update of field this one depends on
-	 * @returns {void}
-	 */
-	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) { // eslint-disable-line no-unused-vars
-		reactiveFieldInfo.label = this.label;
-		reactiveFieldInfo.hint = this.hint;
-		reactiveFieldInfo.required = this.required;
-		reactiveFieldInfo.visible = this.visible;
-		reactiveFieldInfo.disabled = this.disabled;
-		reactiveFieldInfo.markdown = this.markdown;
 	}
 
 	/**

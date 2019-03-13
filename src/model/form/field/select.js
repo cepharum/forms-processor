@@ -113,25 +113,19 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 		}, container );
 	}
 
-	// TODO inspect why select.js requires this explicit update of reactiveFieldInfo whereas checkbox.js is working without ... if it is working ...
 	/** @inheritDoc */
 	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
 		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
 
+		// read out field-specific definition values to cause updating reactive
+		// data accordingly
+		let dummy; // eslint-disable-line no-unused-vars
+
 		if ( !onLocalUpdate ) {
-			reactiveFieldInfo.options = this.options;
+			dummy = this.options;
 		}
 
-		reactiveFieldInfo.prompt = this.prompt;
-	}
-
-	// TODO inspect why select.js requires this explicit update of reactiveFieldInfo whereas checkbox.js is working without ... if it is working ...
-	/** @inheritDoc */
-	initializeReactive( reactiveFieldInfo ) {
-		super.initializeReactive( reactiveFieldInfo );
-
-		reactiveFieldInfo.options = this.options;
-		reactiveFieldInfo.prompt = this.prompt;
+		dummy = this.prompt;
 	}
 
 	/** @inheritDoc */
