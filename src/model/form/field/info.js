@@ -27,45 +27,62 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
-import Markdown from "../utility/markdown";
 
 /**
  * Manages single field of form representing non-editable text display.
  */
 export default class FormFieldInfoModel extends FormFieldAbstractModel {
-	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
-		return {
-			template: `
-<span>
-	<span class="static-info markdown" v-if="markdown" v-html="renderedText"></span>
-	<span class="static-info" v-else>{{ text }}</span>
-</span>
-			`,
-			data: () => reactiveFieldInfo,
-			computed: {
-				renderedText() {
-					return Markdown.getRenderer( this.markdown === true ? "default" : this.markdown ).render( this.text );
-				},
+	/**
+	 * @inheritDoc
+	 */
+	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
+		super( form, definition, fieldIndex, reactiveFieldInfo, {
+			text( _v, _, __, cbTermHandler ) {
+				/**
+				 * Exposes current content to be displayed in field.
+				 *
+				 * @name FormFieldInfoModel#text
+				 * @property string
+				 * @readonly
+				 */
+				return cbTermHandler( _v, rawValue => {
+					const localized = this.selectLocalization( rawValue );
+
+					return this.markdown ? this.markdown.render( localized ) : localized;
+				} );
 			},
-		};
+
+			...customProperties,
+		}, container );
 	}
 
 	/** @inheritDoc */
-	initializeReactive( reactiveFieldInfo ) {
-		super.initializeReactive( reactiveFieldInfo );
+	renderFieldComponent( reactiveFieldInfo ) {
+		return {
+			render( createElement ) {
+				if ( this.markdown ) {
+					return createElement( "span", {
+						class: "static-info markdown",
+						domProps: {
+							innerHTML: this.text,
+						},
+					} );
+				}
 
-		try {
-			reactiveFieldInfo.text = this.text;
-		} catch ( error ) {	// eslint-disable-line no-empty
-		}
+				return createElement( "span", {
+					class: "static-info",
+				}, this.text );
+			},
+			data: () => reactiveFieldInfo,
+		};
 	}
 
 	/** @inheritDoc */
 	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
 		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
 
-		reactiveFieldInfo.text = this.text;
+		// read out another definition property that might have changed
+		const dummy = this.text; // eslint-disable-line no-unused-vars
 	}
 
 	/** @inheritDoc */

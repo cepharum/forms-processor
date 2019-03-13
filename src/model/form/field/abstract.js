@@ -82,6 +82,7 @@ const deferredProperties = [
 
 let unnamedCounter = 0;
 
+const ptnConstantRef = /^\s*=\s*\$constants?\.([^.\s]+)\s*$/i;
 
 
 /**
@@ -348,7 +349,6 @@ export default class FormFieldAbstractModel {
 		{
 			const propNames = Object.keys( qualifiedDefinition );
 			const numProps = propNames.length;
-			const ptnConstantRef = /^\s*=\s*\$constants?\.([^.\s]+)\s*$/i;
 
 			for ( let pni = 0; pni < numProps; pni++ ) {
 				const propertyName = propNames[pni];
@@ -371,38 +371,36 @@ export default class FormFieldAbstractModel {
 						break;
 
 					default :
-						if ( reserved.indexOf( propertyName ) < 0 && deferredProperties.indexOf( propertyName ) < 0 ) {
-							// handle non-reserved properties of definition in a common way
+						if ( reserved.indexOf( propertyName ) < 0 &&
+						     deferredProperties.indexOf( propertyName ) < 0 &&
+						     !customProperties.hasOwnProperty( propertyName ) ) {
+							// handle non-reserved non-deferred property that doesn't have custom handler
+							switch ( propertyName ) {
+								case "suppress" :
+								case "messages" :
+									break;
 
-							if ( customProperties.hasOwnProperty( propertyName ) ) {
-								// got some custom descriptor of property to expose
-								const descriptor = customProperties[propertyName];
-								if ( descriptor !== undefined ) {
-									customProperties[propertyName] = undefined;
+								default :
+									propertyValue = L10n.selectLocalized( propertyValue, form.locale );
+							}
 
-									handleCustomProperty.call( this, descriptor, propertyValue, propertyName );
-								}
+							if ( propertyValue == null ) {
+								reactiveFieldInfo[propertyName] = null;
 							} else {
-								switch ( propertyName ) {
-									case "suppress" :
-									case "messages" :
-										break;
-
-									default :
-										propertyValue = L10n.selectLocalized( propertyValue, form.locale );
-								}
-
-								if ( propertyValue == null ) {
-									reactiveFieldInfo[propertyName] = null;
-								} else {
-									getters[propertyName] = handleComputableValue( propertyValue, propertyName,
-										reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
-								}
+								getters[propertyName] = handleComputableValue( propertyValue, propertyName,
+									reactiveFieldInfo, v => this.normalizeDefinitionValue( v, propertyName, qualifiedDefinition ) );
 							}
 						}
 				}
 			}
 		}
+
+		Object.defineProperties( this, getters );
+
+
+
+		// handle definitions of custom properties after having processed "internal" ones
+		const customGetters = {};
 
 		{ // make sure to transfer "default" behaviour of custom properties due to lacking definition mentioning it
 			const propNames = Object.keys( customProperties );
@@ -410,17 +408,22 @@ export default class FormFieldAbstractModel {
 
 			for ( let pni = 0; pni < numProps; pni++ ) {
 				const propertyName = propNames[pni];
-				const descriptor = customProperties[propertyName];
+				const customProperty = customProperties[propertyName];
 
-				if ( reserved.indexOf( propertyName ) < 0 ) {
-					if ( descriptor !== undefined && !getters.hasOwnProperty( propertyName ) ) {
-						handleCustomProperty.call( this, descriptor, undefined, propertyName );
+				if ( customProperty !== undefined && reserved.indexOf( propertyName ) < 0 ) {
+					let propertyValue = qualifiedDefinition[propertyName];
+
+					const constantRef = ptnConstantRef.exec( propertyValue );
+					if ( constantRef ) {
+						propertyValue = form.sequence.constants[constantRef[1]] || null;
 					}
+
+					handleCustomProperty.call( this, customGetters, customProperty, propertyValue, propertyName );
 				}
 			}
 		}
 
-		Object.defineProperties( this, getters );
+		Object.defineProperties( this, customGetters );
 
 
 
@@ -802,12 +805,13 @@ export default class FormFieldAbstractModel {
 		 * descriptor or some factory to generate this descriptor as provided
 		 * by caller.
 		 *
+		 * @param {object} target collector for definition of property getters and values
 		 * @param {CustomPropertyMap} customProperty property descriptor to use, factory to create that or some fixed value
 		 * @param {*} definedValue value of property found in definition
 		 * @param {string} propertyName name of definition property to be integrated
 		 * @returns {void}
 		 */
-		function handleCustomProperty( customProperty, definedValue, propertyName ) {
+		function handleCustomProperty( target, customProperty, definedValue, propertyName ) {
 			if ( typeof customProperty === "function" ) {
 				// got generator for custom property's description
 				const description = customProperty.call( this,
@@ -831,24 +835,31 @@ export default class FormFieldAbstractModel {
 							reactiveFieldInfo[propertyName] = original;
 							return original;
 						};
-						reactiveFieldInfo[propertyName] = originalGet();
+
+						try {
+							reactiveFieldInfo[propertyName] = originalGet();
+						} catch( error ) {
+							setTimeout( () => {
+								reactiveFieldInfo[propertyName] = originalGet();
+							}, 10 );
+						}
 					} else {
 						reactiveFieldInfo[propertyName] = description.value;
 					}
 
-					getters[propertyName] = description;
+					target[propertyName] = description;
 				}
 			} else if ( typeof customProperty.get === "function" ) {
 				// got custom property's description containing getter function
-				getters[propertyName] = customProperty;
+				target[propertyName] = customProperty;
 				reactiveFieldInfo[propertyName] = customProperty.get();
 			} else if ( customProperty.hasOwnProperty( "value" ) ) {
 				// got custom property's description containing fixed value
-				getters[propertyName] = customProperty;
+				target[propertyName] = customProperty;
 				reactiveFieldInfo[propertyName] = customProperty.value;
 			} else {
 				// got fixed value of custom property
-				getters[propertyName] = { value: customProperty };
+				target[propertyName] = { value: customProperty };
 				reactiveFieldInfo[propertyName] = customProperty;
 			}
 		}
@@ -1083,11 +1094,8 @@ export default class FormFieldAbstractModel {
 				showLabels() {
 					return !suppress || !suppress.labels;
 				},
-				useMarkdown() {
-					return that.markdown;
-				},
 				renderedHint() {
-					return Markdown.getRenderer().render( this.hint );
+					return this.markdown.render( this.hint );
 				},
 			},
 			template: `
@@ -1097,8 +1105,8 @@ export default class FormFieldAbstractModel {
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" @input="onInput" />
-		<span class="hint" v-if="hint && !useMarkdown">{{ hint }}</span>
-		<span class="hint" v-if="hint && useMarkdown" v-html="renderedHint"></span>
+		<span class="hint" v-if="hint && !markdown">{{ hint }}</span>
+		<span class="hint" v-if="hint && markdown" v-html="renderedHint"></span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
@@ -1241,11 +1249,13 @@ export default class FormFieldAbstractModel {
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
-						return boolean == null ? value || false : boolean;
+						const mode = boolean == null ? value || false : boolean;
+
+						return mode ? Markdown.getRenderer( mode === true ? "default" : mode ) : null;
 					}
 
 					default :
-						return Boolean( value );
+						return value ? Markdown.getRenderer( "default" ) : false;
 				}
 
 			case "validity" :

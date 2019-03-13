@@ -73,10 +73,12 @@ export default class Options {
 	 * @param {string|array<{label:string, value:string}>} definitionValue options as provided in field's definition
 	 * @param {?LabelledOptionsListProperty} fallback to return if `definition` is missing/unset
 	 * @param {function(string):string} localizer optional callback selecting matching translation from a map of available localizations
+	 * @param {function(string):string} labelNormalizer callback invoked to normalize labels of items
+	 * @param {function(string):string} valueNormalizer callback invoked to normalize values of items (and labels if those aren't distinguishable from values)
 	 * @param {function(string):PropertyDescriptor} termHandler optional callback selecting matching translation from a map of available localizations
 	 * @return {LabelledOptionsListProperty} property descriptor describing normalized list of options to choose from
 	 */
-	static createOptions( definitionValue, fallback = null, { localizer = null, termHandler = null } = {} ) {
+	static createOptions( definitionValue, fallback = null, { localizer = null, labelNormalizer = null, valueNormalizer = null, termHandler = null } = {} ) {
 		if ( !definitionValue ) {
 			if ( fallback == null ) {
 				throw new TypeError( "Missing list of options to offer in a selector." );
@@ -134,7 +136,7 @@ export default class Options {
 
 				switch ( typeof source ) {
 					case "string" : {
-						const computed = cbTermHandler ? cbTermHandler( source ) : { value: source };
+						const computed = cbTermHandler ? cbTermHandler( source, valueNormalizer ) : { value: source };
 						if ( computed.get ) {
 							hasDynamicItem = true;
 							label = value = computed;
@@ -153,15 +155,15 @@ export default class Options {
 							const _label = localized.label == null ? _value : localizer ? localizer( localized.label ) : localized.label;
 
 							if ( cbTermHandler ) {
-								value = cbTermHandler( localized.value );
-								label = cbTermHandler( _label );
+								value = cbTermHandler( localized.value, valueNormalizer );
+								label = cbTermHandler( _label, labelNormalizer );
 
 								if ( value.get || label.get ) {
 									hasDynamicItem = true;
 								}
 							} else {
-								value = { value: localized.value };
-								label = { value: _label };
+								value = { value: valueNormalizer ? valueNormalizer( localized.value ) : localized.value };
+								label = { value: labelNormalizer ? labelNormalizer( _label ) : _label };
 							}
 						}
 						break;

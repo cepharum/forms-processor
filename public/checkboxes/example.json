@@ -156,9 +156,10 @@
 					"name": "visibilityController",
 					"label": "Control Visibility",
 					"type": "radio",
+					"markdown": true,
 					"options": [
 						{
-							"label": "The controlled field is visible.",
+							"label": "The _controlled field_ is visible.",
 							"value": 1
 						},
 						{
