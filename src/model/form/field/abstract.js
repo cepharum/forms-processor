@@ -33,6 +33,7 @@ import { Processor } from "simple-terms";
 import Markdown from "../utility/markdown";
 
 const termCache = new Map();
+const omitted = {};
 
 /**
  * Declares default values of commonly supported field properties.
@@ -649,21 +650,30 @@ export default class FormFieldAbstractModel {
 				 * Looks up label of option matching given value in a set of
 				 * options defined on a named.
 				 *
-				 * @param {*} fieldValue value matching option to look up
+				 * For conveniently looking up options of fields of type
+				 * `checkbox`, `radio` or `select` you can omit `fieldValue` to
+				 * implicitly look up current value of named field.
+				 *
 				 * @param {string} fieldName name of field options are defined on
+				 * @param {*} fieldValue value matching option to look up
 				 * @param {string} fieldProperty property of field's definition containing set of options
 				 * @return {null|string|object<string,string>} immediate or internationalized label of found option, null otherwise
 				 */
-				lookup( fieldValue, fieldName, fieldProperty = "options" ) {
+				lookup( fieldName, fieldValue = omitted, fieldProperty = "options" ) {
 					const fieldKey = fieldName.toLowerCase();
 					const field = form.sequence.fields[fieldKey];
+					if ( !field ) {
+						return null;
+					}
+
+					const _value = fieldValue === omitted ? field.value : fieldValue;
 					const map = field[fieldProperty];
 
 					if ( Array.isArray( map ) ) {
 						for ( let index = 0, length = map.length; index < length; index++ ) {
 							const entry = map[index];
 
-							if ( entry.value === fieldValue ) {
+							if ( entry.value === _value ) {
 								return entry.label;
 							}
 						}
