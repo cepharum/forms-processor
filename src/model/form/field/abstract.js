@@ -699,24 +699,6 @@ export default class FormFieldAbstractModel {
 				},
 
 				/**
-				 * Provides read-access on cookies.
-				 *
-				 * @param {string} _name name of cookie to read
-				 * @param {boolean} testExistence true to check if named cookie is set instead of actually reading it
-				 * @return {boolean|*} true/false on testing if some cookie exists, found cookie's value or null otherwise
-				 */
-				cookie( _name, testExistence = false ) {
-					if ( /^[a-zA-Z0-9_]+$/.test( _name ) ) {
-						const match = new RegExp( "(?:^|;)\\s*" + _name + "\\s*=\\s*([^;\\s]+)" ).exec( document.cookie );
-						if ( match ) {
-							return testExistence ? true : match[1];
-						}
-					}
-
-					return testExistence ? false : null;
-				},
-
-				/**
 				 * Provides read-access on constants defined in context of
 				 * current sequence of forms.
 				 *
