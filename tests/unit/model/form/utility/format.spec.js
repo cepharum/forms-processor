@@ -59,6 +59,12 @@ describe( "Utility functions checking strings to obey certain formats", () => {
 			result.output.should.be.equal( "DE68210501700012345678" );
 		} );
 
+		it( "accepts and normalizes 'DE51120300001053216097'", () => {
+			const result = Format.iban( "DE51120300001053216097" );
+			Should( result.errors ).be.undefined();
+			result.output.should.be.equal( "DE51120300001053216097" );
+		} );
+
 		it( "denies 'DE68210501700012345679'", () => {
 			const result = Format.iban( "DE68210501700012345679" );
 			result.errors.should.be.eql( ["@FORMATS.IBAN.CHECKSUM_FAILED"] );
