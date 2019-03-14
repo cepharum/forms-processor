@@ -130,7 +130,7 @@ export default class Localization {
 				}
 			}
 
-			return wildcard == null ? fallback : wildcard;
+			return wildcard == null ? fallback == null ? value : fallback : wildcard;
 		}
 
 		return value;
