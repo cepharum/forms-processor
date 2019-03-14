@@ -34,7 +34,7 @@ export default {
 			return manager.currentIndex === manager.forms.length - 1;
 		},
 		isInvalid() {
-			return !this.$store.getters.sequence.currentForm.readValidState( { live: false, includePristine: true, showErrors: false } );
+			return !this.$store.getters.sequence.currentForm.readValidState( { live: false, includePristine: true, showErrors: false, cache: false } );
 		},
 		labelPrevious() {
 			return this.$store.getters.l10n.BUTTONS.PREVIOUS;

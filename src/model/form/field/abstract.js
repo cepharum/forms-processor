@@ -868,9 +868,10 @@ export default class FormFieldAbstractModel {
 	 * @param {boolean} force set true to prevent use of cached result of previous validation
 	 * @param {boolean} includePristine set true to validate pristine fields as well
 	 * @param {boolean} showErrors controls whether error messages of failed validations should be displayed/written in reactive data of field
+	 * @param {boolean} cache controls whether result is cached or not (doesn't control whether cached result is used, see `force`)
 	 * @returns {boolean} true if form is considered valid, false otherwise
 	 */
-	readValidState( { live = true, force = false, includePristine = false, showErrors = true } = {} ) {
+	readValidState( { live = true, force = false, includePristine = false, showErrors = true, cache = true } = {} ) {
 		const data = this.$data;
 
 		if ( !includePristine && data.pristine ) {
@@ -899,7 +900,7 @@ export default class FormFieldAbstractModel {
 
 			const isValid = errors.length === 0;
 
-			if ( !data.pristine ) {
+			if ( !data.pristine && cache ) {
 				// don't adjust mark on a pristine field's validity so it won't
 				// be visually reflected in GUI and to ensure it is re-validated
 				// first time after becoming touched

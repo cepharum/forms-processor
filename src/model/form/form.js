@@ -392,16 +392,17 @@ export default class FormModel {
 	 * @param {boolean} force set true to prevent use of cached result of previous validation
 	 * @param {boolean} includePristine set true to validate pristine fields as well
 	 * @param {boolean} showErrors controls whether error messages of failed validations should be displayed/written in reactive data of field
+	 * @param {boolean} cache controls whether result is cached or not (doesn't control whether cached result is used, see `force`)
 	 * @returns {boolean} true if form is considered valid, false otherwise
 	 */
-	readValidState( { live = true, force = false, includePristine = false, showErrors = true } = {} ) {
+	readValidState( { live = true, force = false, includePristine = false, showErrors = true, cache = true } = {} ) {
 		const numFields = this.fields.length;
 		let valid = true;
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const field = this.fields[i];
 
-			if ( !field.readValidState( { live, force, includePristine, showErrors } ) ) {
+			if ( !field.readValidState( { live, force, includePristine, showErrors, cache } ) ) {
 				valid = false;
 			}
 		}
@@ -409,7 +410,7 @@ export default class FormModel {
 
 		const data = this.$data;
 
-		if ( data.valid !== valid ) {
+		if ( cache && data.valid !== valid ) {
 			data.valid = valid;
 
 			if ( !valid ) {
