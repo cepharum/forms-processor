@@ -133,9 +133,9 @@ export default {
 			}
 		},
 
-		result( { commit }, { success, redirect, text, error = null } ) {
+		result( { commit }, { success, redirect, text, route, error = null } ) {
 			commit( "result", {
-				success, redirect, text, error
+				success, redirect, text, route, error
 			} );
 		},
 	},
@@ -230,10 +230,10 @@ export default {
 			}
 		},
 
-		result( state, { success, redirect, text, error = null } ) {
+		result( state, { success, redirect, text, route, error = null } ) {
 			state.result = {
 				type: success ? "success" : "error",
-				redirect, text, error,
+				redirect, text, error, route,
 			};
 		},
 
@@ -268,6 +268,7 @@ export default {
 		resultIsError: state => state.result.type === "error",
 		resultRedirect: state => state.result.redirect,
 		resultMessage: state => state.result.text,
+		resultRoute: state => state.result.route,
 		resultError: state => state.result.error,
 	},
 };

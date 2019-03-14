@@ -27,8 +27,12 @@ export default {
 	beforeMount() {
 		this.unsubscriber = this.$store.subscribe( ( mutation, state ) => {
 			if ( mutation.type === "form/result" ) {
-				if ( state.form.result.redirect ) {
-					location.href = state.form.result.redirect;
+				const { result } = state.form;
+
+				if ( result.route ) {
+					this.$router[result.route.replace ? "replace" : "push"]( result.route );
+				} else if ( result.redirect ) {
+					location.href = result.redirect;
 				}
 			}
 		} );

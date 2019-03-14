@@ -782,7 +782,9 @@ export default class FormSequenceModel {
 
 			return _process( this.processors, 0, originalData );
 		} )
-			.then( () => _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData ) )
+			.then( processedData => {
+				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData, processedData );
+			} )
 			.catch( error => {
 				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
@@ -804,12 +806,44 @@ export default class FormSequenceModel {
 			const value = typeof configuredBehaviour === "function" ? configuredBehaviour( this, ...args ) : configuredBehaviour;
 
 			const normalized = L10n.selectLocalized( value );
-			if ( typeof normalized === "string" ) {
-				if ( /^(?:[a-z]+:\/\/[^/]+\/?|\.?\/)/.test( normalized ) && !/\s/.test( normalized ) ) {
-					status.redirect = normalized;
-				} else {
-					status.text = normalized;
-				}
+			switch ( typeof normalized ) {
+				case "string" :
+					if ( /^(?:[a-z]+:\/\/[^/]+\/?|\.?\/)/.test( normalized ) && !/\s/.test( normalized ) ) {
+						status.redirect = normalized;
+					} else {
+						status.text = normalized;
+					}
+					break;
+
+				case "object" :
+					if ( normalized ) {
+						if ( typeof normalized.path === "string" || typeof normalized.name === "string" ) {
+							status.route = normalized;
+
+							if ( status.success ) {
+								const [ , processedData ] = args;
+
+								const names = Object.keys( processedData );
+								const numNames = names.length;
+								let i = 0;
+
+								for ( ; i < numNames; i++ ) {
+									const item = processedData[names[i]];
+
+									if ( item && typeof item === "object" ) {
+										break;
+									}
+								}
+
+								if ( i >= numNames ) {
+									// got single level of scalar data, only
+									// => considered ok for passing in query of selected route
+									status.route.query = processedData;
+								}
+							}
+						}
+					}
+					break;
 			}
 
 			return status;

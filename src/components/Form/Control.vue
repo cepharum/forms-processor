@@ -51,8 +51,7 @@ export default {
 		mayContinue() {
 			const sequence = this.$store.getters.sequence;
 
-			return sequence.mode.navigation === "auto"
-			       &&
+			return sequence.mode.navigation === "auto" &&
 			       sequence.firstUnfinishedIndex > sequence.currentIndex + 1;
 		},
 	},
@@ -81,6 +80,7 @@ export default {
 						success: true,
 						redirect: status.redirect,
 						text: status.text,
+						route: status.route,
 					} );
 				} )
 				.catch( error => {
@@ -89,6 +89,7 @@ export default {
 						redirect: error.redirect,
 						text: error.text,
 						error: error.message,
+						route: error.route,
 					} );
 				} );
 		},
