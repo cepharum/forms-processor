@@ -113,6 +113,7 @@ export default {
 				name: configuration.name,
 				definition,
 				registry: configuration.registry,
+				events: this.$root,
 			} ) )
 			.then( () => {
 				const { onReady } = configuration;

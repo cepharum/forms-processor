@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-import Vue from "vue";
 import FormModel from "./form";
 
 import L10n from "@/service/l10n";
@@ -41,6 +40,7 @@ export default class FormSequenceModel {
 	 * @typedef {object} AuxiliaryInfo
 	 * @param {function():string} locale callback invoked to fetch tag of current locale
 	 * @param {function():LocaleTranslationTree} translations callback invoked to fetch map of current translations
+	 * @param {Vue} events component for use with emitting/receiving events of current sequence
 	 */
 
 	/**
@@ -204,6 +204,18 @@ export default class FormSequenceModel {
 			translations: { get: auxiliary.translations },
 
 			/**
+			 * Exposes event bus of current sequence manager.
+			 *
+			 * This event bus is used to emit and listen for events related to
+			 * current sequence of forms, only.
+			 *
+			 * @name FormSequenceModel#events
+			 * @property Vue
+			 * @readonly
+			 */
+			events: { value: auxiliary.events },
+
+			/**
 			 * Exposes registries of custom types of fields and custom input
 			 * processors to be supported in processing current sequence of forms.
 			 *
@@ -225,18 +237,6 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
-
-			/**
-			 * Exposes event bus of current sequence manager.
-			 *
-			 * This event bus is used to emit and listen for events related to
-			 * current sequence of forms, only.
-			 *
-			 * @name FormSequenceModel#events
-			 * @property Vue
-			 * @readonly
-			 */
-			events: { value: new Vue() }
 		} );
 
 
@@ -753,6 +753,7 @@ export default class FormSequenceModel {
 			return Promise.reject( new Error( "Forms aren't finished, yet." ) );
 		}
 
+		const { locale } = this;
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
 		this.events.$emit( "sequence:submitting", originalData );
@@ -783,12 +784,12 @@ export default class FormSequenceModel {
 			return _process( this.processors, 0, originalData );
 		} )
 			.then( processedData => {
-				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData, processedData );
+				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, locale ), originalData, processedData );
 			} )
 			.catch( error => {
 				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
-				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, this.locale ), error ) );
+				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, locale ), error ) );
 			} );
 
 		/**
@@ -797,49 +798,39 @@ export default class FormSequenceModel {
 		 * data.
 		 *
 		 * @param {object} status status descriptor controlling behaviour
-		 * @param {*} configuredBehaviour behaviour defined in configuration
+		 * @param {*} config behaviour defined in configuration
 		 * @param {*} args arguments passed on invoking function found in provided behaviour configuration
 		 * @returns {object} provided status descriptor extended by behaviour control
 		 * @private
 		 */
-		function _prepareResultHandling( status, configuredBehaviour, ...args ) {
-			const value = typeof configuredBehaviour === "function" ? configuredBehaviour( this, ...args ) : configuredBehaviour;
+		function _prepareResultHandling( status, config, ...args ) {
+			const value = typeof config === "function" ? L10n.selectLocalization( config( this, ...args ), locale ) : config;
 
-			const normalized = L10n.selectLocalized( value );
-			switch ( typeof normalized ) {
+			switch ( typeof value ) {
 				case "string" :
-					if ( /^(?:[a-z]+:\/\/[^/]+\/?|\.?\/)/.test( normalized ) && !/\s/.test( normalized ) ) {
-						status.redirect = normalized;
+					if ( /^(?:[a-z]+:\/\/[^\s/]+\/?|\.?\/)/.test( value ) && !/\s/.test( value ) ) {
+						status.redirect = value;
 					} else {
-						status.text = normalized;
+						status.text = value;
 					}
 					break;
 
 				case "object" :
-					if ( normalized ) {
-						if ( typeof normalized.path === "string" || typeof normalized.name === "string" ) {
-							status.route = normalized;
+					if ( value ) {
+						if ( typeof value.event === "string" ) {
+							status.event = {
+								name: value.event,
+								args: Object.assign( {}, value.args ),
+							};
 
 							if ( status.success ) {
 								const [ , processedData ] = args;
 
-								const names = Object.keys( processedData );
-								const numNames = names.length;
-								let i = 0;
+								status.event.data = Object.assign( {}, processedData );
+							} else {
+								const [error] = args;
 
-								for ( ; i < numNames; i++ ) {
-									const item = processedData[names[i]];
-
-									if ( item && typeof item === "object" ) {
-										break;
-									}
-								}
-
-								if ( i >= numNames ) {
-									// got single level of scalar data, only
-									// => considered ok for passing in query of selected route
-									status.route.query = processedData;
-								}
+								status.event.data = error;
 							}
 						}
 					}

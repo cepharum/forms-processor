@@ -1,6 +1,6 @@
 <template>
 	<div class="result">
-		<div class="error" v-if="hasError" v-html="message"></div>
+		<div class="error" v-if="hasError && message != null" v-html="message"></div>
 		<div class="success" v-if="hasSuccess" v-html="message"></div>
 	</div>
 </template>
@@ -21,18 +21,18 @@ export default {
 		message() {
 			const message = this.$store.getters["form/resultMessage"];
 
-			return message == null ? "" : md.render( String( message ) );
+			return message ? md.render( String( message ) ) : null;
 		},
 	},
 	beforeMount() {
 		this.unsubscriber = this.$store.subscribe( ( mutation, state ) => {
 			if ( mutation.type === "form/result" ) {
-				const { result } = state.form;
+				const { result: { event, redirect } } = state.form;
 
-				if ( result.route ) {
-					this.$router[result.route.replace ? "replace" : "push"]( result.route );
-				} else if ( result.redirect ) {
-					location.href = result.redirect;
+				if ( event ) {
+					this.$root.$emit( event.name, event.args, event.data );
+				} else if ( redirect ) {
+					location.href = redirect;
 				}
 			}
 		} );
@@ -41,6 +41,4 @@ export default {
 		this.unsubscriber();
 	},
 };
-
-
 </script>

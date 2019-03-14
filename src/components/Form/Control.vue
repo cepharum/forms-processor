@@ -80,7 +80,7 @@ export default {
 						success: true,
 						redirect: status.redirect,
 						text: status.text,
-						route: status.route,
+						event: status.event,
 					} );
 				} )
 				.catch( error => {
@@ -89,7 +89,7 @@ export default {
 						redirect: error.redirect,
 						text: error.text,
 						error: error.message,
-						route: error.route,
+						event: error.event,
 					} );
 				} );
 		},

@@ -63,9 +63,10 @@ export default {
 		 * @param {string|number} name temporarily unique ID of form identifying it in context of current HTML document
 		 * @param {object} definition description of forms, their fields and additional context information
 		 * @param {object} registry registry of custom field types and custom processors
+		 * @param {Vue} events provides Vue component to be used for emitting/receiving events related to current processor instance
 		 * @returns {void}
 		 */
-		define( { state, commit, dispatch, getters, rootGetters }, { id = null, name = null, definition, registry = {} } ) {
+		define( { state, commit, dispatch, getters, rootGetters }, { id = null, name = null, definition, registry = {}, events } ) {
 			const _id = String( id == null ? nextId++ : id ).trim();
 			const _name = name == null ? _id : String( name ).trim();
 
@@ -76,6 +77,7 @@ export default {
 			}, {
 				locale: () => rootGetters.locale,
 				translations: () => rootGetters.l10n,
+				events,
 			} );
 
 			commit( "define", {
@@ -133,9 +135,9 @@ export default {
 			}
 		},
 
-		result( { commit }, { success, redirect, text, route, error = null } ) {
+		result( { commit }, { success, redirect, text, event, error = null } ) {
 			commit( "result", {
-				success, redirect, text, route, error
+				success, redirect, text, event, error
 			} );
 		},
 	},
@@ -230,10 +232,10 @@ export default {
 			}
 		},
 
-		result( state, { success, redirect, text, route, error = null } ) {
+		result( state, { success, redirect, text, event, error = null } ) {
 			state.result = {
 				type: success ? "success" : "error",
-				redirect, text, error, route,
+				redirect, text, error, event,
 			};
 		},
 
@@ -268,7 +270,6 @@ export default {
 		resultIsError: state => state.result.type === "error",
 		resultRedirect: state => state.result.redirect,
 		resultMessage: state => state.result.text,
-		resultRoute: state => state.result.route,
 		resultError: state => state.result.error,
 	},
 };
