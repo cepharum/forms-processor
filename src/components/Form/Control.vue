@@ -58,15 +58,23 @@ export default {
 	},
 	methods: {
 		rewind() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.rewind();
 		},
 		advance() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.advance();
 		},
 		continueLatest() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.advance( true );
 		},
 		submit() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.submit()
 				.then( status => {
 					this.$store.dispatch( "form/result", {

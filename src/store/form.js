@@ -236,6 +236,10 @@ export default {
 				redirect, text, error,
 			};
 		},
+
+		resetResult( state ) {
+			state.result = {};
+		},
 	},
 	getters: {
 		loaded( state ) {
