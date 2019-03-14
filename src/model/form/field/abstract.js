@@ -42,8 +42,9 @@ const omitted = {};
  */
 const defaultProperties = {
 	type: "text",
-	required: "false",
-	visible: "true",
+	required: false,
+	visible: true,
+	live: true,
 	disabled: null,
 	markdown: null,
 	label: null,
@@ -876,6 +877,11 @@ export default class FormFieldAbstractModel {
 			return true;
 		}
 
+		if ( live && !this.live ) {
+			// prevent live validation of current field
+			return true;
+		}
+
 		if ( force || data.valid == null ) {
 			let errors;
 
@@ -1227,6 +1233,7 @@ export default class FormFieldAbstractModel {
 			case "required" :
 			case "visible" :
 			case "disabled" :
+			case "live" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
