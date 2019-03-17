@@ -87,6 +87,23 @@ export default function customFunctionsGenerator( sequence ) {
 		},
 
 		/**
+		 * Fetches serialized value of named field.
+		 *
+		 * @param {string} fieldName _fully qualified_ name of field
+		 * @returns {?*} serialized value of selected field, null if field is missing
+		 */
+		serialize( fieldName ) {
+			const fieldKey = fieldName.toLowerCase();
+			const field = sequence.fields[fieldKey];
+
+			if ( !field ) {
+				return null;
+			}
+
+			return field.constructor.serialize( field.value );
+		},
+
+		/**
 		 * Resolves optionally provided object with different translations
 		 * in separate properties with value of property matching current
 		 * locale.
