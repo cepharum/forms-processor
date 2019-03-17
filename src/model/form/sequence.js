@@ -830,7 +830,7 @@ export default class FormSequenceModel {
 						if ( typeof value.event === "string" ) {
 							status.event = {
 								name: value.event,
-								args: Object.assign( {}, value.args ),
+								args: Array.isArray( value.args ) ? value.args.slice( 0 ) : Object.assign( {}, value.args ),
 							};
 
 							if ( status.success ) {
