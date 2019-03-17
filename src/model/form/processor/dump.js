@@ -27,16 +27,34 @@
  */
 
 import FormProcessorAbstractModel from "./abstract";
-import FormProcessorSendModel from "./send";
-import FormProcessorMapModel from "./map";
-import FormProcessorDumpModel from "./dump";
 
-export default {
-	abstract: FormProcessorAbstractModel,
-	map: {
-		// maps type name used in a forms' definition into the proper processor model
-		send: FormProcessorSendModel,
-		map: FormProcessorMapModel,
-		dump: FormProcessorDumpModel,
-	},
-};
+/**
+ * Implements processor sending all input data to some configured URL.
+ */
+export default class FormProcessorDumpModel extends FormProcessorAbstractModel {
+	/** @inheritDoc */
+	constructor( definition ) {
+		super( definition );
+
+		const { label } = definition;
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides label to show on dumping current set of data on JS
+			 * console.
+			 *
+			 * @name FormProcessorDumpModel#label
+			 * @property {string}
+			 * @readonly
+			 */
+			label: { value: label },
+		} );
+	}
+
+	/** @inheritDoc */
+	process( data, sequence ) { // eslint-disable-line no-unused-vars
+		console.log( this.label, data ); // eslint-disable-line no-console
+
+		return data;
+	}
+}
