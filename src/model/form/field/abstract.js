@@ -33,7 +33,6 @@ import { Processor } from "simple-terms";
 import Markdown from "../utility/markdown";
 
 const termCache = new Map();
-const omitted = {};
 
 /**
  * Declares default values of commonly supported field properties.
