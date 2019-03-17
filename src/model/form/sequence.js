@@ -28,8 +28,9 @@
 
 import FormModel from "./form";
 
-import L10n from "@/service/l10n";
-import Data from "@/service/data";
+import L10n from "../../service/l10n";
+import Data from "../../service/data";
+import CustomFunctions from "./utility/custom-functions";
 
 
 /**
@@ -237,6 +238,15 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
+
+			/**
+			 * Exposes custom functions for use in scope of current sequence.
+			 *
+			 * @name FormSequenceModel#customFunctions
+			 * @property {object<string,function>}
+			 * @readonly
+			 */
+			customFunctions: { value: CustomFunctions( this ) },
 		} );
 
 

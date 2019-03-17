@@ -26,8 +26,8 @@
  * @author: cepharum
  */
 
-import L10n from "@/service/l10n";
-import Data from "@/service/data";
+import L10n from "../../../service/l10n";
+import Data from "../../../service/data";
 import CompileTerm from "../utility/process";
 import { Processor } from "simple-terms";
 import Markdown from "../utility/markdown";
@@ -199,7 +199,6 @@ export default class FormFieldAbstractModel {
 	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
-		const that = this;
 		const { name } = definition;
 
 		// assume qualified names have been presumed before using
@@ -646,76 +645,7 @@ export default class FormFieldAbstractModel {
 		 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
-			const customFunctions = {
-				/**
-				 * Looks up label of option matching given value in a set of
-				 * options defined on a named.
-				 *
-				 * For conveniently looking up options of fields of type
-				 * `checkbox`, `radio` or `select` you can omit `fieldValue` to
-				 * implicitly look up current value of named field.
-				 *
-				 * @param {string} fieldName name of field options are defined on
-				 * @param {*} fieldValue value matching option to look up
-				 * @param {string} fieldProperty property of field's definition containing set of options
-				 * @return {null|string|object<string,string>} immediate or internationalized label of found option, null otherwise
-				 */
-				lookup( fieldName, fieldValue = omitted, fieldProperty = "options" ) {
-					const fieldKey = fieldName.toLowerCase();
-					const field = form.sequence.fields[fieldKey];
-					if ( !field ) {
-						return null;
-					}
-
-					const _value = fieldValue === omitted ? field.value : fieldValue;
-					const map = field[fieldProperty];
-
-					if ( Array.isArray( map ) ) {
-						for ( let index = 0, length = map.length; index < length; index++ ) {
-							const entry = map[index];
-
-							if ( entry.value === _value ) {
-								return entry.label;
-							}
-						}
-					}
-
-					if ( typeof map === "object" ) {
-						return map.label;
-					}
-
-					return map;
-				},
-
-				/**
-				 * Resolves optionally provided object with different translations
-				 * in separate properties with value of property matching current
-				 * locale.
-				 *
-				 * @param {int|string|object<string,*>} input some scalar to be passed, some object with properties per supported locale
-				 * @return {*} provided scalar value or value of given object's property matching current locale
-				 */
-				localize( input ) {
-					return that.selectLocalization( input );
-				},
-
-				/**
-				 * Provides read-access on constants defined in context of
-				 * current sequence of forms.
-				 *
-				 * @param {string} _name name of constant to read
-				 * @param {boolean} testExistence true to check if named constant exists instead of reading it
-				 * @return {boolean|*} true/false on testing if some constant exists, found constant's value or null otherwise
-				 */
-				constant( _name, testExistence = false ) {
-					const { constants } = that.form.sequence;
-
-					return constants.hasOwnProperty( _name ) ? testExistence ? true : constants[_name] : testExistence ? false : null;
-				},
-			};
-
-
-			const compiled = CompileTerm.compileString( value, customFunctions, termCache, resolveVariableName );
+			const compiled = CompileTerm.compileString( value, form.sequence.customFunctions, termCache, resolveVariableName );
 
 			if ( Array.isArray( compiled ) ) {
 				// value _might contain_ one or more computable terms
