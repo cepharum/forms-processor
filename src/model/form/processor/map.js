@@ -105,7 +105,11 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 			if ( source && typeof source === "object" ) {
 				compiled[name] = this._compileMap( source );
 			} else {
-				compiled[name] = CompileTerm.compileString( source, {}, cache );
+				try {
+					compiled[name] = CompileTerm.compileString( source, {}, cache );
+				} catch ( error ) {
+					throw new TypeError( `compiling term ${source} in context of processor mapping onto field ${name} failed: ${error.message}` );
+				}
 			}
 		}
 

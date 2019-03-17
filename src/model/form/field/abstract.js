@@ -645,7 +645,13 @@ export default class FormFieldAbstractModel {
 		 * @return {{value:string}|{get:function():string}} partial property descriptor containing either static value or dynamic getter
 		 */
 		function handleComputableValue( value, key, data = null, normalizer = null ) {
-			const compiled = CompileTerm.compileString( value, form.sequence.customFunctions, termCache, resolveVariableName );
+			let compiled;
+
+			try {
+				compiled = CompileTerm.compileString( value, form.sequence.customFunctions, termCache, resolveVariableName );
+			} catch ( error ) {
+				throw new TypeError( `compiling term ${value} in context of field ${key} failed: ${error.message}` );
+			}
 
 			if ( Array.isArray( compiled ) ) {
 				// value _might contain_ one or more computable terms
