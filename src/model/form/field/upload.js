@@ -207,9 +207,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			template: `
 				<span class="upload">
 					<div class="files">
-						<preview v-for="(file, index) of value" :file="file"
-						:key="file.name + '_'+ file.lastModifiedDate" 
-						@remove="remove(index)"/>
+						<preview v-for="(file, index) of value" :file="file" :key="file.name + '_' + index + '_' + file.lastModified" @remove="remove(index)"/>
 					</div>
 					<div v-if="dropZone" class="dropContainer" :class="dragOverClass"
 						@dragover="onDragOverDropZone"
@@ -257,17 +255,47 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				},
 				fileSelected( event ) {
 					if ( event.target.files ) {
-						this.addFiles( event.target.files );
-
-						event.target.value = "";
+						this.addFiles( event.target.files )
+							.then( () => { event.target.value = ""; } )
+							.catch( error => { console.error( error ); } ); // eslint-disable-line no-console
 					}
 				},
 				addFiles( files ) {
-					for ( const file of files ) {
-						this.value.push( file );
-					}
+					return new Promise( ( resolve, reject ) => {
+						const getFileInfo = ( index, length, list ) => {
+							if ( index >= length ) {
+								resolve();
+								return;
+							}
 
-					this.$emit( "input", this.value );
+							const file = list[index];
+							const reader = new FileReader();
+
+							reader.onerror = reject;
+							reader.onload = event => {
+								const splitAt = event.target.result.substr( 0, 1000 ).indexOf( ";base64," );
+								if ( splitAt > -1 ) {
+									this.value.push( {
+										name: file.name,
+										type: file.type,
+										size: file.size,
+										lastModified: file.lastModified,
+										_file: file,
+										_content: event.target.result.substr( splitAt + 8 ),
+									} );
+								}
+
+								getFileInfo( index + 1, length, list );
+							};
+
+							reader.readAsDataURL( file );
+						};
+
+						getFileInfo( 0, files.length, files );
+					} )
+						.then( () => {
+							this.$emit( "input", this.value );
+						} );
 				},
 				onDragOverDropZone( event ) {
 					event.stopPropagation();
@@ -311,7 +339,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 		return {
 			props: {
 				file: {
-					type: File,
+					type: Object,
 					required: true,
 				},
 			},
@@ -389,5 +417,77 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 		}
 
 		return errors;
+	}
+
+	/** @inheritDoc */
+	static serialize( files ) {
+		if ( Array.isArray( files ) ) {
+			const numFiles = files.length;
+			const serialized = new Array( numFiles );
+			let write = 0;
+
+			for ( let read = 0; read < numFiles; read++ ) {
+				const file = files[read];
+				if ( file ) {
+					if ( file._content ) {
+						serialized[write++] = {
+							name: file.name,
+							type: file.type,
+							size: file.size,
+							lastModified: file.lastModified,
+							content: file._content,
+						};
+					} else {
+						console.error( `missing prefetched content of file ${file.name} for serialization` ); // eslint-disable-line no-console
+					}
+				}
+			}
+
+			serialized.splice( write );
+
+			return serialized;
+		}
+
+		return [];
+	}
+
+	/** @inheritDoc */
+	static deserialize( data ) {
+		if ( Array.isArray( data ) ) {
+			const numFiles = data.length;
+			const files = new Array( numFiles );
+			let write = 0;
+
+			for ( let read = 0; read < numFiles; read++ ) {
+				const info = data[read];
+
+				if ( info && info.content ) {
+					const file = files[write++] = {
+						name: info.name,
+						type: info.type,
+						size: info.size,
+						lastModified: info.lastModified,
+						_file: null,
+						_content: info.content,
+					};
+
+					( function( record ) {
+						const req = new XMLHttpRequest();
+
+						req.open( "GET", "data:" + record.type + ";base64," + record._content );
+						req.responseType = "blob";
+						req.onload = () => { record._file = req.response; };
+						req.onerror = error => { console.error( `recovering file from storage failed: ${error.messge}` ); }; // eslint-disable-line no-console
+						req.send();
+					} )( file );
+				}
+			}
+
+			files.splice( write );
+
+			return files;
+		}
+
+		return [];
 	}
 }
