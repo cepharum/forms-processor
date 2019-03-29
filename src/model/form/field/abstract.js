@@ -1091,18 +1091,21 @@ export default class FormFieldAbstractModel {
 			},
 			created() {
 				this.__onFormAutoFocusEvent = () => {
-					if ( that.form.autoFocusField === that ) {
-						this.$nextTick( () => {
-							const firstControl = this.$el.querySelector( "input, select, button" );
+					const tryFocusing = ( attempts = 10 ) => {
+						const firstControl = this.$el.querySelector( "input, select, button" );
+						if ( firstControl ) {
+							firstControl.focus();
 
-							if ( firstControl ) {
-								firstControl.focus();
-
-								if ( typeof firstControl.select === "function" ) {
-									firstControl.select();
-								}
+							if ( typeof firstControl.select === "function" ) {
+								firstControl.select();
 							}
-						} );
+						} else if ( attempts > 1 ) {
+							setTimeout( tryFocusing, 10, attempts - 1 );
+						}
+					};
+
+					if ( that.form.autoFocusField === that ) {
+						this.$nextTick( tryFocusing );
 					}
 				};
 

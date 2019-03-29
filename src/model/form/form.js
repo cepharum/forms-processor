@@ -330,10 +330,15 @@ export default class FormModel {
 					const _numFields = _fields.length;
 					let firstInteractive = null;
 
+					if ( this.sequence.currentForm !== this ) {
+						return null;
+					}
+
 					for ( let i = 0; i < _numFields; i++ ) {
 						const field = _fields[i];
 
-						if ( field.constructor.isInteractive && ( field.visible || !field.valid ) ) {
+						if ( field.constructor.isInteractive && field.constructor.isProvidingInput &&
+						     field.visible && field.type !== "hidden" && !field.disabled ) {
 							if ( firstInteractive == null ) {
 								firstInteractive = field;
 							}

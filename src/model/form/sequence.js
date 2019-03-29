@@ -703,7 +703,7 @@ export default class FormSequenceModel {
 		currentForm.finished = true;
 
 		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
-			this.events.$emit( "form:autofocus" );
+			this.handleAutoFocus();
 			return false;
 		}
 
@@ -1053,10 +1053,10 @@ export default class FormSequenceModel {
 				}
 			},
 			mounted() {
-				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => that.handleAutoFocus() );
 			},
 			updated() {
-				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => that.handleAutoFocus() );
 			},
 		};
 	}
@@ -1222,5 +1222,14 @@ export default class FormSequenceModel {
 		const normalized = String( type ).trim().toLowerCase();
 
 		return this.registry.fields[normalized] || null;
+	}
+
+	/**
+	 * Automatically focuses first one of currently available fields.
+	 *
+	 * @returns {void}
+	 */
+	handleAutoFocus() {
+		this.events.$emit( "form:autofocus" );
 	}
 }
