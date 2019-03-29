@@ -138,7 +138,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				        :class="[multi ? 'multi' : 'single', value == null ? 'prompting' : 'selected']" 
 				        :disabled="disabled" 
 				        @change="updated">
-					<option v-if="prompt" disabled :value="null">{{ prompt }}</option>
+					<option v-if="prompt && !disabled" disabled :value="null">{{ prompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,
