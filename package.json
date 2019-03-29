@@ -1,7 +1,7 @@
 {
   "name": "forms-processor",
   "description": "processes description of forms in browsers",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "MIT",
   "scripts": {
     "serve": "vue-cli-service serve",
