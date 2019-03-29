@@ -877,7 +877,7 @@ export default class FormSequenceModel {
 			const source = rawData[internalFormName];
 
 			form.fields.forEach( field => {
-				if ( field.constructor.isInteractive ) {
+				if ( field.constructor.isProvidingInput ) {
 					const internalFieldName = field.name;
 					const originalFieldName = field.originalName;
 

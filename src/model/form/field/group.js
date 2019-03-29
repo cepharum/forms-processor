@@ -228,7 +228,7 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 			for ( let i = 0; i < numFields; i++ ) {
 				const field = fields[i];
 
-				if ( field.constructor.isInteractive ) {
+				if ( field.constructor.isProvidingInput ) {
 					field.setValue( isValue ? newValue[field.name] : null );
 				}
 			}

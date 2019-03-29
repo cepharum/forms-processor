@@ -158,8 +158,18 @@ const ptnConstantRef = /^\s*=\s*\$constants?\.([^.\s]+)\s*$/i;
  */
 export default class FormFieldAbstractModel {
 	/**
-	 * Indicates if current type of field is interactive thus providing any
-	 * input data.
+	 * Indicates if current type of field is providing some value considered
+	 * input to be processed.
+	 *
+	 * @returns {boolean} true if fields of this type are generating input data
+	 */
+	static get isProvidingInput() {
+		return this.isInteractive;
+	}
+
+	/**
+	 * Indicates if current type of field is providing some visual component for
+	 * interacting with the user.
 	 *
 	 * @returns {boolean} true if fields of this type are generating input data
 	 */
@@ -179,7 +189,7 @@ export default class FormFieldAbstractModel {
 	 */
 	static presumeQualifiedNames( sequence, formName, fieldDefinition, fieldIndex ) { // eslint-disable-line no-unused-vars
 		if ( !fieldDefinition.name ) {
-			if ( this.isInteractive ) {
+			if ( this.isProvidingInput ) {
 				throw new TypeError( "Missing field name in definition." );
 			}
 
@@ -279,7 +289,7 @@ export default class FormFieldAbstractModel {
 			 * @property {*|undefined} current value of field, `undefined` if there is no value available for current field
 			 * @readonly
 			 */
-			value: this.constructor.isInteractive ? {
+			value: this.constructor.isProvidingInput ? {
 				get: () => form.readValue( qualifiedName ),
 			} : { value: undefined },
 
@@ -954,7 +964,7 @@ export default class FormFieldAbstractModel {
 
 		this.updateFieldInformation( data, itsMe );
 
-		if ( !itsMe && data.pristine && this.constructor.isInteractive ) {
+		if ( !itsMe && data.pristine && this.constructor.isProvidingInput ) {
 			// some other field has been updated
 			// -> my initial value might depend on it, so re-assign my initial
 			//    unless field has been adjusted before

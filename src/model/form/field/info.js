@@ -86,7 +86,7 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	static get isInteractive() {
+	static get isProvidingInput() {
 		return false;
 	}
 }

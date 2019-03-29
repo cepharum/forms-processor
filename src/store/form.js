@@ -181,7 +181,7 @@ export default {
 					const name = names[i];
 					const field = fields[name];
 
-					if ( field && field.constructor.isInteractive ) {
+					if ( field && field.constructor.isProvidingInput ) {
 						const recoveredData = field.constructor.deserialize( data[name] );
 
 						field.setValue( recoveredData );

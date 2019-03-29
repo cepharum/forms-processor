@@ -59,11 +59,17 @@ FormsProcessor.addField( "my-other-custom", MyCustomFieldType );
 
 Every implementation of a field must overload certain methods of its abstract base class and may overload additional methods.
 
+### `static get isProvidingInput()` 
+
+Any type of field may declare whether it is providing some value to be considered input for processing.
+
+By default, the abstract base class is marking a field as _providing input_ when it is marked _interactive_ (see below). This dependency results in most fields being marked as _providing input_ unless overloading this getter on their own behalf.
+
 ### `static get isInteractive()` 
 
-An interactive field is a field which is gathering information to be included with the resulting set of a input data processed by FormsProcessor after having having passed all defined forms.
+An interactive field is a field which is providing some visual component for interacting with the user. Usually an interactive field is providing some input, too. But this isn't a requirement.
 
-The abstract base class isn't marked as _interactive_. Thus your derived class **must** overload this _static_ getter to return `true` for marking your field to be _interactive_.
+By default, the abstract base class is marking field instances as _interactive_. This is reducing efforts required to implement most derived types of fields.
 
 ### `renderFieldComponent( reactiveFieldInfo )`
 
