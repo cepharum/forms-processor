@@ -149,13 +149,13 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 							:value="item.value"
 							:checked="isSet(item.value)"
 							:disabled="disabled"
-							@change="adjust( $event.target.checked, item.value )"
+							@change="adjust( $event, $event.target.checked, item.value )"
 						/>
 
 						<label v-if="markdown" :for="individualId( index )"
-							@click="adjust( isRadio || !isSet( item.value ), item.value )" v-html="item.label"></label>
+							@click="adjust( $event, isRadio || !isSet( item.value ), item.value )" v-html="item.label"></label>
 						<label v-else :for="individualId( index )"
-							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
+							@click="adjust( $event, isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</div>
 			`,
@@ -199,7 +199,16 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 
 					return current === value;
 				},
-				adjust( added, newValue ) {
+				adjust( event, added, newValue ) {
+					let iter = event.target;
+					while ( iter && iter !== this.$el ) {
+						if ( iter.nodeName.toLowerCase() === "a" ) {
+							return;
+						}
+
+						iter = iter.parentNode;
+					}
+
 					that.touch();
 
 					const { value } = this;
