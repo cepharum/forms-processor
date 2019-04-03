@@ -91,7 +91,7 @@ export default {
 		unblockView() {
 			this.blocked = false;
 		},
-		block() {},
+		block() {}, // eslint-disable-line no-empty-function
 	},
 	beforeMount() {
 		this.$store.getters.sequence.events.$on( "sequence:advance", this.scrollToTop );
