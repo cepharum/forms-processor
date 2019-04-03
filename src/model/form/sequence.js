@@ -766,7 +766,7 @@ export default class FormSequenceModel {
 		const { locale } = this;
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
-		this.events.$emit( "sequence:submitting", originalData );
+		this.events.$emit( "sequence:submission:start", originalData );
 
 		return new Promise( ( resolve, reject ) => {
 			/**
@@ -779,8 +779,6 @@ export default class FormSequenceModel {
 			 */
 			const _process = ( processors, currentIndex, data ) => {
 				if ( currentIndex >= processors.length ) {
-					this.events.$emit( "sequence:submitted", data );
-
 					resolve( data );
 				} else {
 					Promise.resolve( processors[currentIndex].process( data, this ) )
@@ -794,9 +792,13 @@ export default class FormSequenceModel {
 			return _process( this.processors, 0, originalData );
 		} )
 			.then( processedData => {
+				this.events.$emit( "sequence:submission:done", processedData );
+
 				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, locale ), originalData, processedData );
 			} )
 			.catch( error => {
+				this.events.$emit( "sequence:submission:failed", error );
+
 				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
 				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, locale ), error ) );

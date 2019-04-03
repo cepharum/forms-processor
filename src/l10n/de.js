@@ -44,6 +44,7 @@ export default function() {
 		PROMPT: {
 			SELECTOR: "Bitte wählen...",
 		},
+		BLOCK_MESSAGE: "Bitte warten...",
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
 			INVALID: "Diese Angabe ist ungültig.",
