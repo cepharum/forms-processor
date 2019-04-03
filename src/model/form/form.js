@@ -407,7 +407,7 @@ export default class FormModel {
 		for ( let i = 0; i < numFields; i++ ) {
 			const field = this.fields[i];
 
-			if ( !field.readValidState( { live, force, includePristine, showErrors, cache } ) ) {
+			if ( !field.readValidState( { live, force, includePristine, showErrors, cache } ) && field.visible ) {
 				valid = false;
 			}
 		}
