@@ -56,6 +56,7 @@ export default class FormSequenceModel {
 	 */
 	constructor( { id, name }, definition, registry, { read, write, data }, auxiliary ) {
 		const { mode = {}, sequence = [], processors = {} } = definition;
+		const { buttons = {} } = mode;
 
 		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
@@ -534,6 +535,21 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			progressComponent: { value: this.renderProgressComponent( reactiveInfo ) },
+
+			/**
+			 * Exposes custom labels for use with basically supported buttons
+			 * unless either form is providing more specific customizations.
+			 *
+			 * @name FormModel#$button
+			 * @property {object<string,string>}
+			 * @readonly
+			 */
+			$buttons: { value: {
+				previous: buttons.previous || null,
+				next: buttons.next || null,
+				continue: buttons.continue || null,
+				submit: buttons.submit || null,
+			} },
 		} );
 	}
 

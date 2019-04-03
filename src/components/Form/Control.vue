@@ -37,16 +37,24 @@ export default {
 			return !this.$store.getters.sequence.currentForm.readValidState( { live: false, includePristine: true, showErrors: false, cache: false } );
 		},
 		labelPrevious() {
-			return this.$store.getters.l10n.BUTTONS.PREVIOUS;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.previous || sequence.$buttons.previous || this.$store.getters.l10n.BUTTONS.PREVIOUS;
 		},
 		labelNext() {
-			return this.$store.getters.l10n.BUTTONS.NEXT;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.next || sequence.$buttons.next || this.$store.getters.l10n.BUTTONS.NEXT;
 		},
 		labelContinue() {
-			return this.$store.getters.l10n.BUTTONS.CONTINUE;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.continue || sequence.$buttons.continue || this.$store.getters.l10n.BUTTONS.CONTINUE;
 		},
 		labelSubmit() {
-			return this.$store.getters.l10n.BUTTONS.SUBMIT;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.submit || sequence.$buttons.submit || this.$store.getters.l10n.BUTTONS.SUBMIT;
 		},
 		mayContinue() {
 			const sequence = this.$store.getters.sequence;

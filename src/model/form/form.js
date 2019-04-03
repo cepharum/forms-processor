@@ -39,7 +39,7 @@ export default class FormModel {
 	 * @param {object} reactiveFormInfo provides object to contain all reactive information on form
 	 */
 	constructor( sequence, definition, index, reactiveFormInfo ) {
-		const { name = "", fields = [] } = definition;
+		const { name = "", fields = [], buttons = {} } = definition;
 
 		const originalName = String( name ).trim();
 		const formName = originalName.toLowerCase();
@@ -384,6 +384,21 @@ export default class FormModel {
 			 * @readonly
 			 */
 			component: { value: this.renderComponent( reactiveFormInfo ) },
+
+			/**
+			 * Exposes custom labels for use with basically supported buttons
+			 * while this form is currently visible one.
+			 *
+			 * @name FormModel#$button
+			 * @property {object<string,string>}
+			 * @readonly
+			 */
+			$buttons: { value: {
+				previous: buttons.previous || null,
+				next: buttons.next || null,
+				continue: buttons.continue || null,
+				submit: buttons.submit || null,
+			} },
 		} );
 	}
 
