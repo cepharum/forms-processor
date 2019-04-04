@@ -97,6 +97,13 @@ A custom input data processor must overload this method:
   
   Every input data processor should return some data. Whenever an input data processor isn't adjusting the provided data it should return the originally provided data, at least. By returning promise for resulting data the method may start asynchronous processes. This will defer invocation of further input data processors.
 
+### `addTermFunction( functionName, implementation )`
+
+Terms are supported in most parts of definition. This method registers custom function available in terms. The provided function implementation - which is a function - is invoked in context of field the containing term is used with.
+
+* `functionName` is the case-insensitive name of function in scope in any term.
+* `implementation` is the function itself. It may take any number of arguments and it is expected to return some new value. `this` is referring to the instance of field containing term is used with.
+
 ### `addTranslations( locale, translationsOverlay )`
 
 FormsProcessor has internationalization support built in. Internal fields use lookup trees providing translations for current locale. This method is provided to add custom overlays to extend or replace existing entries in a translation tree.
