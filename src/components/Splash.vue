@@ -98,6 +98,13 @@ export default {
 								throw new TypeError( `registering invalid processor type as ${name} rejected` );
 							}
 						},
+						addTermFunction( name, implementation ) {
+							if ( typeof implementation === "function" ) {
+								configuration.registry.processors[name] = implementation;
+							} else {
+								throw new TypeError( `registering invalid implementation for term function ${name} rejected` );
+							}
+						},
 						addTranslations( locale, translationsOverlay ) {
 							const currentLocale = store.getters["l10n/current"];
 							if ( locale === currentLocale ) {

@@ -208,7 +208,9 @@ export default class FormFieldAbstractModel {
 	 * @param {FormFieldAbstractModel} container reference on manager of field container containing current field
 	 */
 	constructor( form, definition, fieldIndex, reactiveFieldInfo, customProperties = {}, container = null ) {
+		const that = this;
 		const { name } = definition;
+		const { sequence } = form;
 
 		// assume qualified names have been presumed before using
 		// presumeQualifiedNames() above, thus `name` must be defined now
@@ -228,6 +230,26 @@ export default class FormFieldAbstractModel {
 		reactiveFieldInfo.errors = [];
 
 
+		// get copy of all registered term functions bound to current field
+		const registeredTermFunctions = sequence.registry.termFunctions;
+		const termFunctionNames = Object.keys( registeredTermFunctions );
+		const numFunctionNames = termFunctionNames.length;
+		const termFunctions = {};
+
+		for ( let i = 0; i < numFunctionNames; i++ ) {
+			const termFunctionName = termFunctionNames[i];
+
+			termFunctions[termFunctionName] = function( ...args ) {
+				return registeredTermFunctions[termFunctionName].apply( that, args );
+			};
+		}
+
+		const boundTermFunctions = Object.freeze( termFunctions );
+
+		let mayAdvertisedDependencies = true;
+		const advertisedDependencies = [];
+
+
 		Object.defineProperties( this, {
 			/**
 			 * Provides reference on instance managing form containing field.
@@ -237,6 +259,16 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			form: { value: form },
+
+			/**
+			 * Provides direct reference on manager controlling sequence of
+			 * forms containing current field.
+			 *
+			 * @name FormFieldAbstractModel#sequence
+			 * @property {FormSequenceModel}
+			 * @readonly
+			 */
+			sequence: { value: sequence },
 
 			/**
 			 * Provides index of field in sequence of its containing form's
@@ -301,6 +333,48 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			container: { value: container || null },
+
+			/**
+			 * Exposes custom term functions bound to current field.
+			 *
+			 * @name FormFieldAbstractModel#termFunctions
+			 * @property {object<string,function>}
+			 * @readonly
+			 */
+			termFunctions: { value: boundTermFunctions },
+
+			/**
+			 * Exposes opportunity to advertise additional dependencies during
+			 * construction of current field)
+			 *
+			 * @name FormFieldAbstractModel#advertiseDependency
+			 * @property {boolean|string}
+			 */
+			advertiseDependency: {
+				get: () => mayAdvertisedDependencies,
+				set: fieldOrFieldName => {
+					if ( mayAdvertisedDependencies && fieldOrFieldName ) {
+						const _name = fieldOrFieldName instanceof this.constructor ? fieldOrFieldName.qualifiedName : String( fieldOrFieldName );
+
+						if ( advertisedDependencies.indexOf( _name ) < 0 ) {
+							advertisedDependencies.push( _name );
+						}
+					}
+				},
+			},
+
+			/**
+			 * Exports list of dependencies advertised by processing terms used
+			 * in definition of current field.
+			 *
+			 * @name FormFieldAbstractModel#advertisedDependency
+			 * @property string[]
+			 * @readonly
+			 * @protected
+			 */
+			advertisedDependencies: {
+				value: advertisedDependencies,
+			},
 		} );
 
 
@@ -366,7 +440,7 @@ export default class FormFieldAbstractModel {
 
 				const constantRef = ptnConstantRef.exec( propertyValue );
 				if ( constantRef ) {
-					propertyValue = form.sequence.constants[constantRef[1]] || null;
+					propertyValue = sequence.constants[constantRef[1]] || null;
 				}
 
 				switch ( propertyName ) {
@@ -425,7 +499,7 @@ export default class FormFieldAbstractModel {
 
 					const constantRef = ptnConstantRef.exec( propertyValue );
 					if ( constantRef ) {
-						propertyValue = form.sequence.constants[constantRef[1]] || null;
+						propertyValue = sequence.constants[constantRef[1]] || null;
 					}
 
 					handleCustomProperty.call( this, customGetters, customProperty, propertyValue, propertyName );
@@ -475,6 +549,9 @@ export default class FormFieldAbstractModel {
 				collectedDependencies[dependencies[j].slice( 0, 2 ).join( "." )] = true;
 			}
 		}
+
+		mayAdvertisedDependencies = false;
+
 
 
 		/**
@@ -617,6 +694,22 @@ export default class FormFieldAbstractModel {
 
 
 		/**
+		 * Collects term used in context of current field.
+		 *
+		 * @param {Processor} term compiled term ready for processing
+		 * @returns {void}
+		 */
+		function collectTerm( term ) {
+			try {
+				// evaluate term e.g. to have any involved term function
+				// advertise custom dependencies of current field
+				term.evaluate( {} );
+			} catch ( e ) {} // eslint-disable-line no-empty
+
+			terms.push( term );
+		}
+
+		/**
 		 * Resolves variable name found in terms used in definition converting
 		 * local references into global ones using a field's qualified name.
 		 *
@@ -628,7 +721,7 @@ export default class FormFieldAbstractModel {
 				return [ form.name, originalPath[0] ];
 			}
 
-			const { qualifiedNames } = form.sequence;
+			const { qualifiedNames } = sequence;
 			const [ major, minor ] = originalPath;
 
 			if ( !qualifiedNames[`${major}.${minor}`.toLowerCase()] ) {
@@ -657,7 +750,7 @@ export default class FormFieldAbstractModel {
 			let compiled;
 
 			try {
-				compiled = CompileTerm.compileString( value, form.sequence.customFunctions, termCache, resolveVariableName );
+				compiled = CompileTerm.compileString( value, boundTermFunctions, termCache, resolveVariableName );
 			} catch ( error ) {
 				throw new TypeError( `compiling term ${value} in context of field ${key} failed: ${error.message}` );
 			}
@@ -671,7 +764,7 @@ export default class FormFieldAbstractModel {
 					const slice = compiled[i];
 
 					if ( slice instanceof Processor ) {
-						terms.push( slice );
+						collectTerm( slice );
 						hasTerm = true;
 					}
 				}
@@ -689,7 +782,7 @@ export default class FormFieldAbstractModel {
 							const slice = compiled[i];
 
 							if ( typeof slice === "object" ) {
-								rendered[i] = slice.evaluate( form.sequence.data );
+								rendered[i] = slice.evaluate( sequence.data );
 							} else {
 								rendered[i] = slice;
 							}
@@ -708,14 +801,14 @@ export default class FormFieldAbstractModel {
 
 			if ( compiled instanceof Processor ) {
 				// value completely consists of a sole term's source
-				terms.push( compiled );
+				collectTerm( compiled );
 
 				if ( data ) {
 					data[key] = null;
 				}
 
 				return { get: () => {
-					const computed = compiled.evaluate( form.sequence.data );
+					const computed = compiled.evaluate( sequence.data );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {
@@ -868,7 +961,7 @@ export default class FormFieldAbstractModel {
 	 * @return {Array} lists qualified names of fields this field depends on.
 	 */
 	listDependencies() {
-		return [];
+		return this.advertisedDependencies;
 	}
 
 	/**
@@ -980,7 +1073,7 @@ export default class FormFieldAbstractModel {
 			this.readValidState( { force: true } );
 		}
 
-		this.form.sequence.events.$emit( "form:update", this.qualifiedName, updatedFieldName || null, newValue );
+		this.sequence.events.$emit( "form:update", this.qualifiedName, updatedFieldName || null, newValue );
 
 		return oldValidity !== data.valid;
 	}
@@ -1109,7 +1202,7 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				that.form.sequence.events.$on( "form:autofocus", this.__onFormAutoFocusEvent );
+				that.sequence.events.$on( "form:autofocus", this.__onFormAutoFocusEvent );
 			},
 			beforeMount() {
 				this.__onFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
@@ -1124,10 +1217,10 @@ export default class FormFieldAbstractModel {
 					}
 				};
 
-				that.form.sequence.events.$on( "form:update", this.__onFormUpdateEvent );
+				that.sequence.events.$on( "form:update", this.__onFormUpdateEvent );
 			},
 			beforeDestroy() {
-				const { events } = that.form.sequence;
+				const { events } = that.sequence;
 
 				events.$off( "form:update", this.__onFormUpdateEvent );
 				events.$off( "form:autofocus", this.__onFormAutoFocusEvent );

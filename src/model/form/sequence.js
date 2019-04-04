@@ -30,7 +30,6 @@ import FormModel from "./form";
 
 import L10n from "../../service/l10n";
 import Data from "../../service/data";
-import CustomFunctions from "./utility/custom-functions";
 
 
 /**
@@ -222,12 +221,13 @@ export default class FormSequenceModel {
 			 * processors to be supported in processing current sequence of forms.
 			 *
 			 * @name FormSequenceModel#registry
-			 * @property {{fields:object<string,FormFieldAbstractModel>, processors:object<string,FormProcessorAbstractModel>}}
+			 * @property {FormsAPIExtensionsRegistry}
 			 * @readonly
 			 */
 			registry: { value: Object.freeze( Object.assign( {}, {
 				fields: Object.freeze( Object.assign( {}, registry.fields ) ),
 				processors: Object.freeze( Object.assign( {}, registry.processors ) ),
+				termFunctions: Object.freeze( Object.assign( {}, registry.termFunctions ) ),
 				translations: Object.freeze( Object.assign( {}, registry.translations ) ),
 			} ) ) },
 
@@ -239,15 +239,6 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
-
-			/**
-			 * Exposes custom functions for use in scope of current sequence.
-			 *
-			 * @name FormSequenceModel#customFunctions
-			 * @property {object<string,function>}
-			 * @readonly
-			 */
-			customFunctions: { value: CustomFunctions( this ) },
 		} );
 
 
@@ -936,26 +927,28 @@ export default class FormSequenceModel {
 				for ( let j = 0; j < numDependencies; j++ ) {
 					const dependency = dependencies[j];
 
-					if ( !dependentsPerField.hasOwnProperty( dependency ) ) {
-						dependentsPerField[dependency] = [];
+					if ( !fieldsMap.hasOwnProperty( dependency ) ) {
+						throw new TypeError( `invalid dependency on unknown field ${dependency}` );
 					}
 
-					dependentsPerField[dependency].push( fieldName );
+					if ( dependentsPerField.hasOwnProperty( dependency ) ) {
+						dependentsPerField[dependency].push( fieldName );
+					} else {
+						dependentsPerField[dependency] = [fieldName];
+					}
+
 				}
 			}
 		}
 
-		const keys = Object.keys( dependentsPerField );
-		const numKeys = keys.length;
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
 
-		for ( let i = 0; i < numKeys; i++ ) {
-			const key = keys[i];
-
-			if ( !fieldsMap.hasOwnProperty( key ) ) {
-				throw new TypeError( `invalid dependency on unknown field ${key}` );
+			if ( dependentsPerField.hasOwnProperty( fieldName ) ) {
+				fieldsMap[fieldName].dependents = dependentsPerField[fieldName];
+			} else {
+				fieldsMap[fieldName].dependents = [];
 			}
-
-			fieldsMap[key].dependents = dependentsPerField[key];
 		}
 	}
 
@@ -982,9 +975,10 @@ export default class FormSequenceModel {
 
 			for ( let i = 0; i < numDependents; i++ ) {
 				const dependent = fields[dependents[i]];
+
 				if ( dependent && dependent !== field ) {
 					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
-						if ( containingForms.indexOf( dependent.form ) > -1 ) {
+						if ( containingForms.indexOf( dependent.form ) < 0 ) {
 							containingForms.push( dependent.form );
 						}
 					}

@@ -205,15 +205,30 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 	/** @inheritDoc */
 	listDependencies() {
-		const { fields } = this;
-		const numFields = fields.length;
-		const deps = [];
+		const map = {};
 
-		for ( let i = 0; i < numFields; i++ ) {
-			deps.splice( deps.length, 0, ...fields[i].dependsOn );
+		const deps = super.listDependencies();
+		const numDeps = deps.length;
+
+		for ( let i = 0; i < numDeps; i++ ) {
+			map[deps[i]] = true;
 		}
 
-		return deps;
+
+		const { fields } = this;
+		const numFields = fields.length;
+
+		for ( let i = 0; i < numFields; i++ ) {
+			const dependsOn = fields[i].dependsOn;
+			const numDependsOn = dependsOn.length;
+
+			for ( let j = 0; j < numDependsOn; j++ ) {
+				map[dependsOn[j]] = true;
+			}
+		}
+
+
+		return Object.keys( map );
 	}
 
 	/** @inheritDoc */
