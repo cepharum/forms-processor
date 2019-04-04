@@ -100,7 +100,7 @@ export default {
 						},
 						addTermFunction( name, implementation ) {
 							if ( typeof implementation === "function" ) {
-								configuration.registry.processors[name] = implementation;
+								configuration.registry.termFunctions[name] = implementation;
 							} else {
 								throw new TypeError( `registering invalid implementation for term function ${name} rejected` );
 							}
