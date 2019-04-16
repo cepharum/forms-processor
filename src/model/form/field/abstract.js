@@ -782,7 +782,7 @@ export default class FormFieldAbstractModel {
 							const slice = compiled[i];
 
 							if ( typeof slice === "object" ) {
-								rendered[i] = slice.evaluate( sequence.data );
+								rendered[i] = slice.evaluate( lowercase( sequence.data, slice.source.toLowerCase().replace( /\s+/g, "" ) ) );
 							} else {
 								rendered[i] = slice;
 							}
@@ -807,8 +807,10 @@ export default class FormFieldAbstractModel {
 					data[key] = null;
 				}
 
+				const lowerCaseTerm = compiled.source.toLowerCase().replace( /\s+/g, "" );
+
 				return { get: () => {
-					const computed = compiled.evaluate( sequence.data );
+					const computed = compiled.evaluate( lowercase( sequence.data, lowerCaseTerm ) );
 					const normalized = normalizer ? normalizer( computed ) : computed;
 
 					if ( data ) {
@@ -829,6 +831,44 @@ export default class FormFieldAbstractModel {
 			}
 
 			return { value: normalized };
+		}
+
+		/**
+		 * Provides copy of provided data with own properties in any contained
+		 * object converted to all-lowercase.
+		 *
+		 * @param {*} data some data to be processed
+		 * @param {string} term source of term evaluated in context of resulting data
+		 * @param {string} path pathname of provided data
+		 * @returns {*} if data is object copy of object with property names changed, otherwise provided data
+		 */
+		function lowercase( data, term, path = null ) {
+			if ( data && typeof data === "object" ) {
+				const names = Object.keys( data );
+				const numNames = names.length;
+				const copy = {};
+
+				for ( let i = 0; i < numNames; i++ ) {
+					const pName = names[i];
+					const lName = pName.toLowerCase();
+					let value = data[pName];
+
+					const subPath = path == null ? lName : path + "." + lName;
+					if ( term.indexOf( subPath ) > -1 ) {
+						if ( value && typeof value === "object" && !Array.isArray( value ) ) {
+							value = lowercase( value, term, subPath );
+						}
+
+						copy[lName] = value;
+					} else {
+						copy[pName] = value;
+					}
+				}
+
+				return copy;
+			}
+
+			return data;
 		}
 
 		/**
