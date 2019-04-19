@@ -32,35 +32,46 @@ import MapProcessor from "../../../../../src/model/form/processor/map";
 
 
 describe( "MapProcessor", () => {
+	const sequenceMock = {
+		registry: {
+			termFunctions: [],
+		},
+	};
+
 	it( "is available", () => {
 		Should( MapProcessor ).be.ok();
 	} );
 
-	it( "can be constructed when passing definition containing proper map", () => {
+	it( "requires provision of sequence manager or similar in second argument", () => {
 		( () => new MapProcessor() ).should.throw();
-		( () => new MapProcessor( null ) ).should.throw();
-		( () => new MapProcessor( {} ) ).should.throw();
-		( () => new MapProcessor( { something: true } ) ).should.throw();
-		( () => new MapProcessor( { something: "true" } ) ).should.throw();
-		( () => new MapProcessor( { map: null } ) ).should.throw();
-		( () => new MapProcessor( { map: true } ) ).should.throw();
-		( () => new MapProcessor( { map: "true" } ) ).should.throw();
-		( () => new MapProcessor( { map: {} } ) ).should.throw();
+		( () => new MapProcessor( { map: { something: null } } ) ).should.throw();
+		( () => new MapProcessor( { map: { something: null } }, sequenceMock ) ).should.not.throw();
+	} );
 
-		( () => new MapProcessor( { map: { something: null } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: true } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: "true" } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: {} } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: { sub: null } } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: { sub: true } } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: { sub: "true" } } } ) ).should.not.throw();
-		( () => new MapProcessor( { map: { something: { sub: {} } } } ) ).should.not.throw();
+	it( "can be constructed when passing definition containing proper map", () => {
+		( () => new MapProcessor( null, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( {}, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { something: true }, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { something: "true" }, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { map: null }, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { map: true }, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { map: "true" }, sequenceMock ) ).should.throw();
+		( () => new MapProcessor( { map: {} }, sequenceMock ) ).should.throw();
+
+		( () => new MapProcessor( { map: { something: null } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: true } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: "true" } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: {} } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: { sub: null } } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: { sub: true } } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: { sub: "true" } } }, sequenceMock ) ).should.not.throw();
+		( () => new MapProcessor( { map: { something: { sub: {} } } }, sequenceMock ) ).should.not.throw();
 	} );
 
 	it( "creates exact copy of map containing literals only", () => {
 		const mapper = new MapProcessor( { map: {
 			major: "test",
-		} } );
+		} }, sequenceMock );
 
 		const mapped = mapper.process( {} );
 		mapped.should.be.Promise();
@@ -74,7 +85,7 @@ describe( "MapProcessor", () => {
 	it( "replaces element of map consisting of a term's source with value in a provided set of named values addressed by that term", () => {
 		const mapper = new MapProcessor( { map: {
 			major: "=test",
-		} } );
+		} }, sequenceMock );
 
 		const mapped = mapper.process( { test: "replaced" } );
 		mapped.should.be.Promise();
@@ -88,7 +99,7 @@ describe( "MapProcessor", () => {
 	it( "replaces element of map consisting of a term's source with `undefined` if value addressed by term is missing in provided set of named values", () => {
 		const mapper = new MapProcessor( { map: {
 			major: "=test",
-		} } );
+		} }, sequenceMock );
 
 		const mapped = mapper.process( { different: "replaced" } );
 		mapped.should.be.Promise();
@@ -102,7 +113,7 @@ describe( "MapProcessor", () => {
 	it( "replaces parts of string considered injected term to be evaluated in scope of a provided set of named values", () => {
 		const mapper = new MapProcessor( { map: {
 			major: "The {{ test }} value.",
-		} } );
+		} }, sequenceMock );
 
 		const mapped = mapper.process( { test: "replaced" } );
 		mapped.should.be.Promise();
@@ -133,7 +144,7 @@ describe( "MapProcessor", () => {
 					multiPartial: " multiple {{ replacement }} elements in a {{ compiling }} string ",
 				},
 			},
-		} } );
+		} }, sequenceMock );
 
 		const mapped = mapper.process( {
 			replacement: "replaced",
