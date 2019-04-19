@@ -33,8 +33,8 @@ import FormProcessorAbstractModel from "./abstract";
  */
 export default class FormProcessorDumpModel extends FormProcessorAbstractModel {
 	/** @inheritDoc */
-	constructor( definition ) {
-		super( definition );
+	constructor( definition, sequence ) {
+		super( definition, sequence );
 
 		const { label } = definition;
 

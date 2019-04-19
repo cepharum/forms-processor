@@ -41,8 +41,8 @@ const ptnProbableUrl = /^([a-z]+:\/\/[^/]+|\.)?\//;
  */
 export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 	/** @inheritDoc */
-	constructor( definition ) {
-		super( definition );
+	constructor( definition, sequence ) {
+		super( definition, sequence );
 
 		const { url, method = "POST", pass = "data", onError = "fail" } = definition;
 

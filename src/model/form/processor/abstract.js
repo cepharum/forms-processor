@@ -34,8 +34,9 @@
 export default class FormProcessorAbstractModel {
 	/**
 	 * @param {object} definition definition properties customizing processor's particular behaviour
+	 * @param {FormSequenceModel} sequence reference on sequence manager this processor is used with
 	 */
-	constructor( definition ) {
+	constructor( definition, sequence ) {
 		Object.defineProperties( this, {
 			/**
 			 * Exposes definition customizing processor's behaviour.
@@ -45,6 +46,15 @@ export default class FormProcessorAbstractModel {
 			 * @readonly
 			 */
 			definition: { value: definition },
+
+			/**
+			 * Exposes sequence processor is used with.
+			 *
+			 * @name FormProcessorAbstractModel#sequence
+			 * @property {FormSequenceModel}
+			 * @readonly
+			 */
+			sequence: { value: sequence },
 		} );
 	}
 

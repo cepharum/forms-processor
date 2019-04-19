@@ -1188,7 +1188,7 @@ export default class FormSequenceModel {
 					throw new TypeError( `Definition of unknown input processor "${typeName}" rejected.` );
 				}
 
-				processors[write++] = new Implementation( definition );
+				processors[write++] = new Implementation( definition, this );
 			}
 		}
 
