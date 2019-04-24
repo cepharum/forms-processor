@@ -416,28 +416,28 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			render( createElement ) {
 				const elements = [];
 				const classes = [
-					"align-" + that.align,
+					"align-" + this.align,
 				];
 
-				if ( that.prefix == null ) {
+				if ( this.prefix == null ) {
 					classes.push( "without-prefix" );
 				} else {
 					classes.push( "with-prefix" );
 					elements.push( createElement( "span", {
 						class: "prefix",
-					}, that.prefix ) );
+					}, this.prefix ) );
 				}
 
 				const domProps = {
 					value: reactiveFieldInfo.formattedValue,
 				};
 
-				if ( that.disabled ) {
+				if ( this.disabled ) {
 					domProps.disabled = true;
 				}
 
-				if ( that.placeholder != null ) {
-					domProps.placeholder = that.placeholder + ( that.required && !that.label ? "*" : "" );
+				if ( this.placeholder != null ) {
+					domProps.placeholder = this.placeholder + ( this.required && !this.label ? "*" : "" );
 				}
 
 				if ( !that.multiline ) {
@@ -468,13 +468,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					},
 				} ) );
 
-				if ( that.suffix == null ) {
+				if ( this.suffix == null ) {
 					classes.push( "without-suffix" );
 				} else {
 					classes.push( "with-suffix" );
 					elements.push( createElement( "span", {
 						class: "suffix",
-					}, that.suffix ) );
+					}, this.suffix ) );
 				}
 
 				const _counter = [];

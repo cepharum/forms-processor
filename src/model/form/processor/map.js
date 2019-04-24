@@ -29,6 +29,7 @@
 import FormProcessorAbstractModel from "./abstract";
 import CompileTerm from "../utility/process";
 import { Processor } from "simple-terms";
+import FormFieldAbstractModel from "../field/abstract";
 
 
 const cache = new Map();
@@ -56,8 +57,8 @@ const cache = new Map();
  */
 export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 	/** @inheritDoc */
-	constructor( definition ) {
-		super( definition );
+	constructor( definition, sequence ) {
+		super( definition, sequence );
 
 		if ( !definition || !definition.hasOwnProperty( "map" ) || !definition.map || typeof definition.map !== "object" ) {
 			throw new TypeError( "missing definition of map to be applied on processing data" );
@@ -67,6 +68,35 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 			throw new TypeError( "rejecting empty map to be applied on processing data" );
 		}
 
+		const registeredTermFunctions = sequence.registry.termFunctions;
+		const termFunctionNames = Object.keys( registeredTermFunctions );
+		const numFunctionNames = termFunctionNames.length;
+		const termFunctions = {};
+
+		for ( let i = 0; i < numFunctionNames; i++ ) {
+			const termFunctionName = termFunctionNames[i];
+
+			termFunctions[termFunctionName] = function( ...args ) {
+				return registeredTermFunctions[termFunctionName].apply( Object.freeze( {
+					sequence: sequence,
+				} ), args );
+			};
+		}
+
+
+		Object.defineProperties( this, {
+			/**
+			 * Exposes custom term functions to be available in terms used in
+			 * definition of mapping.
+			 *
+			 * @property FormProcessorMapModel#termFunctions
+			 * @property {object<string,function>}
+			 * @readonly
+			 */
+			termFunctions: { value: Object.freeze( termFunctions ) },
+		} );
+
+
 		Object.defineProperties( this, {
 			/**
 			 * Exposes map applied to create different structure of data.
@@ -75,13 +105,13 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 			 * @property {object}
 			 * @readonly
 			 */
-			map: { value: this.constructor._compileMap( definition.map ) },
+			map: { value: this._compileMap( definition.map ) },
 		} );
 	}
 
 	/** @inheritDoc */
 	process( data, sequence ) { // eslint-disable-line no-unused-vars
-		return Promise.resolve( this.constructor._applyMap( this.map, Object.assign( data, sequence ? { _form: sequence.data } : null ) ) );
+		return Promise.resolve( this._applyMap( this.map, Object.assign( data, sequence ? { $form: sequence.data } : null ) ) );
 	}
 
 	/**
@@ -92,7 +122,7 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 	 * @returns {object<string,ThreadOfCompiledNodes>} hierarchical set of compiled terms mixed with literals
 	 * @private
 	 */
-	static _compileMap( map ) {
+	_compileMap( map ) {
 		const compiled = {};
 
 		const names = Object.keys( map );
@@ -105,7 +135,11 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 			if ( source && typeof source === "object" ) {
 				compiled[name] = this._compileMap( source );
 			} else {
-				compiled[name] = CompileTerm.compileString( source, {}, cache );
+				try {
+					compiled[name] = CompileTerm.compileString( source, this.termFunctions, cache );
+				} catch ( error ) {
+					throw new TypeError( `compiling term ${source} in context of processor mapping onto field ${name} failed: ${error.message}` );
+				}
 			}
 		}
 
@@ -121,7 +155,7 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 	 * @returns {object<string,ThreadOfData>} data with structure according provided map
 	 * @protected
 	 */
-	static _applyMap( map, data ) {
+	_applyMap( map, data ) {
 		const compiled = {};
 
 		const names = Object.keys( map );
@@ -139,7 +173,7 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 					const slice = source[j];
 
 					if ( slice && typeof slice === "object" ) {
-						computed[j] = slice.evaluate( data );
+						computed[j] = slice.evaluate( FormFieldAbstractModel.lowercaseData( data, slice.source.toLowerCase().replace( /\s+/g, "" ) ) );
 					} else {
 						computed[j] = slice;
 					}

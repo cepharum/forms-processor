@@ -1,9 +1,9 @@
 /**
- * (c) 2018 cepharum GmbH, Berlin, http://cepharum.de
+ * (c) 2019 cepharum GmbH, Berlin, http://cepharum.de
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 cepharum GmbH
+ * Copyright (c) 2019 cepharum GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +26,26 @@
  * @author: cepharum
  */
 
-import FormFieldAbstractModel from "./abstract";
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
-import FormFieldCheckBoxModel from "./checkbox";
-import FormFieldSelectModel from "./select";
-import FormFieldUploadModel from "./upload";
-import FormFieldImageModel from "./image";
-import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
-import FormFieldHiddenModel from "./hidden";
-import FormFieldDateModel from "./date";
+import L10n from "../../../service/l10n";
 
-export default {
-	abstract: FormFieldAbstractModel,
-	map: {
-		info: FormFieldInfoModel,
-		date: FormFieldDateModel,
-		text: FormFieldTextModel,
-		checkbox: FormFieldCheckBoxModel,
-		radio: FormFieldCheckBoxModel,
-		select: FormFieldSelectModel,
-		multi: FormFieldMultiModel,
-		upload: FormFieldUploadModel,
-		image: FormFieldImageModel,
-		group: FormFieldGroupModel,
-		hidden: FormFieldHiddenModel,
-	},
-};
+
+/**
+ * Resolves internationalized input provided as object with different
+ * localizations in separate properties with value of that property matching
+ * current locale.
+ *
+ * An internationalized object is expected to have property named like current
+ * locale's tag or otherwise have some property named `en` to expose an English
+ * translation or have one of the properties named `*` or `any` to expose a
+ * fallback.
+ *
+ * On providing non-object input or some object mismatching expectations this
+ * input is return as-is.
+ *
+ * @this FormFieldAbstractModel
+ * @param {*|object<string,*>} input some scalar to be passed, some object with properties per supported locale
+ * @return {*} provided scalar value or value of given object's property matching current locale
+ */
+export default function localize( input ) {
+	return L10n.selectLocalized( input, this.sequence.locale );
+}

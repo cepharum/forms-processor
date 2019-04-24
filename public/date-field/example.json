@@ -1,0 +1,40 @@
+{
+  "processors": [
+	{
+	  "url": "/"
+	}
+  ],
+  "title": "Persistent Input",
+  "description": "Sequence of forms",
+  "sequence": [
+	{
+	  "name": "date-field",
+	  "label": "Date Field Test",
+	  "fields": [
+		{
+		  "type": "date",
+		  "name": "test2",
+		  "allowedWeekDays": ["1-2", 5],
+		  "notAllowedDates": "24-12-2019",
+		  "format": "dd.mm.yyyy",
+		  "placeholder": "dd.mm.yyyy",
+		  "yearbuffer": 20,
+		  "minDate": "-18Y",
+		  "maxDate": "today",
+		  "required": true
+		},
+		{
+		  "type": "date",
+		  "name": "test",
+		  "allowedWeekDays": ["1-2", 5],
+		  "notAllowedDates": "24-12-2019",
+		  "placeholder": "yyyy-mm-dd",
+		  "yearbuffer": 20,
+		  "minDate": "-18Y",
+		  "maxDate": "today",
+		  "required": true
+		}
+	  ]
+	}
+  ]
+}

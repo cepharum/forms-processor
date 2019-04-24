@@ -74,62 +74,76 @@ export default class FormFieldImageUploadModel extends FormFieldUploadModel {
 	get previewComponent() {
 		const that = this;
 		const { previewMode } = that;
+
 		return {
 			props: {
 				file: {
-					type: File,
+					type: Object,
 					required: true,
 				},
 			},
-			template: `
-				<component :is="previewMode" :file="file" @remove="()=>{this.$emit('remove')}"></component>
-			`,
-			computed: {
-				previewMode() {
-					return previewMode;
+			data() {
+				const record = {
+					url: null,
+				};
+
+				const checker = () => {
+					if ( this.file._file instanceof Blob ) {
+						record.url = URL.createObjectURL( this.file._file );
+					} else {
+						setTimeout( checker, 25 );
+					}
+				};
+
+				checker();
+
+				return record;
+			},
+			render( createElement ) {
+				switch ( previewMode ) {
+					case "foreground" :
+						return createElement( "span", {
+							class: "preview image foreground",
+							title: name,
+						}, [
+							createElement( "img", {
+								domProps: {
+									src: this.url,
+									alt: "",
+								},
+							} ),
+							createElement( "span", {
+								class: "button",
+								on: {
+									click: () => { this.$emit( "remove" ); },
+								},
+							}, "\u00d7" ),
+						] );
+
+					case "background" :
+						return createElement( "span", {
+							class: "preview image background",
+							title: name,
+							style: this.url ? {
+								backgroundImage: "url(" + this.url + ")",
+							} : null,
+						}, [
+							createElement( "span", {
+								class: "button",
+								on: {
+									click: () => { this.$emit( "remove" ); },
+								},
+							}, "\u00d7" ),
+						] );
+				}
+
+				return createElement( "<!---->" );
+			},
+			beforeDestroy() {
+				if ( this.url ) {
+					URL.revokeObjectURL( this.url );
 				}
 			},
-			components: {
-				background: {
-					props: {
-						file: {
-							type: File,
-							required: true,
-						},
-					},
-					template: `
-						<span class="preview image background" :title="file.name" :style="style">
-							<span class="button" @click="()=>{this.$emit('remove')}">&times;</span>
-						</span>
-					`,
-					computed: {
-						style() {
-							return {
-								backgroundImage: `url(${URL.createObjectURL( this.file )})`,
-							};
-						},
-					},
-				},
-				foreground: {
-					props: {
-						file: {
-							type: File,
-							required: true,
-						},
-					},
-					template: `
-						<span class="preview image foreground" :title="file.name">
-							<img :src="url"/>
-							<span class="button" @click="()=>{this.$emit('remove')}">&times;</span>
-						</span>
-					`,
-					computed: {
-						url() {
-							return URL.createObjectURL( this.file );
-						}
-					},
-				}
-			}
 		};
 	}
 }

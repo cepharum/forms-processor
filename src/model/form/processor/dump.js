@@ -26,31 +26,35 @@
  * @author: cepharum
  */
 
-import FormFieldAbstractModel from "./abstract";
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
-import FormFieldCheckBoxModel from "./checkbox";
-import FormFieldSelectModel from "./select";
-import FormFieldUploadModel from "./upload";
-import FormFieldImageModel from "./image";
-import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
-import FormFieldHiddenModel from "./hidden";
-import FormFieldDateModel from "./date";
+import FormProcessorAbstractModel from "./abstract";
 
-export default {
-	abstract: FormFieldAbstractModel,
-	map: {
-		info: FormFieldInfoModel,
-		date: FormFieldDateModel,
-		text: FormFieldTextModel,
-		checkbox: FormFieldCheckBoxModel,
-		radio: FormFieldCheckBoxModel,
-		select: FormFieldSelectModel,
-		multi: FormFieldMultiModel,
-		upload: FormFieldUploadModel,
-		image: FormFieldImageModel,
-		group: FormFieldGroupModel,
-		hidden: FormFieldHiddenModel,
-	},
-};
+/**
+ * Implements processor sending all input data to some configured URL.
+ */
+export default class FormProcessorDumpModel extends FormProcessorAbstractModel {
+	/** @inheritDoc */
+	constructor( definition, sequence ) {
+		super( definition, sequence );
+
+		const { label } = definition;
+
+		Object.defineProperties( this, {
+			/**
+			 * Provides label to show on dumping current set of data on JS
+			 * console.
+			 *
+			 * @name FormProcessorDumpModel#label
+			 * @property {string}
+			 * @readonly
+			 */
+			label: { value: label },
+		} );
+	}
+
+	/** @inheritDoc */
+	process( data, sequence ) { // eslint-disable-line no-unused-vars
+		console.log( this.label, data ); // eslint-disable-line no-console
+
+		return data;
+	}
+}

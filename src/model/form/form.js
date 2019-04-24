@@ -39,7 +39,7 @@ export default class FormModel {
 	 * @param {object} reactiveFormInfo provides object to contain all reactive information on form
 	 */
 	constructor( sequence, definition, index, reactiveFormInfo ) {
-		const { name = "", fields = [] } = definition;
+		const { name = "", fields = [], buttons = {} } = definition;
 
 		const originalName = String( name ).trim();
 		const formName = originalName.toLowerCase();
@@ -330,10 +330,15 @@ export default class FormModel {
 					const _numFields = _fields.length;
 					let firstInteractive = null;
 
+					if ( this.sequence.currentForm !== this ) {
+						return null;
+					}
+
 					for ( let i = 0; i < _numFields; i++ ) {
 						const field = _fields[i];
 
-						if ( field.constructor.isInteractive && ( field.visible || !field.valid ) ) {
+						if ( field.constructor.isInteractive && field.constructor.isProvidingInput &&
+						     field.visible && field.type !== "hidden" && !field.disabled ) {
 							if ( firstInteractive == null ) {
 								firstInteractive = field;
 							}
@@ -379,6 +384,21 @@ export default class FormModel {
 			 * @readonly
 			 */
 			component: { value: this.renderComponent( reactiveFormInfo ) },
+
+			/**
+			 * Exposes custom labels for use with basically supported buttons
+			 * while this form is currently visible one.
+			 *
+			 * @name FormModel#$button
+			 * @property {object<string,string>}
+			 * @readonly
+			 */
+			$buttons: { value: {
+				previous: buttons.previous || null,
+				next: buttons.next || null,
+				continue: buttons.continue || null,
+				submit: buttons.submit || null,
+			} },
 		} );
 	}
 
@@ -392,16 +412,17 @@ export default class FormModel {
 	 * @param {boolean} force set true to prevent use of cached result of previous validation
 	 * @param {boolean} includePristine set true to validate pristine fields as well
 	 * @param {boolean} showErrors controls whether error messages of failed validations should be displayed/written in reactive data of field
+	 * @param {boolean} cache controls whether result is cached or not (doesn't control whether cached result is used, see `force`)
 	 * @returns {boolean} true if form is considered valid, false otherwise
 	 */
-	readValidState( { live = true, force = false, includePristine = false, showErrors = true } = {} ) {
+	readValidState( { live = true, force = false, includePristine = false, showErrors = true, cache = true } = {} ) {
 		const numFields = this.fields.length;
 		let valid = true;
 
 		for ( let i = 0; i < numFields; i++ ) {
 			const field = this.fields[i];
 
-			if ( !field.readValidState( { live, force, includePristine, showErrors } ) ) {
+			if ( !field.readValidState( { live, force, includePristine, showErrors, cache } ) && field.visible ) {
 				valid = false;
 			}
 		}
@@ -409,7 +430,7 @@ export default class FormModel {
 
 		const data = this.$data;
 
-		if ( data.valid !== valid ) {
+		if ( cache && data.valid !== valid ) {
 			data.valid = valid;
 
 			if ( !valid ) {

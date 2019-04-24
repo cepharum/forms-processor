@@ -1,9 +1,9 @@
 /**
- * (c) 2018 cepharum GmbH, Berlin, http://cepharum.de
+ * (c) 2019 cepharum GmbH, Berlin, http://cepharum.de
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 cepharum GmbH
+ * Copyright (c) 2019 cepharum GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +26,20 @@
  * @author: cepharum
  */
 
-import FormFieldAbstractModel from "./abstract";
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
-import FormFieldCheckBoxModel from "./checkbox";
-import FormFieldSelectModel from "./select";
-import FormFieldUploadModel from "./upload";
-import FormFieldImageModel from "./image";
-import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
-import FormFieldHiddenModel from "./hidden";
-import FormFieldDateModel from "./date";
+/**
+ * Fetches serialized value of named field.
+ *
+ * @this FormFieldAbstractModel
+ * @param {string} fieldName _fully qualified_ name of field
+ * @returns {?*} serialized value of selected field, null if field is missing
+ */
+export default function serialize( fieldName ) {
+	const fieldKey = fieldName.toLowerCase();
+	const field = this.sequence.fields[fieldKey];
 
-export default {
-	abstract: FormFieldAbstractModel,
-	map: {
-		info: FormFieldInfoModel,
-		date: FormFieldDateModel,
-		text: FormFieldTextModel,
-		checkbox: FormFieldCheckBoxModel,
-		radio: FormFieldCheckBoxModel,
-		select: FormFieldSelectModel,
-		multi: FormFieldMultiModel,
-		upload: FormFieldUploadModel,
-		image: FormFieldImageModel,
-		group: FormFieldGroupModel,
-		hidden: FormFieldHiddenModel,
-	},
-};
+	if ( !field ) {
+		return null;
+	}
+
+	return field.constructor.serialize( field.value );
+}

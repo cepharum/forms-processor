@@ -41,8 +41,8 @@ const ptnProbableUrl = /^([a-z]+:\/\/[^/]+|\.)?\//;
  */
 export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 	/** @inheritDoc */
-	constructor( definition ) {
-		super( definition );
+	constructor( definition, sequence ) {
+		super( definition, sequence );
 
 		const { url, method = "POST", pass = "data", onError = "fail" } = definition;
 
@@ -146,14 +146,7 @@ export default class FormProcessorSendModel extends FormProcessorAbstractModel {
 		} );
 	}
 
-	/**
-	 * Processes provided input data.
-	 *
-	 * @param {FormSequenceInputData} data all forms' input data
-	 * @param {FormSequenceModel} sequence sequence of forms provided data is related to
-	 * @returns {Promise<FormSequenceInputData>} processed input data
-	 * @abstract
-	 */
+	/** @inheritDoc */
 	process( data, sequence ) {
 		if ( !data || typeof data !== "object" || Array.isArray( data ) ) {
 			return Promise.reject( new TypeError( "Rejecting invalid input data to be sent." ) );

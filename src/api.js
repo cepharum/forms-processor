@@ -27,6 +27,7 @@
  */
 
 import Processors from "./model/form/processor";
+import TermFunctions from "./model/form/term-functions";
 import Fields from "./model/form/field";
 import Data from "@/service/data";
 import EventBus from "@/service/events";
@@ -36,6 +37,7 @@ import EventBus from "@/service/events";
  * @typedef {object} FormsAPIExtensionsRegistry
  * @property {object<string,FormFieldAbstractModel>} fields maps custom field types to be supported
  * @property {object<string,FormProcessorAbstractModel>} processors maps custom input processors
+ * @property {object<string,function>} termFunctions names custom function available in processable terms
  * @property {object<string,object>} translations map of locales into custom translation overlays
  */
 
@@ -77,6 +79,7 @@ export default class FormsAPI {
 				components: [],
 				fields: {},
 				processors: {},
+				termFunctions: {},
 				translations: {},
 			} },
 		} );
@@ -84,6 +87,7 @@ export default class FormsAPI {
 		this.runConfiguration( {
 			fields: Fields.map,
 			processors: Processors.map,
+			termFunctions: TermFunctions.map,
 			sequences: [],
 		} );
 	}
@@ -99,7 +103,7 @@ export default class FormsAPI {
 	 * @returns {void}
 	 */
 	runConfiguration( configuration ) {
-		const { fields = {}, processors = {}, translations = {}, sequences = [] } = ( function( preConfiguration ) {
+		const { fields = {}, processors = {}, termFunctions = {}, translations = {}, sequences = [] } = ( function( preConfiguration ) {
 			if ( Array.isArray( preConfiguration ) ) {
 				return {
 					sequences: preConfiguration,
@@ -108,8 +112,9 @@ export default class FormsAPI {
 
 			if ( preConfiguration && typeof preConfiguration === "object" && Array.isArray( preConfiguration.sequences ) ) {
 				return {
-					processors: preConfiguration.processors || {},
 					fields: preConfiguration.fields || {},
+					processors: preConfiguration.processors || {},
+					termFunctions: preConfiguration.termFunctions || {},
 					translations: preConfiguration.translations || {},
 					sequences: preConfiguration.sequences,
 				};
@@ -135,6 +140,14 @@ export default class FormsAPI {
 			const name = processorNames[i];
 
 			this.addProcessor( name, processors[name] );
+		}
+
+		const termFunctionNames = Object.keys( termFunctions );
+		const numTermFunctions = termFunctionNames.length;
+		for ( let i = 0; i < numTermFunctions; i++ ) {
+			const name = termFunctionNames[i];
+
+			this.addTermFunction( name, termFunctions[name] );
 		}
 
 		const translationNames = Object.keys( translations );
@@ -172,6 +185,7 @@ export default class FormsAPI {
 				registry: {
 					processors: Object.assign( {}, this._registry.processors, individualRegistry.processors ),
 					fields: Object.assign( {}, this._registry.fields, individualRegistry.fields ),
+					termFunctions: Object.assign( {}, this._registry.termFunctions, individualRegistry.termFunctions ),
 					translations: Data.deepMerge( {}, this._registry.translations, individualRegistry.translations ),
 				},
 			} ) );
@@ -273,7 +287,7 @@ export default class FormsAPI {
 	/**
 	 * Adds support for custom type of field.
 	 *
-	 * @param {string} typeName name of type to use in field definition for addressing provided implementation
+	 * @param {string} typeName case-insensitive name of type to use in field definition for addressing provided implementation
 	 * @param {class|function(class):class} implementationOrFactory implementation of custom field type or factory callback generating it
 	 * @returns {FormsAPI} current forms manager for fluent interface
 	 */
@@ -281,7 +295,7 @@ export default class FormsAPI {
 		const _name = String( typeName ).trim().toLowerCase();
 		const registry = this._registry.fields;
 
-		if ( registry.hasOwnProperty( _name ) ) {
+		if ( registry.hasOwnProperty( _name ) && ( !Fields.map.hasOwnProperty( _name ) || _name === "abstract" ) ) {
 			throw new TypeError( `Handler for fields of type "${typeName}" has been registered before.` );
 		}
 
@@ -299,7 +313,7 @@ export default class FormsAPI {
 	/**
 	 * Adds support for custom input processor.
 	 *
-	 * @param {string} name name of processor to use in a sequence's definition of input processors for including provided processor
+	 * @param {string} name case-insensitive name of processor to use in a sequence's definition of input processors for including provided processor
 	 * @param {class|function(class):class} implementationOrFactory implementation of custom field type or factory callback generating it
 	 * @returns {FormsAPI} current forms manager for fluent interface
 	 */
@@ -307,7 +321,7 @@ export default class FormsAPI {
 		const _name = String( name ).trim().toLowerCase();
 		const registry = this._registry.processors;
 
-		if ( registry.hasOwnProperty( _name ) ) {
+		if ( registry.hasOwnProperty( _name ) && ( !Processors.map.hasOwnProperty( _name ) || _name === "abstract" ) ) {
 			throw new TypeError( `Input processor of type "${name}" has been registered before.` );
 		}
 
@@ -318,6 +332,30 @@ export default class FormsAPI {
 		}
 
 		registry[_name] = processor;
+
+		return this;
+	}
+
+	/**
+	 * Adds custom function to be exposed in processing terms on deriving values.
+	 *
+	 * @param {string} functionName case-insensitive name of function to be used in terms
+	 * @param {function} implementation implementation of custom term function
+	 * @returns {FormsAPI} current forms manager for fluent interface
+	 */
+	addTermFunction( functionName, implementation ) {
+		const _name = String( functionName ).trim().toLowerCase();
+		const registry = this._registry.termFunctions;
+
+		if ( registry.hasOwnProperty( _name ) && !TermFunctions.map.hasOwnProperty( _name ) ) {
+			throw new TypeError( `Term function "${functionName}" has been registered before.` );
+		}
+
+		if ( typeof implementation !== "function" ) {
+			throw new TypeError( `Implementation for term function "${functionName}" is not a function.` );
+		}
+
+		registry[_name] = implementation;
 
 		return this;
 	}

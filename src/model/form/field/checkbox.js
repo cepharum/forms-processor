@@ -68,9 +68,11 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 					// support terms in either option's properties
 					return Options.createOptions( _d, null, {
 						localizer: map => this.selectLocalization( map ),
-						termHandler: v => cbTermHandler( v, null, true ),
+						termHandler: ( v, normalizer ) => cbTermHandler( v, normalizer, true ),
+						labelNormalizer: l => ( this.markdown ? this.markdown.render( l ) : l ),
 					} );
 				}
+
 
 				// handling simple definition of options using comma-separated string
 				// support term in whole definition of list
@@ -79,7 +81,16 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						return [];
 					}
 
-					const normalized = Options.createOptions( computed );
+					let normalized;
+
+					if ( this.markdown ) {
+						normalized = Options.createOptions( computed, null, {
+							labelNormalizer: label => this.markdown.render( label ),
+						} );
+					} else {
+						normalized = Options.createOptions( computed );
+					}
+
 					if ( normalized.get ) {
 						return normalized.get();
 					}
@@ -124,22 +135,6 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
-		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
-
-		if ( !onLocalUpdate ) {
-			reactiveFieldInfo.options = this.options;
-		}
-	}
-
-	/** @inheritDoc */
-	initializeReactive( reactiveFieldInfo ) {
-		super.initializeReactive( reactiveFieldInfo );
-
-		reactiveFieldInfo.options = this.options;
-	}
-
-	/** @inheritDoc */
 	renderFieldComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { form: { sequence: { events } }, qualifiedName, group, type } = that;
@@ -159,9 +154,9 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						/>
 
 						<label v-if="markdown" class="markdown" :for="individualId( index )"
-							@click="adjust( isRadio || !isSet( item.value ), item.value )" v-html="item.renderedLabel"></label>
+							@click.self.prevent="adjust( isRadio || !isSet( item.value ), item.value )" v-html="item.renderedLabel"></label>
 						<label v-else :for="individualId( index )"
-							@click="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
+							@click.self.prevent="adjust( isRadio || !isSet( item.value ), item.value )">{{item.label == null ? item.value : item.label}}</label>
 					</span>
 				</div>
 			`,
@@ -175,7 +170,8 @@ export default class FormFieldCheckBoxModel extends FormFieldAbstractModel {
 						"multi-select": multi,
 						"single-select": !multi,
 						multi: numOptions > 1,
-						single: numOptions < 2
+						single: numOptions < 2,
+						markdown: this.markdown,
 					};
 				},
 				normalizedName() {

@@ -34,45 +34,61 @@ export default {
 			return manager.currentIndex === manager.forms.length - 1;
 		},
 		isInvalid() {
-			return !this.$store.getters.sequence.currentForm.readValidState( { live: false, includePristine: true, showErrors: false } );
+			return !this.$store.getters.sequence.currentForm.readValidState( { live: false, includePristine: true, showErrors: false, cache: false } );
 		},
 		labelPrevious() {
-			return this.$store.getters.l10n.BUTTONS.PREVIOUS;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.previous || sequence.$buttons.previous || this.$store.getters.l10n.BUTTONS.PREVIOUS;
 		},
 		labelNext() {
-			return this.$store.getters.l10n.BUTTONS.NEXT;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.next || sequence.$buttons.next || this.$store.getters.l10n.BUTTONS.NEXT;
 		},
 		labelContinue() {
-			return this.$store.getters.l10n.BUTTONS.CONTINUE;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.continue || sequence.$buttons.continue || this.$store.getters.l10n.BUTTONS.CONTINUE;
 		},
 		labelSubmit() {
-			return this.$store.getters.l10n.BUTTONS.SUBMIT;
+			const sequence = this.$store.getters.sequence;
+
+			return sequence.currentForm.$buttons.submit || sequence.$buttons.submit || this.$store.getters.l10n.BUTTONS.SUBMIT;
 		},
 		mayContinue() {
 			const sequence = this.$store.getters.sequence;
 
-			return sequence.mode.navigation === "auto"
-			       &&
+			return sequence.mode.navigation === "auto" &&
 			       sequence.firstUnfinishedIndex > sequence.currentIndex + 1;
 		},
 	},
 	methods: {
 		rewind() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.rewind();
 		},
 		advance() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.advance();
 		},
 		continueLatest() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.advance( true );
 		},
 		submit() {
+			this.$store.commit( "form/resetResult" );
+
 			return this.$store.getters.sequence.submit()
 				.then( status => {
 					this.$store.dispatch( "form/result", {
 						success: true,
 						redirect: status.redirect,
 						text: status.text,
+						event: status.event,
 					} );
 				} )
 				.catch( error => {
@@ -81,6 +97,7 @@ export default {
 						redirect: error.redirect,
 						text: error.text,
 						error: error.message,
+						event: error.event,
 					} );
 				} );
 		},

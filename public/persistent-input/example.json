@@ -55,7 +55,7 @@
 				},
 				{
 					"type": "info",
-					"text": "Your full name is {{localize(lookup( salutation, 'first.salutation' ))}} {{firstname}} {{lastname}}. Your colour for identification is {{test( length(colours), colours, 'unset' )}} and is{{test(first.reported.confirmed, '', ' **not**')}} confirmed.",
+					"text": "Your full name is {{localize(lookup( 'first.salutation' ))}} {{firstname}} {{lastname}}. Your colour for identification is {{test( length(colours), colours, 'unset' )}} and is{{test(first.reported.confirmed, '', ' **not**')}} confirmed.",
 					"markdown": true
 				},
 				{
@@ -76,7 +76,7 @@
 					"fields": [
 						{
 							"type": "info",
-							"text": "Salutation: {{localize(lookup( salutation, 'first.salutation' ))}}"
+							"text": "Salutation: {{localize(lookup( 'first.salutation' ))}}"
 						},
 						{
 							"type": "info",

@@ -117,19 +117,15 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
 		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
 
+		// read out field-specific definition values to cause updating reactive
+		// data accordingly
+		let dummy; // eslint-disable-line no-unused-vars
+
 		if ( !onLocalUpdate ) {
-			reactiveFieldInfo.options = this.options;
+			dummy = this.options;
 		}
 
-		reactiveFieldInfo.prompt = this.prompt;
-	}
-
-	/** @inheritDoc */
-	initializeReactive( reactiveFieldInfo ) {
-		super.initializeReactive( reactiveFieldInfo );
-
-		reactiveFieldInfo.options = this.options;
-		reactiveFieldInfo.prompt = this.prompt;
+		dummy = this.prompt;
 	}
 
 	/** @inheritDoc */
@@ -142,7 +138,7 @@ export default class FormFieldSelectModel extends FormFieldAbstractModel {
 				        :class="[multi ? 'multi' : 'single', value == null ? 'prompting' : 'selected']" 
 				        :disabled="disabled" 
 				        @change="updated">
-					<option v-if="prompt" disabled :value="null">{{ prompt }}</option>
+					<option v-if="prompt && !disabled" disabled :value="null">{{ prompt }}</option>
 					<option v-for="( item, index ) in options" :key="index" :value="item.value">{{item.label}}</option>
 				</select>
 			`,

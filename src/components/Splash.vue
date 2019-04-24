@@ -70,8 +70,13 @@ export default {
 
 				if ( typeof dependencies === "function" ) {
 					return dependencies.call( {
-						addField( name, field ) {
-							const _field = typeof field === "function" && !FormFieldAbstractModel.isBaseClassOf( field ) ? field( FormFieldAbstractModel ) : field;
+						addField( name, field, baseField = null ) {
+							const baseClass = baseField == null ? FormFieldAbstractModel : configuration.registry.fields[baseField];
+							if ( baseClass == null ) {
+								throw new TypeError( `missing base class for deriving new field type implementation` );
+							}
+
+							const _field = typeof field === "function" && !FormFieldAbstractModel.isBaseClassOf( field ) ? field( baseClass ) : field;
 
 							if ( FormFieldAbstractModel.isBaseClassOf( _field ) ) {
 								configuration.registry.fields[name] = _field;
@@ -79,13 +84,25 @@ export default {
 								throw new TypeError( `registering invalid field type as ${name} rejected` );
 							}
 						},
-						addProcessor( name, processor ) {
-							const _processor = typeof processor === "function" && !FormProcessorAbstractModel.isBaseClassOf( processor ) ? processor( FormProcessorAbstractModel ) : processor;
+						addProcessor( name, processor, baseProcessor = null ) {
+							const baseClass = baseProcessor == null ? FormProcessorAbstractModel : configuration.registry.processors[baseProcessor];
+							if ( baseClass == null ) {
+								throw new TypeError( `missing base class for deriving new processor type implementation` );
+							}
+
+							const _processor = typeof processor === "function" && !FormProcessorAbstractModel.isBaseClassOf( processor ) ? processor( baseClass ) : processor;
 
 							if ( FormProcessorAbstractModel.isBaseClassOf( _processor ) ) {
 								configuration.registry.processors[name] = _processor;
 							} else {
 								throw new TypeError( `registering invalid processor type as ${name} rejected` );
+							}
+						},
+						addTermFunction( name, implementation ) {
+							if ( typeof implementation === "function" ) {
+								configuration.registry.termFunctions[name] = implementation;
+							} else {
+								throw new TypeError( `registering invalid implementation for term function ${name} rejected` );
 							}
 						},
 						addTranslations( locale, translationsOverlay ) {
@@ -113,6 +130,7 @@ export default {
 				name: configuration.name,
 				definition,
 				registry: configuration.registry,
+				events: this.$root,
 			} ) )
 			.then( () => {
 				const { onReady } = configuration;

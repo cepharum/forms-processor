@@ -360,7 +360,7 @@ export default class Format {
 			}
 		}
 
-		if ( modulo !== "1" ) {
+		if ( Number( modulo ) !== 1 ) {
 			return {
 				errors: ["@FORMATS.IBAN.CHECKSUM_FAILED"],
 			};

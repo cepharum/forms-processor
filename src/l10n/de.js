@@ -44,6 +44,7 @@ export default function() {
 		PROMPT: {
 			SELECTOR: "Bitte wählen...",
 		},
+		BLOCK_MESSAGE: "Bitte warten...",
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Die Validierung scheiterte unerwartet.",
 			INVALID: "Diese Angabe ist ungültig.",
@@ -53,12 +54,20 @@ export default function() {
 			TOO_LONG: "Ihre Angabe ist zu lang.",
 			TOO_FEW: "Zu wenig Angaben getätigt",
 			TOO_MANY: "Ihre Angabe enthält zu viele Elemente.",
-			TOO_LITTLE_FILES: "Sie haben zu wenige Dateien ausgewählt.",
-			TOO_MANY_FILES: "Sie haben zu viele Dateien ausgewählt.",
-			TOO_SMALL_FILES_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu gering.",
-			TOO_BIG_FILES_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu hoch.",
-			TOO_SMALL_FILE: "Die Größe der ausgewählten Datei ist zu gering.",
-			TOO_BIG_FILE: "Die Größe der ausgewählten Datei ist zu hoch.",
+			FILE: {
+				TOO_LITTLE: "Sie haben zu wenige Dateien ausgewählt.",
+				TOO_MANY: "Sie haben zu viele Dateien ausgewählt.",
+				TOO_SMALL_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu gering.",
+				TOO_BIG_TOTAL: "Die Gesamtgröße aller ausgewählten Dateien ist zu hoch.",
+				TOO_SMALL: "Die Größe der ausgewählten Datei ist zu gering.",
+				TOO_BIG: "Die Größe der ausgewählten Datei ist zu hoch.",
+			},
+			DATE: {
+				TOO_EARLY: "Das gewählte Datum liegt zu weit zurück.",
+				TOO_LATE: "Das gewählte Datum liegt zu weit in der Zukunft.",
+				DAY_NOT_ALLOWED: "Der gewählte Wochentag ist nicht erlaubt.",
+				NOT_ALLOWED: "Das gewählte Datum ist nicht erlaubt.",
+			},
 			MIME_MISMATCH: "Sie haben eine Datei mit falschem Format ausgewählt.",
 			PATTERN_MISMATCH: "Das Format Ihrer Angabe ist fehlerhaft.",
 		},
@@ -78,6 +87,9 @@ export default function() {
 			},
 			MAIL: {
 				INVALID_FORMAT: "Das Format Ihrer Angabe ist keine gültige E-Mail-Adresse.",
+			},
+			DATE: {
+				INVALID_FORMAT: "Das Format Ihrer Angabe ist kein gültiges Datum.",
 			},
 			PHONE: {
 				INVALID_CHARACTER: "Ihre Angabe enthält Zeichen, die in einer Telefonnummer unzulässig sind.",

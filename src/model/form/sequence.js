@@ -26,11 +26,10 @@
  * @author: cepharum
  */
 
-import Vue from "vue";
 import FormModel from "./form";
 
-import L10n from "@/service/l10n";
-import Data from "@/service/data";
+import L10n from "../../service/l10n";
+import Data from "../../service/data";
 
 
 /**
@@ -41,6 +40,7 @@ export default class FormSequenceModel {
 	 * @typedef {object} AuxiliaryInfo
 	 * @param {function():string} locale callback invoked to fetch tag of current locale
 	 * @param {function():LocaleTranslationTree} translations callback invoked to fetch map of current translations
+	 * @param {Vue} events component for use with emitting/receiving events of current sequence
 	 */
 
 	/**
@@ -55,6 +55,7 @@ export default class FormSequenceModel {
 	 */
 	constructor( { id, name }, definition, registry, { read, write, data }, auxiliary ) {
 		const { mode = {}, sequence = [], processors = {} } = definition;
+		const { buttons = {} } = mode;
 
 		const numDefinedForms = sequence.length;
 		const reactiveInfo = {
@@ -148,6 +149,15 @@ export default class FormSequenceModel {
 			data: { get: data },
 
 			/**
+			 * Exposes optionally defined set of constants.
+			 *
+			 * @name FormSequenceModel#constants
+			 * @property {object}
+			 * @readonly
+			 */
+			constants: { value: definition.constants || {} },
+
+			/**
 			 * Reads value of a field selected by its name from storage.
 			 *
 			 * @name FormSequenceModel#readValue
@@ -195,16 +205,29 @@ export default class FormSequenceModel {
 			translations: { get: auxiliary.translations },
 
 			/**
+			 * Exposes event bus of current sequence manager.
+			 *
+			 * This event bus is used to emit and listen for events related to
+			 * current sequence of forms, only.
+			 *
+			 * @name FormSequenceModel#events
+			 * @property Vue
+			 * @readonly
+			 */
+			events: { value: auxiliary.events },
+
+			/**
 			 * Exposes registries of custom types of fields and custom input
 			 * processors to be supported in processing current sequence of forms.
 			 *
 			 * @name FormSequenceModel#registry
-			 * @property {{fields:object<string,FormFieldAbstractModel>, processors:object<string,FormProcessorAbstractModel>}}
+			 * @property {FormsAPIExtensionsRegistry}
 			 * @readonly
 			 */
 			registry: { value: Object.freeze( Object.assign( {}, {
 				fields: Object.freeze( Object.assign( {}, registry.fields ) ),
 				processors: Object.freeze( Object.assign( {}, registry.processors ) ),
+				termFunctions: Object.freeze( Object.assign( {}, registry.termFunctions ) ),
 				translations: Object.freeze( Object.assign( {}, registry.translations ) ),
 			} ) ) },
 
@@ -216,18 +239,6 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
-
-			/**
-			 * Exposes event bus of current sequence manager.
-			 *
-			 * This event bus is used to emit and listen for events related to
-			 * current sequence of forms, only.
-			 *
-			 * @name FormSequenceModel#events
-			 * @property Vue
-			 * @readonly
-			 */
-			events: { value: new Vue() }
 		} );
 
 
@@ -515,6 +526,21 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			progressComponent: { value: this.renderProgressComponent( reactiveInfo ) },
+
+			/**
+			 * Exposes custom labels for use with basically supported buttons
+			 * unless either form is providing more specific customizations.
+			 *
+			 * @name FormModel#$button
+			 * @property {object<string,string>}
+			 * @readonly
+			 */
+			$buttons: { value: {
+				previous: buttons.previous || null,
+				next: buttons.next || null,
+				continue: buttons.continue || null,
+				submit: buttons.submit || null,
+			} },
 		} );
 	}
 
@@ -684,7 +710,7 @@ export default class FormSequenceModel {
 		currentForm.finished = true;
 
 		if ( !currentForm.readValidState( { live: false, force: true, includePristine: true } ) ) {
-			this.events.$emit( "form:autofocus" );
+			this.handleAutoFocus();
 			return false;
 		}
 
@@ -744,9 +770,10 @@ export default class FormSequenceModel {
 			return Promise.reject( new Error( "Forms aren't finished, yet." ) );
 		}
 
+		const { locale } = this;
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
-		this.events.$emit( "sequence:submitting", originalData );
+		this.events.$emit( "sequence:submission:start", originalData );
 
 		return new Promise( ( resolve, reject ) => {
 			/**
@@ -759,8 +786,6 @@ export default class FormSequenceModel {
 			 */
 			const _process = ( processors, currentIndex, data ) => {
 				if ( currentIndex >= processors.length ) {
-					this.events.$emit( "sequence:submitted", data );
-
 					resolve( data );
 				} else {
 					Promise.resolve( processors[currentIndex].process( data, this ) )
@@ -773,11 +798,17 @@ export default class FormSequenceModel {
 
 			return _process( this.processors, 0, originalData );
 		} )
-			.then( () => _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, this.locale ), originalData ) )
+			.then( processedData => {
+				this.events.$emit( "sequence:submission:done", processedData );
+
+				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, locale ), originalData, processedData );
+			} )
 			.catch( error => {
+				this.events.$emit( "sequence:submission:failed", error );
+
 				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
 
-				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, this.locale ), error ) );
+				throw Object.assign( error, _prepareResultHandling( { success: false }, L10n.selectLocalized( this.mode.onFailure, locale ), error ) );
 			} );
 
 		/**
@@ -786,21 +817,43 @@ export default class FormSequenceModel {
 		 * data.
 		 *
 		 * @param {object} status status descriptor controlling behaviour
-		 * @param {*} configuredBehaviour behaviour defined in configuration
+		 * @param {*} config behaviour defined in configuration
 		 * @param {*} args arguments passed on invoking function found in provided behaviour configuration
 		 * @returns {object} provided status descriptor extended by behaviour control
 		 * @private
 		 */
-		function _prepareResultHandling( status, configuredBehaviour, ...args ) {
-			const value = typeof configuredBehaviour === "function" ? configuredBehaviour( this, ...args ) : configuredBehaviour;
+		function _prepareResultHandling( status, config, ...args ) {
+			const value = typeof config === "function" ? L10n.selectLocalization( config( this, ...args ), locale ) : config;
 
-			const normalized = L10n.selectLocalized( value );
-			if ( typeof normalized === "string" ) {
-				if ( /^(?:[a-z]+:\/\/[^/]+\/?|\.?\/)/.test( normalized ) && !/\s/.test( normalized ) ) {
-					status.redirect = normalized;
-				} else {
-					status.text = normalized;
-				}
+			switch ( typeof value ) {
+				case "string" :
+					if ( /^(?:[a-z]+:\/\/[^\s/]+\/?|\.?\/)/.test( value ) && !/\s/.test( value ) ) {
+						status.redirect = value;
+					} else {
+						status.text = value;
+					}
+					break;
+
+				case "object" :
+					if ( value ) {
+						if ( typeof value.event === "string" ) {
+							status.event = {
+								name: value.event,
+								args: Array.isArray( value.args ) ? value.args.slice( 0 ) : Object.assign( {}, value.args ),
+							};
+
+							if ( status.success ) {
+								const [ , processedData ] = args;
+
+								status.event.data = Object.assign( {}, processedData );
+							} else {
+								const [error] = args;
+
+								status.event.data = error;
+							}
+						}
+					}
+					break;
 			}
 
 			return status;
@@ -833,7 +886,7 @@ export default class FormSequenceModel {
 			const source = rawData[internalFormName];
 
 			form.fields.forEach( field => {
-				if ( field.constructor.isInteractive ) {
+				if ( field.constructor.isProvidingInput ) {
 					const internalFieldName = field.name;
 					const originalFieldName = field.originalName;
 
@@ -874,26 +927,28 @@ export default class FormSequenceModel {
 				for ( let j = 0; j < numDependencies; j++ ) {
 					const dependency = dependencies[j];
 
-					if ( !dependentsPerField.hasOwnProperty( dependency ) ) {
-						dependentsPerField[dependency] = [];
+					if ( !fieldsMap.hasOwnProperty( dependency ) ) {
+						throw new TypeError( `invalid dependency on unknown field ${dependency}` );
 					}
 
-					dependentsPerField[dependency].push( fieldName );
+					if ( dependentsPerField.hasOwnProperty( dependency ) ) {
+						dependentsPerField[dependency].push( fieldName );
+					} else {
+						dependentsPerField[dependency] = [fieldName];
+					}
+
 				}
 			}
 		}
 
-		const keys = Object.keys( dependentsPerField );
-		const numKeys = keys.length;
+		for ( let i = 0; i < numFields; i++ ) {
+			const fieldName = fieldNames[i];
 
-		for ( let i = 0; i < numKeys; i++ ) {
-			const key = keys[i];
-
-			if ( !fieldsMap.hasOwnProperty( key ) ) {
-				throw new TypeError( `invalid dependency on unknown field ${key}` );
+			if ( dependentsPerField.hasOwnProperty( fieldName ) ) {
+				fieldsMap[fieldName].dependents = dependentsPerField[fieldName];
+			} else {
+				fieldsMap[fieldName].dependents = [];
 			}
-
-			fieldsMap[key].dependents = dependentsPerField[key];
 		}
 	}
 
@@ -920,9 +975,10 @@ export default class FormSequenceModel {
 
 			for ( let i = 0; i < numDependents; i++ ) {
 				const dependent = fields[dependents[i]];
-				if ( dependent ) {
+
+				if ( dependent && dependent !== field ) {
 					if ( dependent.onUpdateValue( updatedValue, fieldName ) ) {
-						if ( containingForms.indexOf( dependent.form ) > -1 ) {
+						if ( containingForms.indexOf( dependent.form ) < 0 ) {
 							containingForms.push( dependent.form );
 						}
 					}
@@ -1009,10 +1065,10 @@ export default class FormSequenceModel {
 				}
 			},
 			mounted() {
-				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => that.handleAutoFocus() );
 			},
 			updated() {
-				this.$nextTick( () => { that.events.$emit( "form:autofocus" ); } );
+				this.$nextTick( () => that.handleAutoFocus() );
 			},
 		};
 	}
@@ -1132,7 +1188,7 @@ export default class FormSequenceModel {
 					throw new TypeError( `Definition of unknown input processor "${typeName}" rejected.` );
 				}
 
-				processors[write++] = new Implementation( definition );
+				processors[write++] = new Implementation( definition, this );
 			}
 		}
 
@@ -1178,5 +1234,14 @@ export default class FormSequenceModel {
 		const normalized = String( type ).trim().toLowerCase();
 
 		return this.registry.fields[normalized] || null;
+	}
+
+	/**
+	 * Automatically focuses first one of currently available fields.
+	 *
+	 * @returns {void}
+	 */
+	handleAutoFocus() {
+		this.events.$emit( "form:autofocus" );
 	}
 }

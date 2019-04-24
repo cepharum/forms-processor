@@ -1,9 +1,9 @@
 /**
- * (c) 2018 cepharum GmbH, Berlin, http://cepharum.de
+ * (c) 2019 cepharum GmbH, Berlin, http://cepharum.de
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 cepharum GmbH
+ * Copyright (c) 2019 cepharum GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,31 +26,16 @@
  * @author: cepharum
  */
 
-import FormFieldAbstractModel from "./abstract";
-import FormFieldInfoModel from "./info";
-import FormFieldTextModel from "./text";
-import FormFieldCheckBoxModel from "./checkbox";
-import FormFieldSelectModel from "./select";
-import FormFieldUploadModel from "./upload";
-import FormFieldImageModel from "./image";
-import FormFieldMultiModel from "./multi";
-import FormFieldGroupModel from "./group";
-import FormFieldHiddenModel from "./hidden";
-import FormFieldDateModel from "./date";
+/**
+ * Reads if named constant is defined in sequence containing current field.
+ *
+ * @this FormFieldAbstractModel
+ * @param {string} _name name of constant to read or check
+ * @param {boolean} testExistence true to check if named constant exists instead of reading it
+ * @return {boolean|*} true/false on testing if constant exists, found constant's value or null otherwise
+ */
+export default function constant( _name, testExistence = false ) {
+	const { constants } = this.sequence;
 
-export default {
-	abstract: FormFieldAbstractModel,
-	map: {
-		info: FormFieldInfoModel,
-		date: FormFieldDateModel,
-		text: FormFieldTextModel,
-		checkbox: FormFieldCheckBoxModel,
-		radio: FormFieldCheckBoxModel,
-		select: FormFieldSelectModel,
-		multi: FormFieldMultiModel,
-		upload: FormFieldUploadModel,
-		image: FormFieldImageModel,
-		group: FormFieldGroupModel,
-		hidden: FormFieldHiddenModel,
-	},
-};
+	return constants.hasOwnProperty( _name ) ? testExistence ? true : constants[_name] : testExistence ? false : null;
+}

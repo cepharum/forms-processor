@@ -25,6 +25,7 @@
 				<FormControl/>
 			</div>
 		</div>
+		<div class="blocker" v-if="blocked" @click.capture.prevent.stop="block">{{ $store.getters.l10n.BLOCK_MESSAGE || "Please wait ..." }}</div>
 	</div>
 </template>
 
@@ -43,6 +44,11 @@ export default {
 		FormResult,
 		FormContent,
 		FormControl,
+	},
+	data() {
+		return {
+			blocked: false,
+		};
 	},
 	computed: {
 		isVisible() {
@@ -79,12 +85,25 @@ export default {
 
 			window.scrollTo( 0, y );
 		},
+		blockView() {
+			this.blocked = true;
+		},
+		unblockView() {
+			this.blocked = false;
+		},
+		block() {}, // eslint-disable-line no-empty-function
 	},
 	beforeMount() {
 		this.$store.getters.sequence.events.$on( "sequence:advance", this.scrollToTop );
+		this.$store.getters.sequence.events.$on( "sequence:submission:start", this.blockView );
+		this.$store.getters.sequence.events.$on( "sequence:submission:done", this.unblockView );
+		this.$store.getters.sequence.events.$on( "sequence:submission:failed", this.unblockView );
 	},
 	beforeDestroy() {
 		this.$store.getters.sequence.events.$off( "sequence:advance", this.scrollToTop );
+		this.$store.getters.sequence.events.$off( "sequence:submission:start", this.blockView );
+		this.$store.getters.sequence.events.$off( "sequence:submission:done", this.unblockView );
+		this.$store.getters.sequence.events.$off( "sequence:submission:failed", this.unblockView );
 	},
 };
 </script>

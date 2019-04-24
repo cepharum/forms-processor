@@ -44,6 +44,7 @@ export default function() {
 		PROMPT: {
 			SELECTOR: "Please choose...",
 		},
+		BLOCK_MESSAGE: "Please wait...",
 		VALIDATION: {
 			UNEXPECTED_ERROR: "Validation failed unexpectedly.",
 			INVALID: "This information is invalid.",
@@ -53,12 +54,20 @@ export default function() {
 			TOO_LONG: "Provided information is too long.",
 			TOO_FEW: "The number of provided records is too low.",
 			TOO_MANY: "The number of provided records is too high.",
-			TOO_LITTLE_FILES: "You must select more files.",
-			TOO_MANY_FILES: "You have selected too many files.",
-			TOO_SMALL_FILES_TOTAL: "The total size of all selected files exceeds permitted minimum.",
-			TOO_BIG_FILES_TOTAL: "The total size of all selected files exceeds permitted maximum.",
-			TOO_SMALL_FILE: "The size of selected file exceeds permitted minimum.",
-			TOO_BIG_FILE: "The size of selected file exceeds permitted maximum.",
+			FILE: {
+				TOO_LITTLE: "You must select more files.",
+				TOO_MANY: "You have selected too many files.",
+				TOO_SMALL_TOTAL: "The total size of all selected files exceeds permitted minimum.",
+				TOO_BIG_TOTAL: "The total size of all selected files exceeds permitted maximum.",
+				TOO_SMALL: "The size of selected file exceeds permitted minimum.",
+				TOO_BIG: "The size of selected file exceeds permitted maximum.",
+			},
+			DATE: {
+				TOO_EARLY: "The chosen date is too far in the past.",
+				TOO_LATE: "The chosen date is too far in the future.",
+				DAY_NOT_ALLOWED: "The chosen weekday is not permitted.",
+				NOT_ALLOWED: "The chosen date is not permitted.",
+			},
 			MIME_MISMATCH: "You've selected wrong type of file.",
 			PATTERN_MISMATCH: "This information does not comply with required format.",
 		},
@@ -78,6 +87,9 @@ export default function() {
 			},
 			MAIL: {
 				INVALID_FORMAT: "Your input does not look like a well-formed mail address.",
+			},
+			DATE: {
+				INVALID_FORMAT: "Your input does not look like a well-formed date.",
 			},
 			PHONE: {
 				INVALID_CHARACTER: "Your input contains characters that aren't permitted in a phone number.",
