@@ -30,6 +30,8 @@ import LookupImpl from "./lookup";
 import SerializeImpl from "./serialize";
 import LocalizeImpl from "./localize";
 import ConstantImpl from "./constant";
+import MonetaryImpl from "./monetary";
+import NltobrImpl from "./nltobr";
 
 export default {
 	abstract: Function,
@@ -39,5 +41,7 @@ export default {
 		serialize: SerializeImpl,
 		localize: LocalizeImpl,
 		constant: ConstantImpl,
+		monetary: MonetaryImpl,
+		nltobr: NltobrImpl,
 	},
 };
