@@ -26,7 +26,7 @@
  * @author: cepharum
  */
 
-module.exports = {
+const config = {
 	runtimeCompiler: true,
 	productionSourceMap: false,
 	publicPath: "",
@@ -36,3 +36,12 @@ module.exports = {
 		},
 	},
 };
+
+if ( process.env.BUILD_TARGET === "library" ) {
+	config.transpileDependencies = [
+		/^markdown-it/,
+		"simple-terms"
+	];
+}
+
+module.exports = config;

@@ -345,9 +345,14 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 			},
 			template: `
 				<span class="preview">
-					<span class="label">{{file.name}}</span> <span class="button" @click="()=>{this.$emit('remove')}">&times;</span>
+					<span class="label">{{file.name}}</span> <span class="button" @click="onRemove">&times;</span>
 				</span>
 			`,
+			methods: {
+				onRemove() {
+					this.$emit( "remove" );
+				},
+			},
 		};
 	}
 
