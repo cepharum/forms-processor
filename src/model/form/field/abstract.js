@@ -967,7 +967,7 @@ export default class FormFieldAbstractModel {
 			try {
 				errors = Data.unique( this.validate( live ) );
 			} catch ( e ) {
-				errors = ["@VALIDATION.UNEXPECTED_ERROR"];
+				errors = [ "@VALIDATION.UNEXPECTED_ERROR", e.message ];
 			}
 
 			if ( showErrors ) {
@@ -1133,6 +1133,40 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Looks up provided key for some matching translation to be returned.
+	 *
+	 * @param {string|[string, Array]} lookup key looked up in map of current
+	 *        locale's translations, or combination of lookup key and arguments
+	 *        in sole parameter
+	 * @param {Array} args arguments to replace marker in translation
+	 * @return {string} found translation
+	 */
+	localize( lookup, ...args ) {
+		if ( Array.isArray( lookup ) ) {
+			const [ _lookup, _args = [] ] = lookup;
+
+			return L10n.translate( this.sequence.translations, _lookup, ..._args );
+		}
+
+		if ( typeof lookup === "string" ) {
+			const _lookup = lookup.trim();
+
+			if ( _lookup[0] === "@" ) {
+				const rawLookUp = _lookup.slice( 1 );
+				const messages = this.messages;
+
+				if ( messages && messages.hasOwnProperty( rawLookUp ) ) {
+					return this.selectLocalization( messages[rawLookUp] );
+				}
+
+				return L10n.translate( this.sequence.translations, rawLookUp, ...args );
+			}
+		}
+
+		return lookup;
+	}
+
+	/**
 	 * Provides definition of field's component.
 	 *
 	 * @param {object} reactiveFieldInfo provides object containing reactive information on field
@@ -1196,30 +1230,7 @@ export default class FormFieldAbstractModel {
 			`,
 			data: () => reactiveFieldInfo,
 			methods: {
-				localize( lookup ) {
-					if ( Array.isArray( lookup ) ) {
-						const [ _lookup, args ] = lookup;
-
-						return L10n.translate( this.$store.getters.l10n, _lookup, ...args );
-					}
-
-					if ( typeof lookup === "string" ) {
-						const _lookup = lookup.trim();
-
-						if ( _lookup[0] === "@" ) {
-							const rawLookUp = _lookup.slice( 1 );
-							const messages = that.messages;
-
-							if ( messages && messages.hasOwnProperty( rawLookUp ) ) {
-								return that.selectLocalization( messages[rawLookUp] );
-							}
-
-							return L10n.translate( this.$store.getters.l10n, rawLookUp );
-						}
-					}
-
-					return lookup;
-				},
+				localize: ( ...args ) => that.localize( ...args ),
 				onInput( value ) {
 					that.touch();
 
