@@ -209,4 +209,23 @@ export default class Range {
 	isAboveRange( value ) {
 		return this.upperInclusive ? value > this.upper : value >= this.upper;
 	}
+
+	/**
+	 * Detects if provided value is in defined range.
+	 *
+	 * @param {number} value value to be tested
+	 * @returns {boolean} true if value is in defined range
+	 */
+	isInRange( value ) {
+		const v = parseFloat( value );
+		if ( isNaN( v ) ) {
+			return false;
+		}
+
+		if ( this.lowerInclusive ? v < this.lower : v <= this.lower ) {
+			return false;
+		}
+
+		return this.upperInclusive ? v <= this.upper : v < this.upper;
+	}
 }
