@@ -1212,6 +1212,7 @@ export default class FormFieldAbstractModel {
 						this.required ? "mandatory" : "optional",
 						this.pristine ? "pristine" : "touched",
 						this.label == null ? "without-label" : "with-label",
+						this.auxiliary == null ? "without-auxiliary" : "with-auxiliary",
 						this.valid ? "valid" : this.valid == null ? "validity-unknown" : "invalid",
 						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
@@ -1257,13 +1258,13 @@ export default class FormFieldAbstractModel {
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" @input="onInput" />
-		<AuxiliaryComponent v-if="auxiliary && !lateAuxiliary" :context="auxiliary" />
+		<AuxiliaryComponent v-if="auxiliary != null && !lateAuxiliary" :context="auxiliary" />
 		<span class="hint" v-if="hint && !markdown">{{ hint }}</span>
 		<span class="hint" v-if="hint && markdown" v-html="renderedHint"></span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
-		<AuxiliaryComponent v-if="auxiliary && lateAuxiliary" :context="auxiliary" />
+		<AuxiliaryComponent v-if="auxiliary != null && lateAuxiliary" :context="auxiliary" />
 	</span>
 </div>
 			`,
