@@ -136,7 +136,7 @@ export default function( Abstract ) {
 		/** @inheritDoc */
 		renderFieldComponent() {
 			return {
-				template: `<div/>`,
+				render: createElement => createElement( "" ),
 			};
 		}
 

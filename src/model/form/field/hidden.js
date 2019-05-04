@@ -36,7 +36,8 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 	renderComponent( reactiveFieldInfo ) {
 		const info = super.renderComponent( reactiveFieldInfo );
 
-		info.template = `<div style="display:none"/>`;
+		info.template = undefined;
+		info.render = createElement => createElement( "" );
 
 		return info;
 	}
