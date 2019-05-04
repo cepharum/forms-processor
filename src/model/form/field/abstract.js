@@ -1203,7 +1203,7 @@ export default class FormFieldAbstractModel {
 			},
 			computed: {
 				componentClasses() {
-					return [
+					const _collected = [
 						`field`,
 						`type-${type}`,
 						`name-${originalName}`,
@@ -1216,7 +1216,29 @@ export default class FormFieldAbstractModel {
 						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
 						this.showLabels ? "show-labels" : "suppress-labels",
-					].concat( classes, reactiveFieldInfo.additionalComponentClasses );
+					].concat( classes );
+
+
+					const additional = this.additionalComponentClasses;
+
+					if ( Array.isArray( additional ) ) {
+						_collected.splice( _collected.length, 0, ...additional );
+					} else if ( typeof additional === "string" ) {
+						_collected.push( additional );
+					} else if ( additional ) {
+						const names = Object.keys( additional );
+						const numNames = names.length;
+
+						for ( let n = 0; n < numNames; n++ ) {
+							const _name = names[n];
+
+							if ( additional[_name] ) {
+								_collected.push( _name );
+							}
+						}
+					}
+
+					return _collected;
 				},
 				showErrors() {
 					return !suppress || !suppress.errors;
