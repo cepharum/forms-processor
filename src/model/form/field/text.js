@@ -748,22 +748,26 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 
 		// process all configured validations
-		if ( this.required && !value.length ) {
+		const required = this.required && !value.length;
+		if ( required ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
-		} else {
-			const { counter } = this;
-			const unitNames = Object.keys( sizeUnits );
-			const numUnitNames = unitNames.length;
+		}
 
-			for ( let i = 0; i < numUnitNames; i++ ) {
-				const unitName = unitNames[i];
-				const size = this.size[unitName];
-				const count = counts[unitName];
-				const mode = counter[unitName];
 
-				modes[unitName] = values[unitName] = states[unitName] = null;
+		const { counter } = this;
+		const unitNames = Object.keys( sizeUnits );
+		const numUnitNames = unitNames.length;
 
-				if ( size ) {
+		for ( let i = 0; i < numUnitNames; i++ ) {
+			const unitName = unitNames[i];
+			const size = this.size[unitName];
+			const count = counts[unitName];
+			const mode = counter[unitName];
+
+			modes[unitName] = values[unitName] = states[unitName] = null;
+
+			if ( size ) {
+				if ( !required ) {
 					if ( !live && size.isBelowRange( count ) ) {
 						errors.push( "@VALIDATION.TOO_SHORT" );
 					}
@@ -771,24 +775,26 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					if ( size.isAboveRange( count ) ) {
 						errors.push( "@VALIDATION.TOO_LONG" );
 					}
+				}
 
-					if ( mode ) {
-						const upper = size.upper;
-						const countsUp = mode !== "down";
+				if ( mode ) {
+					const upper = size.upper;
+					const countsUp = mode !== "down";
 
-						if ( countsUp || isFinite( upper ) ) {
-							hasAnyCounter = true;
+					if ( countsUp || isFinite( upper ) ) {
+						hasAnyCounter = true;
 
-							values[unitName] = countsUp ? count : upper - ( size.upperInclusive ? 0 : 1 ) - count;
-							states[unitName] = count <= upper;
-						}
+						values[unitName] = countsUp ? count : upper - ( size.upperInclusive ? 0 : 1 ) - count;
+						states[unitName] = count <= upper || count < size.lower;
 					}
 				}
 			}
+		}
 
-			this.additionalComponentClasses = hasAnyCounter ? "with-counter" : "without-counter";
+		this.$data.additionalComponentClasses = hasAnyCounter ? "with-counter" : "without-counter";
 
 
+		if ( !required ) {
 			// check for complying with optionally selected format
 			let { format } = this;
 			if ( format ) {
