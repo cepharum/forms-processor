@@ -225,9 +225,10 @@ export default class FormFieldAbstractModel {
 		const qualifiedName = `${formName}.${normalizedName}`;
 
 		// prepare provided variable space for reactive data of current field's component
-		reactiveFieldInfo.valid = reactiveFieldInfo.value = reactiveFieldInfo.formattedValue = null;
-		reactiveFieldInfo.pristine = true;
-		reactiveFieldInfo.errors = [];
+		reactiveFieldInfo.valid = reactiveFieldInfo.value = reactiveFieldInfo.formattedValue =
+		reactiveFieldInfo.auxiliary = null;
+		reactiveFieldInfo.pristine = reactiveFieldInfo.lateAuxiliary = true;
+		reactiveFieldInfo.errors = reactiveFieldInfo.additionalComponentClasses = [];
 
 
 		// get copy of all registered term functions bound to current field
@@ -1038,6 +1039,7 @@ export default class FormFieldAbstractModel {
 		dummy = this.visible;
 		dummy = this.disabled;
 		dummy = this.markdown;
+		dummy = this.lateAuxiliary;
 
 		// apply custom updates of reactive data observed by Vue to detect change of state
 	}
@@ -1133,6 +1135,22 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Fetches description of an auxiliary Vue component accompanying the one
+	 * representing this field.
+	 *
+	 * @note Support for auxiliary component is provided to optionally extend
+	 *       field component beyond that one's scope. In most cases this isn't
+	 *       required, though.
+	 *
+	 * @returns {object} description of Vue component
+	 */
+	renderAuxiliaryComponent() {
+		return {
+			render: createElement => createElement( "" ),
+		};
+	}
+
+	/**
 	 * Looks up provided key for some matching translation to be returned.
 	 *
 	 * @param {string|[string, Array]} lookup key looked up in map of current
@@ -1181,6 +1199,7 @@ export default class FormFieldAbstractModel {
 		return {
 			components: {
 				FieldComponent: this.renderFieldComponent( reactiveFieldInfo ),
+				AuxiliaryComponent: this.renderAuxiliaryComponent(),
 			},
 			computed: {
 				componentClasses() {
@@ -1197,16 +1216,13 @@ export default class FormFieldAbstractModel {
 						this.disabled ? "disabled" : "enabled",
 						this.showErrors ? "show-errors" : "suppress-errors",
 						this.showLabels ? "show-labels" : "suppress-labels",
-					].concat( classes );
+					].concat( classes, reactiveFieldInfo.additionalComponentClasses );
 				},
 				showErrors() {
 					return !suppress || !suppress.errors;
 				},
 				showLabels() {
 					return !suppress || !suppress.labels;
-				},
-				renderedCounter() {
-					return this.hasOwnProperty( "counter" ) && this.counter.mode ? this.counter.caption : null;
 				},
 				renderedHint() {
 					return this.markdown.render( this.hint );
@@ -1219,12 +1235,13 @@ export default class FormFieldAbstractModel {
 	</span>
 	<span class="widget">
 		<FieldComponent ref="fieldComponent" @input="onInput" />
+		<AuxiliaryComponent v-if="auxiliary && !lateAuxiliary" :context="auxiliary" />
 		<span class="hint" v-if="hint && !markdown">{{ hint }}</span>
 		<span class="hint" v-if="hint && markdown" v-html="renderedHint"></span>
-		<span class="counter" v-if="renderedCounter" v-html="renderedCounter"></span>
 		<span class="errors" v-if="showErrors && errors.length">
 			<span class="error" v-for="error in errors">{{ localize( error ) }}</span>
 		</span>
+		<AuxiliaryComponent v-if="auxiliary && lateAuxiliary" :context="auxiliary" />
 	</span>
 </div>
 			`,
@@ -1331,6 +1348,7 @@ export default class FormFieldAbstractModel {
 			case "visible" :
 			case "disabled" :
 			case "live" :
+			case "lateAuxiliary" :
 				switch ( typeof value ) {
 					case "string" : {
 						const boolean = Data.normalizeToBoolean( value );
