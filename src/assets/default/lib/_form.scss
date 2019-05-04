@@ -132,6 +132,10 @@
 			.invalid {
 				color: red;
 			}
+
+			span + span:before {
+				content: ", ";
+			}
 		}
 
 		.hint {

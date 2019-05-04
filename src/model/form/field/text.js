@@ -30,10 +30,16 @@ import FormFieldAbstractModel from "./abstract";
 import Range from "../utility/range";
 import Pattern from "../utility/pattern";
 import Format from "../utility/format";
-import L10n from "@/service/l10n";
 import Data from "../../../service/data";
 
 const ptnPatternSyntax = /^\s*\/(.+)\/([gi]?)\s*$/i;
+
+const sizeUnits = {
+	char: [ "c", "character", "characters", "char", "chars" ],
+	word: [ "w", "word", "words" ],
+	line: [ "l", "line", "lines" ],
+};
+
 
 /**
  * Manages single field of form representing text input.
@@ -48,51 +54,56 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 *
 				 * @name FormFieldTextModel#size
 				 * @property {Range|string|Array} value
-				 *		Examples:
-				 *			10-40			content is valid iff text contains between 10 and 40 characters
-				 *			10-40 chars		content is valid iff text contains between 10 and 40 characters
-				 *			-5 words		content is valid iff text contains up to five words
-				 *			[ "-200 chars", "-3 lines" ]
-				 *							content is valid iff text contains up to 200 characters in up to three lines
+				 *        Examples:
+				 *            10-40            content is valid iff text contains between 10 and 40 characters
+				 *            10-40 chars        content is valid iff text contains between 10 and 40 characters
+				 *            -5 words        content is valid iff text contains up to five words
+				 *            [ "-200 chars", "-3 lines" ]
+				 *                            content is valid iff text contains up to 200 characters in up to three lines
 				 * @readonly
 				 */
 
-				const _units = {
-					CHAR:	[ "c", "character", "characters", "char", "chars" ],
-					WORD:	[ "w", "word", "words" ],
-					LINE:	[ "l", "line", "lines" ],
-				};
-
+				const unitNames = Object.keys( sizeUnits );
 				const _sizes = {};
 
 				if ( Array.isArray( value ) && value.every( item => !isNaN( parseFloat( item ) ) && isFinite( item ) ) ) {
-					_sizes.CHAR = termHandler( value, rawValue => new Range( rawValue ) ).value;
-					return { value: _sizes };
-				}
-
-				if ( ( Array.isArray( value ) && value.length > 0 ) || typeof value === "string" ) {
+					Object.defineProperty( _sizes, "char", Object.assign( {
+						enumerable: true
+					}, termHandler( value, rawValue => new Range( rawValue ) ) ) );
+				} else if ( ( Array.isArray( value ) && value.length > 0 ) || typeof value === "string" ) {
 					const _values = Array.isArray( value ) ? value : [value];
+
 					for ( let i = 0; i < _values.length; i++ ) {
 						const matches = /^\s*(.+)\s+(\w+)\s*$/.exec( _values[i] );
 						if ( matches ) {
-							// (The current option ends with a word.)
+							// The current option ends with a word.
 							// Check if word is a known unit:
-							const _unitKeys = Object.keys( _units );
-							let k;
-							for ( k = 0; k < _unitKeys.length; k++ ) {
-								if ( _units[_unitKeys[k]].indexOf( matches[2] ) > -1 ) {
+							let k, unitName;
+
+							for ( k = 0; k < unitNames.length; k++ ) {
+								unitName = unitNames[k];
+
+								if ( sizeUnits[unitName].indexOf( matches[2] ) > -1 ) {
 									break;
 								}
 							}
-							if ( k < _unitKeys.length ) {
-								_sizes[_unitKeys[k]] = termHandler( matches[1], rawValue => new Range( rawValue ) ).value;
+
+							if ( k < unitNames.length ) {
+								Object.defineProperty( _sizes, unitName, Object.assign( {
+									enumerable: true
+								}, termHandler( matches[1], rawValue => new Range( rawValue ) ) ) );
 								continue;
 							}
 						}
-						_sizes.CHAR = termHandler( _values[i], rawValue => new Range( rawValue ) ).value;
+
+						Object.defineProperty( _sizes, "char", Object.assign( {
+							enumerable: true
+						}, termHandler( _values[i], rawValue => new Range( rawValue ) ) ) );
 					}
 				} else {
-					_sizes.CHAR = termHandler( value, rawValue => new Range( rawValue ) ).value;
+					Object.defineProperty( _sizes, "char", Object.assign( {
+						enumerable: true
+					}, termHandler( value, rawValue => new Range( rawValue ) ) ) );
 				}
 
 				return { value: _sizes };
@@ -284,34 +295,338 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
 			},
 
-			counter( value ) {
+			counter( value, _, __, termHandler ) {
 				/**
 				 * Configures field to show the number of used characters/ words/ lines under the input
 				 *
 				 * The displayed information depends on option 'size'.
 				 *
+				 * - Supported values are:
+				 *   - `false` or some equivalent boolean string to hide counter
+				 *   - `true` or some equivalent boolean string to count characters/ words/ lines
+				 *   - `up` to count characters/ words/ lines
+				 *   - `down` to count remaining characters/ words/ lines
+				 *
 				 * @name FormFieldTextModel#counter
 				 * @property {boolean|string} value
-				 *		Known values:
-				 *			false					hide counter
-				 *			true					count characters/ words/ lines
-				 *			up						count characters/ words/ lines
-				 *			down					count remaining characters/ words/ lines
 				 * @readonly
 				 */
-				const _value = String( value ).trim().toLowerCase();
+				return termHandler( value, rawValue => {
+					const _value = String( rawValue ).trim().toLowerCase();
 
-				switch ( _value ) {
-					case "up" :
-					case "down" :
-						return { value: { mode: _value, caption: null } };
-					default :
-						return { value: { mode: Data.normalizeToBoolean( _value ), caption: null } };
-				}
+					switch ( _value ) {
+						case "up" :
+						case "down" :
+							return {
+								char: _value,
+								word: _value,
+								line: _value,
+							};
+
+						default : {
+							const asBoolean = Data.normalizeToBoolean( _value );
+
+							if ( asBoolean != null ) {
+								return {
+									char: asBoolean ? "up" : false,
+									word: asBoolean ? "up" : false,
+									line: asBoolean ? "up" : false,
+								};
+							}
+
+							const states = {
+								char: false,
+								word: false,
+								line: false,
+							};
+
+							const names = _value.split( /\s*,\s*/ );
+							const length = names.length;
+
+							for ( let i = 0; i < length; i++ ) {
+								const name = names[i];
+
+								if ( states.hasOwnProperty( name ) ) {
+									states.name = "up";
+								}
+							}
+
+							return states;
+						}
+					}
+				} );
 			},
 
 			...customProperties,
 		}, container );
+
+
+		const counts = {
+			char: NaN,
+			word: NaN,
+			line: NaN,
+		};
+
+		Object.defineProperties( this, {
+			/**
+			 * Cached number of characters in field's value.
+			 *
+			 * @note This information doesn't auto-update but is updated on
+			 *       validating text input.
+			 *
+			 * @name FormFieldTextModel#characterCount
+			 * @property {int}
+			 */
+			characterCount: {
+				get() { return counts.char; },
+				set( value ) {
+					const _v = parseInt( value );
+					if ( _v > -1 ) {
+						counts.char = _v;
+					}
+				},
+			},
+
+			/**
+			 * Cached number of words in field's value.
+			 *
+			 * @note This information doesn't auto-update but is updated on
+			 *       validating text input.
+			 *
+			 * @name FormFieldTextModel#wordCount
+			 * @property {int}
+			 */
+			wordCount: {
+				get() { return counts.word; },
+				set( value ) {
+					const _v = parseInt( value );
+					if ( _v > -1 ) {
+						counts.word = _v;
+					}
+				},
+			},
+
+			/**
+			 * Cached number of lines in field's value.
+			 *
+			 * @note This information doesn't auto-update but is updated on
+			 *       validating text input.
+			 *
+			 * @name FormFieldTextModel#lineCount
+			 * @property {int}
+			 */
+			lineCount: {
+				get() { return counts.line; },
+				set( value ) {
+					const _v = parseInt( value );
+					if ( _v > -1 ) {
+						counts.line = _v;
+					}
+				},
+			},
+		} );
+	}
+
+	/** @inheritDoc */
+	initializeReactive( reactiveFieldInfo ) {
+		super.initializeReactive( reactiveFieldInfo );
+
+		reactiveFieldInfo.auxiliary = {
+			mode: null,
+			counts: {
+				char: NaN,
+				word: NaN,
+				line: NaN,
+			},
+			modes: {
+				char: NaN,
+				word: NaN,
+				line: NaN,
+			},
+			values: {
+				char: NaN,
+				word: NaN,
+				line: NaN,
+			},
+			states: {
+				char: NaN,
+				word: NaN,
+				line: NaN,
+			},
+		};
+	}
+
+	/** @inheritDoc */
+	updateFieldInformation( reactiveFieldInfo, onLocalUpdate ) {
+		super.updateFieldInformation( reactiveFieldInfo, onLocalUpdate );
+
+		if ( !onLocalUpdate ) {
+			this.readValidState( { force: true } );
+		}
+	}
+
+	/** @inheritDoc */
+	renderAuxiliaryComponent() {
+		const that = this;
+
+		return {
+			render( createElement ) {
+				const { modes, values, states } = this.context;
+
+
+				const unitNames = Object.keys( sizeUnits );
+				const numUnitNames = unitNames.length;
+				const counters = [];
+
+				for ( let i = 0; i < numUnitNames; i++ ) {
+					const unitName = unitNames[i];
+					const value = values[unitName];
+					const mode = modes[unitName];
+					const valid = states[unitName];
+
+					if ( value != null ) {
+						const key = unitName.toUpperCase();
+						let text;
+
+						if ( mode === "down" ) {
+							switch ( value ) {
+								case 0 :
+									text = that.localize( `@COUNTER.${key}_NONE`, value );
+									break;
+
+								case 1 :
+									text = that.localize( `@COUNTER.${key}_SINGLE`, value );
+									break;
+
+								case -1 :
+									text = that.localize( `@COUNTER.${key}_NEGATIVE_SINGLE`, -value );
+									break;
+
+								default :
+									if ( value < 0 ) {
+										text = that.localize( `@COUNTER.${key}_NEGATIVE_MULTI`, -value );
+									} else {
+										text = that.localize( `@COUNTER.${key}_MULTI`, value );
+									}
+							}
+						} else {
+							switch ( value ) {
+								case 0 :
+									text = that.localize( `@COUNTER.${key}_NONE`, value );
+									break;
+
+								case 1 :
+									text = that.localize( `@COUNTER.${key}_SINGLE`, value );
+									break;
+
+								default :
+									text = that.localize( `@COUNTER.${key}_MULTI`, value );
+									break;
+							}
+						}
+
+						counters.push( createElement( "span", {
+							class: [
+								"unit-" + unitName,
+								"counts-" + mode,
+								valid ? "valid" : "invalid",
+							],
+						}, text ) );
+					}
+				}
+
+				if ( counters.length ) {
+					return createElement( "div", { class: "counter", }, counters );
+				}
+
+				return createElement( "" );
+			},
+			props: {
+				context: {
+					type: Object,
+					required: true,
+				},
+			},
+		};
+	}
+
+	/** @inheritDoc */
+	renderFieldComponent( reactiveFieldInfo ) {
+		const that = this;
+		let lastValue = null;
+
+		return {
+			render( createElement ) {
+				const elements = [];
+				const classes = [
+					"align-" + this.align,
+				];
+
+				if ( this.prefix == null ) {
+					classes.push( "without-prefix" );
+				} else {
+					classes.push( "with-prefix" );
+					elements.push( createElement( "span", {
+						class: "prefix",
+					}, this.prefix ) );
+				}
+
+				const domProps = {
+					value: reactiveFieldInfo.formattedValue,
+				};
+
+				if ( this.disabled ) {
+					domProps.disabled = true;
+				}
+
+				if ( this.placeholder != null ) {
+					domProps.placeholder = this.placeholder + ( this.required && !this.label ? "*" : "" );
+				}
+
+				if ( !that.multiline ) {
+					domProps.type = "text";
+				}
+
+				elements.push( createElement( that.multiline ? "textarea" : "input", {
+					domProps,
+					on: {
+						input: event => {
+							const { value: input, selectionStart } = event.target;
+
+							const length = input.length;
+							const options = {
+								removing: lastValue != null && length < lastValue.length,
+								at: selectionStart,
+							};
+
+							const { value, formattedValue } = that.normalizeValue( input, options );
+
+							event.target.value = lastValue = formattedValue;
+							event.target.setSelectionRange( options.at, options.at );
+
+							// re-emit in scope of this field's type-specific
+							// component (containing input element created here)
+							this.$emit( "input", value );
+						},
+					},
+				} ) );
+
+				if ( this.suffix == null ) {
+					classes.push( "without-suffix" );
+				} else {
+					classes.push( "with-suffix" );
+					elements.push( createElement( "span", {
+						class: "suffix",
+					}, this.suffix ) );
+				}
+
+
+				return createElement( "div", { class: classes, }, elements );
+			},
+			data() {
+				return reactiveFieldInfo;
+			},
+		};
 	}
 
 	/** @inheritDoc */
@@ -407,184 +722,11 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 	}
 
 	/** @inheritDoc */
-	renderFieldComponent( reactiveFieldInfo ) {
-		const that = this;
-
-		let lastValue = null;
-
-		return {
-			render( createElement ) {
-				const elements = [];
-				const classes = [
-					"align-" + this.align,
-				];
-
-				if ( this.prefix == null ) {
-					classes.push( "without-prefix" );
-				} else {
-					classes.push( "with-prefix" );
-					elements.push( createElement( "span", {
-						class: "prefix",
-					}, this.prefix ) );
-				}
-
-				const domProps = {
-					value: reactiveFieldInfo.formattedValue,
-				};
-
-				if ( this.disabled ) {
-					domProps.disabled = true;
-				}
-
-				if ( this.placeholder != null ) {
-					domProps.placeholder = this.placeholder + ( this.required && !this.label ? "*" : "" );
-				}
-
-				if ( !that.multiline ) {
-					domProps.type = "text";
-				}
-
-				elements.push( createElement( that.multiline ? "textarea" : "input", {
-					domProps,
-					on: {
-						input: event => {
-							const { value: input, selectionStart } = event.target;
-
-							const length = input.length;
-							const options = {
-								removing: lastValue != null && length < lastValue.length,
-								at: selectionStart,
-							};
-
-							const { value, formattedValue } = that.normalizeValue( input, options );
-
-							event.target.value = lastValue = formattedValue;
-							event.target.setSelectionRange( options.at, options.at );
-
-							// re-emit in scope of this field's type-specific
-							// component (containing input element created here)
-							this.$emit( "input", value );
-						},
-					},
-				} ) );
-
-				if ( this.suffix == null ) {
-					classes.push( "without-suffix" );
-				} else {
-					classes.push( "with-suffix" );
-					elements.push( createElement( "span", {
-						class: "suffix",
-					}, this.suffix ) );
-				}
-
-				const _counter = [];
-				if ( that.counter.mode ) {
-					const _sizeGroups = Object.keys( that.size );
-
-					const translate = ( id, ...args ) => {
-						const argCount = ( L10n.translate( this.$store.getters.l10n, id ).replace( "%%", "" ).match( /%s|%d|%j/g ) || [] ).length;
-
-						args.splice( argCount );
-						args.unshift( id );
-						args.unshift( this.$store.getters.l10n );
-
-						return L10n.translate.apply( this, args );
-					};
-
-					let value = String( this.value == null ? "" : this.value ).trim();
-					// apply optional reducer to strip off characters to be ignored on validating
-					const { reducer } = this;
-					if ( reducer ) {
-						// https://stackoverflow.com/a/16046903/3182819
-						const numCaptures = ( new RegExp( reducer.source + "|" ) ).exec( "" ).length - 1;
-						value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
-					}
-
-					if ( that.counter.mode === "down" ) {
-						for ( let i = 0; i < _sizeGroups.length; i++ ) {
-							if ( !isFinite( that.size[_sizeGroups[i]].upper ) ) {
-								continue;
-							}
-							// eslint-disable-next-line no-extra-parens
-							let n = that.size[_sizeGroups[i]].upper - ( that.size[_sizeGroups[i]].upperInclusive ? 0 : 1 );
-							switch ( _sizeGroups[i] ) {
-								case "CHAR" :	n -= value.length;										break;
-								case "WORD" :	n -= ( value.match( /\S+/g ) || [] ).length;			break;
-								case "LINE" :	n -= ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
-								default :	throw new TypeError( `unknown size-group: ${_sizeGroups[i]}` );
-							}
-							if ( _counter.length > 0 ) {
-								_counter.push( ", " );
-							}
-							switch ( n ) {
-								case 0 :
-									_counter.push( translate( `COUNTER.${_sizeGroups[i]}_NONE`, n ) );
-									break;
-								case 1 :
-									_counter.push( translate( `COUNTER.${_sizeGroups[i]}_SINGLE`, n ) );
-									break;
-								case -1 :
-									_counter.push( "<span class=\"invalid\">" + translate( `COUNTER.${_sizeGroups[i]}_NEGATIVE_SINGLE`, -n ) + "</span>" );
-									break;
-								default :
-									if ( n < 0 ) {
-										_counter.push( "<span class=\"invalid\">" + translate( `COUNTER.${_sizeGroups[i]}_NEGATIVE_MULTI`, -n ) + "</span>" );
-									} else {
-										_counter.push( translate( `COUNTER.${_sizeGroups[i]}_MULTI`, n ) );
-									}
-							}
-						}
-						if ( _counter.length > 0 ) {
-							this.counter.caption = translate( "COUNTER.DOWN", _counter.join( "" ) );
-						}
-					} else {
-						for ( let i = 0; i < _sizeGroups.length; i++ ) {
-							let n;
-							switch ( _sizeGroups[i] ) {
-								default :
-								case "CHAR" :	n = value.length;										break;
-								case "WORD" :	n = ( value.match( /\S+/g ) || [] ).length;				break;
-								case "LINE" :	n = ( value.match( /\r\n?|\n/g ) || [] ).length + 1;	break;
-							}
-							if ( _counter.length > 0 ) {
-								_counter.push( ", " );
-							}
-							let s;
-							switch ( n ) {
-								case 0 :	s = translate( `COUNTER.${_sizeGroups[i]}_NONE`, n );	break;
-								case 1 :	s = translate( `COUNTER.${_sizeGroups[i]}_SINGLE`, n );	break;
-								default :	s = translate( `COUNTER.${_sizeGroups[i]}_MULTI`, n );	break;
-							}
-							if (
-								isFinite( that.size[_sizeGroups[i]].upper ) &&
-								n > ( that.size[_sizeGroups[i]].upper - ( that.size[_sizeGroups[i]].upperInclusive ? 0 : 1 ) )
-							) {
-								_counter.push( `<span class="invalid">${s}</span>` );
-							} else {
-								_counter.push( s );
-							}
-						}
-						if ( _counter.length > 0 ) {
-							this.counter.caption = translate( "COUNTER.UP", _counter.join( "" ) );
-						}
-					}
-
-					classes.push( "with-counter" );
-				}
-
-				return createElement( "div", { class: classes, }, elements );
-			},
-			data: () => reactiveFieldInfo,
-		};
-	}
-
-	/** @inheritDoc */
 	validate( live ) {
 		const errors = super.validate();
-
 		let value = String( this.value == null ? "" : this.value ).trim();
 
-		// apply optional reducer to strip off characters to be ignored on validating
+		// apply optional reducer to strip off characters ignored on validation
 		const { reducer } = this;
 		if ( reducer ) {
 			// https://stackoverflow.com/a/16046903/3182819
@@ -593,28 +735,59 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			value = value.replace( reducer, ( _, ...captures ) => captures.slice( 0, numCaptures ).join( "" ) );
 		}
 
-		const counting = {
-			CHAR:	value.length,
-			WORD:	( value.match( /\S+/g ) || [] ).length,
-			LINE:	( value.match( /\r\n?|\n/g ) || [] ).length + 1,
-		};
 
-		// perform basic validations
+		// always update all counters internally
+		const { auxiliary } = this.$data;
+		const { counts, modes, values, states } = auxiliary;
+
+		counts.char = value.length;
+		counts.word = value.split( /\s+/ ).length;
+		counts.line = value.split( /\r?\n/ ).length;
+
+		let hasAnyCounter = false;
+
+
+		// process all configured validations
 		if ( this.required && !value.length ) {
 			errors.push( "@VALIDATION.MISSING_REQUIRED" );
 		} else {
-			const _sizeGroups = Object.keys( this.size );
-			for ( let i = 0; i < _sizeGroups.length; i++ ) {
-				if ( !counting.hasOwnProperty( _sizeGroups[i] ) ) {
-					throw new TypeError( `unknown size-group: ${_sizeGroups[i]}` );
-				}
-				if ( !live && this.size[_sizeGroups[i]].isBelowRange( counting[_sizeGroups[i]] ) ) {
-					errors.push( "@VALIDATION.TOO_SHORT" );
-				}
-				if ( this.size[_sizeGroups[i]].isAboveRange( counting[_sizeGroups[i]] ) ) {
-					errors.push( "@VALIDATION.TOO_LONG" );
+			const { counter } = this;
+			const unitNames = Object.keys( sizeUnits );
+			const numUnitNames = unitNames.length;
+
+			for ( let i = 0; i < numUnitNames; i++ ) {
+				const unitName = unitNames[i];
+				const size = this.size[unitName];
+				const count = counts[unitName];
+				const mode = counter[unitName];
+
+				modes[unitName] = values[unitName] = states[unitName] = null;
+
+				if ( size ) {
+					if ( !live && size.isBelowRange( count ) ) {
+						errors.push( "@VALIDATION.TOO_SHORT" );
+					}
+
+					if ( size.isAboveRange( count ) ) {
+						errors.push( "@VALIDATION.TOO_LONG" );
+					}
+
+					if ( mode ) {
+						const upper = size.upper;
+						const countsUp = mode !== "down";
+
+						if ( countsUp || isFinite( upper ) ) {
+							hasAnyCounter = true;
+
+							values[unitName] = countsUp ? count : upper - ( size.upperInclusive ? 0 : 1 ) - count;
+							states[unitName] = count <= upper;
+						}
+					}
 				}
 			}
+
+			this.additionalComponentClasses = hasAnyCounter ? "with-counter" : "without-counter";
+
 
 			// check for complying with optionally selected format
 			let { format } = this;
@@ -623,12 +796,12 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 				if ( typeof Format[format] === "function" ) {
 					const result = Format[format]( value, Boolean( live ), this, { countryCodes: this.countryCodes } );
+
 					if ( result.errors ) {
 						errors.splice( errors.length, 0, ...result.errors );
 					}
 				}
 			}
-
 
 			// check for complying with custom pattern
 			if ( !live ) {

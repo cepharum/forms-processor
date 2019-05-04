@@ -120,10 +120,28 @@
 					"counter": true
 				},
 				{
+					"name": "dynamic_size",
+					"label": "Dynamic size",
+					"initial": "200",
+					"pattern": "#+"
+				},
+				{
+					"name": "counter_with_dynamic_size",
+					"label": "Counter with dynamic size",
+					"size": "-{{test(dynamic_size > 0,dynamic_size,100)}}",
+					"counter": "down"
+				},
+				{
 					"name": "counter_two_units",
 					"label": "Counter with two units",
 					"size": [ "-200 chars", "-50 words" ],
 					"counter": true
+				},
+				{
+					"name": "counter_with_two_dynamic_units",
+					"label": "Counter with two dynamic size",
+					"size": [ "-{{test(dynamic_size,dynamic_size,100)}} chars", "-{{max(1,ceil(dynamic_size/4))}} words" ],
+					"counter": "down"
 				},
 				{
 					"name": "counter_without_size",
