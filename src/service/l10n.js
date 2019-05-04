@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-import { format } from "util";
 import { normalizeLocale } from "./utility/l10n";
 
 /**
@@ -89,8 +88,66 @@ export default class Localization {
 			}
 		}
 
-		if ( _map && args.length ) {
-			_map = format( _map, ...args );
+		if ( typeof _map === "string" && args.length > 0 ) {
+			let argsCursor = 0;
+
+			_map = _map.replace( /%(0|[^\d%])?(\d*)(?:([.,])(\d+))?(?:\$(\d+))?([%sdfijoO])/g, ( all, fill, padding, decimalSep, fractional, cursor, code ) => {
+				let value = null;
+
+				switch ( code ) {
+					case "s" :
+						value = cursor > -1 ? args[cursor] : args[argsCursor++];
+						value = value == null ? "" : String( value );
+						break;
+
+					case "d" :
+					case "f" :
+						value = cursor > -1 ? args[cursor] : args[argsCursor++];
+						value = value == null ? 0 : String( parseFloat( value ) );
+						break;
+
+					case "i" :
+						value = cursor > -1 ? args[cursor] : args[argsCursor++];
+						value = value == null ? 0 : String( parseInt( value ) );
+						break;
+
+					case "j" :
+					case "o" :
+					case "O" :
+						value = cursor > -1 ? args[cursor] : args[argsCursor++];
+						value = JSON.stringify( value );
+						break;
+
+					case "%" :
+						value = "%";
+						break;
+				}
+
+				if ( padding > 0 ) {
+					if ( value == null ) {
+						value = "";
+					}
+
+					const _f = code === "d" || code === "f" ? fractional : 0;
+					if ( _f > -1 ) {
+						const sep = value.indexOf( "." );
+						const pre = sep > -1 ? value.substr( 0, sep ) : value;
+						let post = sep > -1 ? value.substr( sep + 1, _f ) : "";
+
+						while ( post.length < _f ) {
+							post += "0";
+						}
+
+						value = pre + ( _f > 0 ? decimalSep + post : "" );
+					}
+
+					while ( value.length < padding ) {
+						value = " " + value;
+					}
+				}
+
+				return value == null ? "" : value;
+			} );
 		}
 
 		return _map;
