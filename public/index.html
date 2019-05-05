@@ -14,8 +14,9 @@
 		</noscript>
 		<div id="app"></div>
 		<script type="text/javascript" id="loaderScript">
-			var definitionFile = location.hash.slice( 1 )
-			if ( definitionFile.match( /^([a-z_.0-9-]+\/)+definition\.js$/i ) ) {
+			var definition = location.hash.slice( 1 );
+
+			if ( definition.match( /^([a-z_.0-9-]+\/)+definition\.js$/i ) ) {
 				// got hash selecting particular definition file to use instead
 				// of static example (supporting different E2E tests this way)
 				var script = document.createElement( "script" );
@@ -24,8 +25,16 @@
 				var me = document.getElementById( "loaderScript" );
 				me.parentNode.insertBefore( script, me.nextSibling );
 
-				script.src = definitionFile;
+				script.src = definition;
 			} else {
+				if ( /^base64:[a-z0-9+/]+=*$/i.test( definition ) ) {
+					definition = JSON.parse( decodeURIComponent( escape( atob( definition.substr( 7 ) ) ) ) );
+				} else if ( !/\.json$/i.test( definition ) ) {
+					definition = definition ? definition + "/example.json" : "example.json";
+				}
+
+
+				// create configuration picked up by forms processor on load
 				var CepharumForms = {
 					processors: {
 						extract: function( abstract ) {
@@ -53,18 +62,22 @@
 						},
 					},
 					translations: {
+						en: {
+							VALIDATION: {
+								MISSING_REQUIRED: "Uh, this is required, dude!",
+							},
+						},
 						de: {
 							VALIDATION: {
-								MISSING_REQUIRED: "Gib hier was an, Mann!",
+								MISSING_REQUIRED: "Oh Mann, hier muss was rein!",
 							},
 						},
 					},
-					sequences: [ [ "#app", {
-						//definition: "http://127.0.0.1:8000/form/describe/test.yaml",
-						definition: definitionFile.match( /\.json$/i ) ? definitionFile : "example.json",
+					sequences: [["#app", {
+						definition: definition,
 						id: "some-input-1234",
 						name: "testform",
-					} ] ],
+					}]],
 				};
 			}
 		</script>

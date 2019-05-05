@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Forms Processor Sandbox</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+				min-height: 100vh;
+			}
+
+			#wrapper {
+				display: flex;
+				flex-flow: column;
+				justify-content: stretch;
+				min-height: 100vh;
+			}
+
+			#title {
+				text-align: center;
+			}
+
+			#twocol {
+				display: flex;
+				flex-flow: row;
+				align-items: stretch;
+				flex: 1 1 auto;
+			}
+
+			#editor {
+				position: relative;
+				flex: 1 1 50%;
+				padding: 0.5em;
+			}
+
+			#preview {
+				position: relative;
+				flex: 1 1 50%;
+				padding: 0.5em;
+			}
+
+			#subdocument {
+				border: 1px solid #aaa;
+			}
+
+			#panel {
+				margin: 1em;
+				text-align: center;
+			}
+
+			#code, #subdocument {
+				width: 100%;
+				height: 100%;
+				box-sizing: border-box;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="wrapper">
+			<h1 id="title">Forms Processor Sandbox</h1>
+			<div id="twocol">
+				<div id="editor">
+					<textarea id="code"></textarea>
+				</div>
+				<div id="preview">
+					<iframe id="subdocument"></iframe>
+				</div>
+			</div>
+			<div id="panel">
+				<button onclick="preview()">Preview</button>
+			</div>
+		</div>
+		<script type="application/javascript">
+			var code = document.getElementById( "code" );
+			var subdocument = document.getElementById( "subdocument" );
+
+			function preview() {
+				var data = JSON.parse( code.value );
+
+				subdocument.src = "about:blank";
+				setTimeout( function() {
+					subdocument.src = "./index.html#base64:" + btoa( unescape( encodeURIComponent( JSON.stringify( data ) ) ) );
+				}, 10 );
+			}
+
+			code.value = JSON.stringify( {
+				label: "Test Form",
+				description: {
+					de: "Dieses Formular kann bearbeitet werden.",
+					en: "This form may be edited."
+				},
+				mode: {
+					validation: "live",
+					navigation: "sequential",
+					select: "url",
+					view: {
+						progress: "yes"
+					},
+					fullResult: false,
+					onSuccess: {
+						de: "## Glückwunsch!\n\nSie haben es geschafft.",
+						en: "## Congratulations!\n\nYou're done."
+					},
+					onFailure: "https://www.google.de"
+				},
+				processors: [
+					{
+						type: "map",
+						map: {
+							last: "=first.lastName",
+							first: "=first.firstName",
+						},
+					},
+					{
+						type: "dump",
+						label: "output of first mapper"
+					},
+					{
+						type: "map",
+						map: {
+							full: "=last + ', ' + first",
+							alt: "{{$form.second.lastName}}, {{$form.second.firstName}}",
+						},
+					},
+					{
+						type: "dump",
+						label: "output of second mapper"
+					},
+				],
+				sequence: [
+					{
+						name: "first",
+						label: {
+							de: "Erste Seite",
+							en: "First Page"
+						},
+						description: {
+							de: "Dieses Formular erscheint zuerst.",
+							en: "This form comes first."
+						},
+						fields: [
+							{
+								name: "lastName",
+								label: {
+									en: "Last Name",
+									de: "Nachname"
+								},
+								type: "text",
+								required: true,
+								size: "5-63"
+							},
+							{
+								name: "firstName",
+								label: {
+									en: "First Name",
+									ANY: "Vorname"
+								},
+								visible: true,
+								required: "=!empty(lastName)",
+								size: "5-63"
+							},
+							{
+								name: "gender",
+								label: {
+									de: "Geschlecht",
+									ANY: "Gender"
+								},
+								options: [
+									"m",
+									{
+										value: "f",
+										label: {
+											de: "weiblich",
+											ANY: "female",
+										}
+									},
+								],
+								type: "radio",
+								required: true,
+								classes: "very-important, urgent",
+								visible: true,
+							},
+						]
+					},
+					{
+						name: "second",
+						label: "More Fields",
+						title: "Second Page",
+						description: {
+							EN: "Please provide more information here.",
+							de: "Geben Sie hier weitere Informationen an."
+						},
+						fields: [
+							{
+								name: "lastName",
+								label: {
+									EN: "Last Name",
+									DE: "Nachname"
+								},
+								type: "text",
+								required: true,
+								size: "5-63",
+								initial: "=first.lastName"
+							},
+							{
+								name: "firstName",
+								label: "Vorname",
+								required: true,
+								size: "5-63",
+								initial: "Max"
+							},
+							{
+								name: "iban",
+								label: "IBAN",
+								pattern: "AA## #### #### #### #### ##"
+							},
+							{
+								name: "productKey",
+								label: "Seriennummer",
+								required: false,
+								pattern: "AAAA-AAAA-AAAA-AAAA",
+								noResult: true
+							},
+							{
+								name: "ip",
+								label: "IPv4",
+								required: false,
+								pattern: "#???.#???.#???.#???",
+								format: "IPv4"
+							}
+						]
+					}
+				]
+			}, null, 4 );
+		</script>
+	</body>
+</html>
