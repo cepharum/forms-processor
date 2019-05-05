@@ -182,7 +182,7 @@ export default class FormProcessorMapModel extends FormProcessorAbstractModel {
 				compiled[name] = computed.join( "" );
 			} else if ( source && typeof source === "object" ) {
 				if ( source instanceof Processor ) {
-					compiled[name] = source.evaluate( data );
+					compiled[name] = source.evaluate( FormFieldAbstractModel.lowercaseData( data, source.source.toLowerCase().replace( /\s+/g, "" ) ) );
 				} else {
 					compiled[name] = this._applyMap( source, data );
 				}
