@@ -26,7 +26,8 @@
  * @author: cepharum
  */
 
-import L10n from "@/service/l10n";
+import L10n from "../../service/l10n";
+import Data from "../../service/data";
 
 /**
  * Manages single form as described in provided definition.
@@ -175,6 +176,16 @@ export default class FormModel {
 			 * @readonly
 			 */
 			writeValue: { value: sequence.writeValue },
+
+			/**
+			 * Configures auto-focusing of first field in context of current
+			 * form.
+			 *
+			 * @name FormModel#autoFocus
+			 * @property boolean
+			 * @readonly
+			 */
+			autoFocus: { value: Data.normalizeToBoolean( definition.autofocus, true ) },
 		} );
 
 

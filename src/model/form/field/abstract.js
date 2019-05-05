@@ -1278,26 +1278,28 @@ export default class FormFieldAbstractModel {
 				},
 			},
 			created() {
-				this.__onFormAutoFocusEvent = () => {
-					const tryFocusing = ( attempts = 10 ) => {
-						const firstControl = this.$el.querySelector( "input, select, button" );
-						if ( firstControl ) {
-							firstControl.focus();
+				if ( that.form.autoFocus ) {
+					this.__onFormAutoFocusEvent = () => {
+						const tryFocusing = ( attempts = 10 ) => {
+							const firstControl = this.$el.querySelector( "input, select, button" );
+							if ( firstControl ) {
+								firstControl.focus();
 
-							if ( typeof firstControl.select === "function" ) {
-								firstControl.select();
+								if ( typeof firstControl.select === "function" ) {
+									firstControl.select();
+								}
+							} else if ( attempts > 1 ) {
+								setTimeout( tryFocusing, 10, attempts - 1 );
 							}
-						} else if ( attempts > 1 ) {
-							setTimeout( tryFocusing, 10, attempts - 1 );
+						};
+
+						if ( that.form.autoFocusField === that ) {
+							this.$nextTick( tryFocusing );
 						}
 					};
 
-					if ( that.form.autoFocusField === that ) {
-						this.$nextTick( tryFocusing );
-					}
-				};
-
-				that.sequence.events.$on( "form:autofocus", this.__onFormAutoFocusEvent );
+					that.sequence.events.$on( "form:autofocus", this.__onFormAutoFocusEvent );
+				}
 			},
 			beforeMount() {
 				this.__onFormUpdateEvent = ( emittingQualifiedName, updatedFieldName, newValue ) => { // eslint-disable-line no-unused-vars
@@ -1318,7 +1320,10 @@ export default class FormFieldAbstractModel {
 				const { events } = that.sequence;
 
 				events.$off( "form:update", this.__onFormUpdateEvent );
-				events.$off( "form:autofocus", this.__onFormAutoFocusEvent );
+
+				if ( that.form.autoFocus ) {
+					events.$off( "form:autofocus", this.__onFormAutoFocusEvent );
+				}
 			},
 		};
 	}
