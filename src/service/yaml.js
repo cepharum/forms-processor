@@ -84,6 +84,25 @@ function ParserError( type, line, column ) {
 }
 
 /**
+ * Replaces discovered escape sequence with character represented by sequence.
+ *
+ * @param {*} _ ignored (assumed full match in pattern matching)
+ * @param {string} code code following backslash
+ * @return {string} character represented by escape sequence
+ */
+function escapes( _, code ) {
+	switch ( code ) {
+		case "n" : return "\n";
+		case "t" : return "\t";
+		case "f" : return "\f";
+		case "v" : return "\v";
+
+		default :
+			return code;
+	}
+}
+
+/**
  * Implements very basic YAML parser not complying with any standard most
  * probably.
  */
@@ -251,7 +270,7 @@ export default class YAML {
 							break;
 
 						case code[startBlock] :
-							node.name = code.substring( startBlock + 1, cursor ).replace( /\\(.)/g, "$1" );
+							node.name = code.substring( startBlock + 1, cursor ).replace( /\\(.)/g, escapes );
 							mode = ParserModes.COLON;
 							break;
 					}
@@ -377,12 +396,13 @@ export default class YAML {
 
 					switch ( node.value ) {
 						case ">" :
-							node.trim = true;
-
-							// falls through
+						case ">-" :
+						case ">+" :
 						case "|" :
+						case "|-" :
+						case "|+" :
+							node.folded = node.value;
 							node.value = null;
-							node.folded = true;
 							break;
 
 						case null :
@@ -415,7 +435,7 @@ export default class YAML {
 							break;
 
 						case code[startBlock] :
-							node.value = code.substring( startBlock + 1, cursor );
+							node.value = code.substring( startBlock + 1, cursor ).replace( /\\(.)/g, escapes );
 
 							mode = ParserModes.LINEBREAK;
 							startBlock = cursor + 1;
@@ -706,7 +726,25 @@ export default class YAML {
 				break;
 
 			default :
-				if ( !node.quotedValue && !node.folded ) {
+				if ( node.folded ) {
+					const mode = /^([|>])([+-])?$/.exec( node.folded );
+					node.value = node.value.replace( /(\n\s*$)|(?:\n([^ \t]))/g, ( _, end, inner ) => {
+						if ( end ) {
+							switch ( mode[2] ) {
+								case "+" :
+									return end;
+
+								case "-" :
+									return "";
+
+								default :
+									return "\n";
+							}
+						}
+
+						return ( mode[1] === ">" ? inner === "\n" ? "" : " " : "\n" ) + inner;
+					} );
+				} else if ( !node.quotedValue ) {
 					const trimmedValue = node.value.trim();
 
 					if ( trimmedValue === "null" ) {
