@@ -16,7 +16,7 @@ sequence:
 ` ) );
 
 		browser.expect.element( ".form-name-sole" ).to.be.visible.after( 5000 );
-		browser.expect.element( ".field.name-sole" ).to.be.visible;
+		browser.expect.element( ".field.name-sole" ).to.be.visible; // eslint-disable-line no-unused-expressions
 
 		browser.end();
 	}
