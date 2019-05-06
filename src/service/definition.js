@@ -26,6 +26,8 @@
  * @author: cepharum
  */
 
+import YAML from "../service/yaml";
+
 /**
  * Provides support for fetching definition of form to process.
  */
@@ -39,15 +41,42 @@ export default class Definition {
 	 */
 	static load( source ) {
 		switch ( typeof source ) {
-			case "string" :
-				return fetch( source )
-					.then( response => {
-						if ( !response.ok ) {
-							throw new Error( `Fetching form description failed: ${response.status} ${response.statusText}` );
+			case "string" : {
+				let loader;
+
+				if ( /\s/.test( source ) ) {
+					// string contains whitespace
+					// -> assume serialized definition instead of definition's URL
+					loader = Promise.resolve( source );
+				} else {
+					loader = fetch( source )
+						.then( response => {
+							if ( !response.ok ) {
+								throw new Error( `Fetching form description failed: ${response.status} ${response.statusText}` );
+							}
+
+							const type = response.headers.get( "content-type" );
+							if ( /^(application|text)\/json$/.test( type ) ) {
+								return response.json();
+							}
+
+							return response.text();
+						} );
+				}
+
+				return loader
+					.then( content => {
+						if ( typeof content === "string" ) {
+							if ( /^\s*{/.test( content ) ) {
+								return JSON.parse( content );
+							}
+
+							return YAML.parse( content );
 						}
 
-						return response.json();
+						return content;
 					} );
+			}
 
 			case "object" :
 				if ( source && !Array.isArray( source ) ) {
