@@ -69,6 +69,7 @@
 			</div>
 			<div id="panel">
 				<button onclick="preview()">Preview</button>
+				<button onclick="reset()">Reset</button>
 			</div>
 		</div>
 		<script type="application/javascript">
@@ -76,163 +77,180 @@
 			var subdocument = document.getElementById( "subdocument" );
 
 			function preview() {
-				var data = JSON.parse( code.value );
+				var url;
+
+				localStorage.fpPreview = code.value;
+
+				if ( code.value.match( /^\s*{/ ) ) {
+					var data = JSON.parse( code.value );
+					url = "./index.html#base64:json:" + btoa( unescape( encodeURIComponent( JSON.stringify( data ) ) ) );
+				} else {
+					url = "./index.html#base64:string:" + btoa( unescape( encodeURIComponent( code.value ) ) );
+				}
 
 				subdocument.src = "about:blank";
 				setTimeout( function() {
-					subdocument.src = "./index.html#base64:" + btoa( unescape( encodeURIComponent( JSON.stringify( data ) ) ) );
+					subdocument.src = url;
 				}, 10 );
 			}
 
-			code.value = JSON.stringify( {
-				label: "Test Form",
-				description: {
-					de: "Dieses Formular kann bearbeitet werden.",
-					en: "This form may be edited."
-				},
-				mode: {
-					validation: "live",
-					navigation: "sequential",
-					select: "url",
-					view: {
-						progress: "yes"
+			function reset() {
+				code.value = JSON.stringify( {
+					label: "Test Form",
+					description: {
+						de: "Dieses Formular kann bearbeitet werden.",
+						en: "This form may be edited."
 					},
-					fullResult: false,
-					onSuccess: {
-						de: "## Glückwunsch!\n\nSie haben es geschafft.",
-						en: "## Congratulations!\n\nYou're done."
-					},
-					onFailure: "https://www.google.de"
-				},
-				processors: [
-					{
-						type: "map",
-						map: {
-							last: "=first.lastName",
-							first: "=first.firstName",
+					mode: {
+						validation: "live",
+						navigation: "sequential",
+						select: "url",
+						view: {
+							progress: "yes"
 						},
-					},
-					{
-						type: "dump",
-						label: "output of first mapper"
-					},
-					{
-						type: "map",
-						map: {
-							full: "=last + ', ' + first",
-							alt: "{{$form.second.lastName}}, {{$form.second.firstName}}",
+						fullResult: false,
+						onSuccess: {
+							de: "## Glückwunsch!\n\nSie haben es geschafft.",
+							en: "## Congratulations!\n\nYou're done."
 						},
+						onFailure: "https://www.google.de"
 					},
-					{
-						type: "dump",
-						label: "output of second mapper"
-					},
-				],
-				sequence: [
-					{
-						name: "first",
-						label: {
-							de: "Erste Seite",
-							en: "First Page"
-						},
-						description: {
-							de: "Dieses Formular erscheint zuerst.",
-							en: "This form comes first."
-						},
-						fields: [
-							{
-								name: "lastName",
-								label: {
-									en: "Last Name",
-									de: "Nachname"
-								},
-								type: "text",
-								required: true,
-								size: "5-63"
+					processors: [
+						{
+							type: "map",
+							map: {
+								last: "=first.lastName",
+								first: "=first.firstName",
 							},
-							{
-								name: "firstName",
-								label: {
-									en: "First Name",
-									ANY: "Vorname"
-								},
-								visible: true,
-								required: "=!empty(lastName)",
-								size: "5-63"
+						},
+						{
+							type: "dump",
+							label: "output of first mapper"
+						},
+						{
+							type: "map",
+							map: {
+								full: "=last + ', ' + first",
+								alt: "{{$form.second.lastName}}, {{$form.second.firstName}}",
 							},
-							{
-								name: "gender",
-								label: {
-									de: "Geschlecht",
-									ANY: "Gender"
-								},
-								options: [
-									"m",
-									{
-										value: "f",
-										label: {
-											de: "weiblich",
-											ANY: "female",
-										}
+						},
+						{
+							type: "dump",
+							label: "output of second mapper"
+						},
+					],
+					sequence: [
+						{
+							name: "first",
+							label: {
+								de: "Erste Seite",
+								en: "First Page"
+							},
+							description: {
+								de: "Dieses Formular erscheint zuerst.",
+								en: "This form comes first."
+							},
+							fields: [
+								{
+									name: "lastName",
+									label: {
+										en: "Last Name",
+										de: "Nachname"
 									},
-								],
-								type: "radio",
-								required: true,
-								classes: "very-important, urgent",
-								visible: true,
-							},
-						]
-					},
-					{
-						name: "second",
-						label: "More Fields",
-						title: "Second Page",
-						description: {
-							EN: "Please provide more information here.",
-							de: "Geben Sie hier weitere Informationen an."
-						},
-						fields: [
-							{
-								name: "lastName",
-								label: {
-									EN: "Last Name",
-									DE: "Nachname"
+									type: "text",
+									required: true,
+									size: "5-63"
 								},
-								type: "text",
-								required: true,
-								size: "5-63",
-								initial: "=first.lastName"
+								{
+									name: "firstName",
+									label: {
+										en: "First Name",
+										ANY: "Vorname"
+									},
+									visible: true,
+									required: "=!empty(lastName)",
+									size: "5-63"
+								},
+								{
+									name: "gender",
+									label: {
+										de: "Geschlecht",
+										ANY: "Gender"
+									},
+									options: [
+										"m",
+										{
+											value: "f",
+											label: {
+												de: "weiblich",
+												ANY: "female",
+											}
+										},
+									],
+									type: "radio",
+									required: true,
+									classes: "very-important, urgent",
+									visible: true,
+								},
+							]
+						},
+						{
+							name: "second",
+							label: "More Fields",
+							title: "Second Page",
+							description: {
+								EN: "Please provide more information here.",
+								de: "Geben Sie hier weitere Informationen an."
 							},
-							{
-								name: "firstName",
-								label: "Vorname",
-								required: true,
-								size: "5-63",
-								initial: "Max"
-							},
-							{
-								name: "iban",
-								label: "IBAN",
-								pattern: "AA## #### #### #### #### ##"
-							},
-							{
-								name: "productKey",
-								label: "Seriennummer",
-								required: false,
-								pattern: "AAAA-AAAA-AAAA-AAAA",
-								noResult: true
-							},
-							{
-								name: "ip",
-								label: "IPv4",
-								required: false,
-								pattern: "#???.#???.#???.#???",
-								format: "IPv4"
-							}
-						]
-					}
-				]
-			}, null, 4 );
+							fields: [
+								{
+									name: "lastName",
+									label: {
+										EN: "Last Name",
+										DE: "Nachname"
+									},
+									type: "text",
+									required: true,
+									size: "5-63",
+									initial: "=first.lastName"
+								},
+								{
+									name: "firstName",
+									label: "Vorname",
+									required: true,
+									size: "5-63",
+									initial: "Max"
+								},
+								{
+									name: "iban",
+									label: "IBAN",
+									pattern: "AA## #### #### #### #### ##"
+								},
+								{
+									name: "productKey",
+									label: "Seriennummer",
+									required: false,
+									pattern: "AAAA-AAAA-AAAA-AAAA",
+									noResult: true
+								},
+								{
+									name: "ip",
+									label: "IPv4",
+									required: false,
+									pattern: "#???.#???.#???.#???",
+									format: "IPv4"
+								}
+							]
+						}
+					]
+				}, null, 4 );
+			}
+
+			if ( localStorage.fpPreview ) {
+				code.value = localStorage.fpPreview;
+			} else {
+				reset();
+			}
 		</script>
 	</body>
 </html>

@@ -27,8 +27,10 @@
 
 				script.src = definition;
 			} else {
-				if ( /^base64:[a-z0-9+/]+=*$/i.test( definition ) ) {
-					definition = JSON.parse( decodeURIComponent( escape( atob( definition.substr( 7 ) ) ) ) );
+				if ( /^base64:json:[a-z0-9+/]+=*$/i.test( definition ) ) {
+					definition = JSON.parse( decodeURIComponent( escape( atob( definition.substr( 12 ) ) ) ) );
+				} else if ( /^base64:string:[a-z0-9+/]+=*$/i.test( definition ) ) {
+					definition = decodeURIComponent( escape( atob( definition.substr( 14 ) ) ) );
 				} else if ( !/\.json$/i.test( definition ) ) {
 					definition = definition ? definition + "/example.json" : "example.json";
 				}
