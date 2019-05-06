@@ -610,6 +610,7 @@ export default class YAML {
 				break;
 
 			case ParserModes.LEADING_SPACE :
+			case ParserModes.COMMENT :
 				break;
 
 			case ParserModes.QUOTED_NAME :
