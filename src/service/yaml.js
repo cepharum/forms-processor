@@ -28,30 +28,30 @@
 
 const ParserModes = {
 	// processing leading whitespace in a line
-	LEADING_SPACE: "leading",
+	LEADING_SPACE: 0,
 	// requiring LF
-	LF: "lf",
+	LF: 1,
 	// reading characters of unquoted property name
-	NAME: "name",
+	NAME: 2,
 	// reading characters of quoted property name searching for closing quote
-	QUOTED_NAME: "qname",
+	QUOTED_NAME: 3,
 	// reading single escaped characters in a quoted property name
-	ESCAPED_QUOTED_NAME: "escqname",
+	ESCAPED_QUOTED_NAME: 4,
 	// searching for colon separating property's name from its value
-	COLON: "colon",
+	COLON: 5,
 	// reading characters of unquoted, unfolded property value
-	VALUE: "value",
+	VALUE: 6,
 	// reading characters of unquoted, folded property value
-	FOLDED_VALUE: "fvalue",
+	FOLDED_VALUE: 7,
 	// reading characters of quoted, unfolded property value searching for
 	// closing quote
-	QUOTED_VALUE: "qvalue",
+	QUOTED_VALUE: 8,
 	// reading single escaped characters in a quoted property value
-	ESCAPED_QUOTED_VALUE: "escqvalue",
+	ESCAPED_QUOTED_VALUE: 9,
 	// reading characters in a comment
-	COMMENT: "comment",
+	COMMENT: 10,
 	// skipping any trailing space while searching next linebreak
-	LINEBREAK: "lb",
+	LINEBREAK: 11,
 };
 
 const Errors = {
@@ -152,7 +152,7 @@ export default class YAML {
 							break;
 
 						case "#" :
-							mode = ParserModes.COMMENT;
+							mode = node && node.folded ? ParserModes.FOLDED_VALUE : ParserModes.COMMENT;
 							break;
 
 						default : {
@@ -674,8 +674,20 @@ export default class YAML {
 			case EmptyObject : {
 				// got proper node marking start of another level of hierarchy
 				// -> put another frame with node's indentation onto stack
-				const ref = contextStack[0].ref;
-				const isArray = Array.isArray( ref );
+				let ref = contextStack[0].ref;
+				let isArray = Array.isArray( ref );
+
+				if ( node.array && !isArray ) {
+					if ( Object.keys( ref ).length === 0 ) {
+						ref = contextStack[0].ref = [];
+						isArray = true;
+
+						if ( contextStack.length > 1 ) {
+							contextStack[1].ref[contextStack[0].selector] = ref;
+						}
+					}
+				}
+
 				const selector = isArray ? ref.length : node.name;
 				const sub = node.value === EmptyArray ? [] : {};
 
