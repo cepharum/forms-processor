@@ -13,9 +13,9 @@
 </template>
 
 <script>
-import L10n from "@/service/l10n";
-import Definition from "@/service/definition";
-import Data from "@/service/data";
+import L10n from "../service/l10n";
+import Definition from "../service/definition";
+import Data from "../service/data";
 
 import FormFieldAbstractModel from "../model/form/field/abstract";
 import FormProcessorAbstractModel from "../model/form/processor/abstract";

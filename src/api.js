@@ -29,8 +29,9 @@
 import Processors from "./model/form/processor";
 import TermFunctions from "./model/form/term-functions";
 import Fields from "./model/form/field";
-import Data from "@/service/data";
-import EventBus from "@/service/events";
+import Data from "./service/data";
+import EventBus from "./service/events";
+import YAML from "./service/yaml";
 
 
 /**
@@ -164,6 +165,17 @@ export default class FormsAPI {
 
 			this.create( element, options );
 		}
+	}
+
+	/**
+	 * Exposes integrated YAML parser extracting data structure from provided
+	 * YAML code.
+	 *
+	 * @param {string} code YAML code to be parsed
+	 * @return {object} data structure described by YAML code
+	 */
+	yamlParse( code ) {
+		return YAML.parse( code );
 	}
 
 	/**
