@@ -28,7 +28,14 @@
 
 module.exports = {
 	formToUrl( form ) {
-		const url = process.env.VUE_DEV_SERVER_URL + "#base64:" + Buffer.from( unescape( encodeURIComponent( JSON.stringify( form ) ) ) ).toString( "base64" );
+		const url = process.env.VUE_DEV_SERVER_URL + "#base64:json:" + Buffer.from( unescape( encodeURIComponent( JSON.stringify( form ) ) ) ).toString( "base64" );
+
+		console.log( url );
+
+		return url;
+	},
+	stringToUrl( form ) {
+		const url = process.env.VUE_DEV_SERVER_URL + "#base64:string:" + Buffer.from( unescape( encodeURIComponent( form ) ) ).toString( "base64" );
 
 		console.log( url );
 
