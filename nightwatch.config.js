@@ -49,7 +49,9 @@ module.exports = {
 					].filter( i => i ),
 				},
 				acceptSslCerts: true
-			}
+			},
+
+			filter: process.env.VUE_E2E_FILTER,
 		}
 	}
 };
