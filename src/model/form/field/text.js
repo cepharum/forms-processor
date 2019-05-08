@@ -317,41 +317,16 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 					switch ( _value ) {
 						case "up" :
 						case "down" :
-							return {
-								char: _value,
-								word: _value,
-								line: _value,
-							};
+							return _value;
 
 						default : {
 							const asBoolean = Data.normalizeToBoolean( _value );
 
 							if ( asBoolean != null ) {
-								return {
-									char: asBoolean ? "up" : false,
-									word: asBoolean ? "up" : false,
-									line: asBoolean ? "up" : false,
-								};
+								return asBoolean ? "up" : false;
 							}
 
-							const states = {
-								char: false,
-								word: false,
-								line: false,
-							};
-
-							const names = _value.split( /\s*,\s*/ );
-							const length = names.length;
-
-							for ( let i = 0; i < length; i++ ) {
-								const name = names[i];
-
-								if ( states.hasOwnProperty( name ) ) {
-									states.name = "up";
-								}
-							}
-
-							return states;
+							return false;
 						}
 					}
 				} );
@@ -438,11 +413,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				word: NaN,
 				line: NaN,
 			},
-			modes: {
-				char: NaN,
-				word: NaN,
-				line: NaN,
-			},
 			values: {
 				char: NaN,
 				word: NaN,
@@ -471,7 +441,12 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 		return {
 			render( createElement ) {
-				const { modes, values, states } = this.context;
+				const { values, states } = this.context;
+				const mode = that.counter;
+
+				if ( !mode ) {
+					return createElement( "" );
+				}
 
 
 				const unitNames = Object.keys( sizeUnits );
@@ -481,7 +456,6 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				for ( let i = 0; i < numUnitNames; i++ ) {
 					const unitName = unitNames[i];
 					const value = values[unitName];
-					const mode = modes[unitName];
 					const valid = states[unitName];
 
 					if ( value != null ) {
@@ -491,36 +465,36 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 						if ( mode === "down" ) {
 							switch ( value ) {
 								case 0 :
-									text = that.localize( `@COUNTER.${key}_NONE`, value );
+									text = that.localize( `@COUNTER.${key}.NONE`, value );
 									break;
 
 								case 1 :
-									text = that.localize( `@COUNTER.${key}_SINGLE`, value );
+									text = that.localize( `@COUNTER.${key}.SINGLE`, value );
 									break;
 
 								case -1 :
-									text = that.localize( `@COUNTER.${key}_NEGATIVE_SINGLE`, -value );
+									text = that.localize( `@COUNTER.${key}.NEGATIVE_SINGLE`, -value );
 									break;
 
 								default :
 									if ( value < 0 ) {
-										text = that.localize( `@COUNTER.${key}_NEGATIVE_MULTI`, -value );
+										text = that.localize( `@COUNTER.${key}.NEGATIVE_MULTI`, -value );
 									} else {
-										text = that.localize( `@COUNTER.${key}_MULTI`, value );
+										text = that.localize( `@COUNTER.${key}.MULTI`, value );
 									}
 							}
 						} else {
 							switch ( value ) {
 								case 0 :
-									text = that.localize( `@COUNTER.${key}_NONE`, value );
+									text = that.localize( `@COUNTER.${key}.NONE`, value );
 									break;
 
 								case 1 :
-									text = that.localize( `@COUNTER.${key}_SINGLE`, value );
+									text = that.localize( `@COUNTER.${key}.SINGLE`, value );
 									break;
 
 								default :
-									text = that.localize( `@COUNTER.${key}_MULTI`, value );
+									text = that.localize( `@COUNTER.${key}.MULTI`, value );
 									break;
 							}
 						}
@@ -536,7 +510,13 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 
 				if ( counters.length ) {
-					return createElement( "div", { class: "counter", }, counters );
+					return createElement( "div", { class: [
+						"counter",
+						mode === "down" ? "count-down" : "count-up",
+					], }, [
+						createElement( "label", { class: "prompt" }, that.localize( `@COUNTER.PROMPT.${mode.toUpperCase()}` ) ),
+						createElement( "span", {}, counters ),
+					] );
 				}
 
 				return createElement( "" );
@@ -738,7 +718,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 
 		// always update all counters internally
 		const { auxiliary } = this.$data;
-		const { counts, modes, values, states } = auxiliary;
+		const { counts, values, states } = auxiliary;
 
 		counts.char = value.length;
 		counts.word = value.split( /\s+/ ).length;
@@ -754,7 +734,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 		}
 
 
-		const { counter } = this;
+		const { counter: mode } = this;
 		const unitNames = Object.keys( sizeUnits );
 		const numUnitNames = unitNames.length;
 
@@ -762,9 +742,8 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 			const unitName = unitNames[i];
 			const size = this.size[unitName];
 			const count = counts[unitName];
-			const mode = counter[unitName];
 
-			modes[unitName] = values[unitName] = states[unitName] = null;
+			values[unitName] = states[unitName] = null;
 
 			if ( size ) {
 				if ( !required ) {
@@ -790,6 +769,8 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 			}
 		}
+
+		auxiliary.mode = mode === "down" ? "down" : "up";
 
 		this.$data.additionalComponentClasses = hasAnyCounter ? "with-counter" : "without-counter";
 

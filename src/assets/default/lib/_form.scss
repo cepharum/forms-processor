@@ -133,6 +133,10 @@
 				color: red;
 			}
 
+			.prompt:after {
+				content: ": ";
+			}
+
 			span + span:before {
 				content: ", ";
 			}
