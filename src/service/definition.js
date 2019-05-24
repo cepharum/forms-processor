@@ -26,7 +26,7 @@
  * @author: cepharum
  */
 
-import YAML from "../service/yaml";
+import { YAML } from "instant-yaml";
 
 /**
  * Provides support for fetching definition of form to process.
