@@ -16,7 +16,7 @@
     "docs:build": "vuepress build docs"
   },
   "dependencies": {
-    "instant-yaml": "^0.1.2",
+    "instant-yaml": "^0.1.3",
     "markdown-it": "^8.4.2",
     "simple-terms": "^0.1.0",
     "vue": "^2.6.10",
