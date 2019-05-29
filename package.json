@@ -39,5 +39,9 @@
     "should": "^13.2.3",
     "vue-template-compiler": "^2.6.10",
     "vuepress": "^0.14.11"
+  },
+  "author": {
+    "name": "cepharum GmbH",
+    "email": "info@cepharum.de",
   }
 }
