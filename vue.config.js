@@ -27,6 +27,7 @@
  */
 
 const config = {
+	mode: process.env.NODE_ENV || "development",
 	runtimeCompiler: true,
 	productionSourceMap: false,
 	publicPath: "",
