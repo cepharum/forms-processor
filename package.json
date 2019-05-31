@@ -9,7 +9,7 @@
     "build-library": "cross-env BUILD_TARGET=library NODE_ENV=production vue-cli-service build --target lib --formats umd,umd-min --name FormsProcessor src/library.js",
     "create-library": "node create-library.sh.js",
     "lint": "cross-env NODE_ENV=production vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit",
+    "test:unit": "cross-env NODE_ENV=test vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
     "test:e2e:served": "cross-env NODE_ENV=development vue-cli-service test:e2e --url=http://localhost:8080",
     "docs:dev": "vuepress dev docs",

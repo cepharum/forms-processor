@@ -79,7 +79,13 @@ const DefaultHolidays = [];
 export class PartialDate extends Date {
 	/** @inheritDoc */
 	constructor( ...args ) {
-		super( ...args );
+		if ( args.length > 0 ) {
+			super( ...args );
+		} else if ( process.env.node === "test" ) {
+			super( 2019, 4, 31, 16, 32, 30 );
+		} else {
+			super();
+		}
 
 		if ( args.length > 0 ) {
 			/** @property int @readonly @protected */
@@ -147,6 +153,22 @@ export class PartialDate extends Date {
 
 	/** @inheritDoc */
 	setMonth( ...args ) {
+		const [month] = args;
+
+		if ( isNaN( this._date ) ) {
+			// adjust internally existing day of month to prevent auto-adjusting
+			// month when assigning desired value below
+			const dayOfMonth = super.getDate();
+
+			const copy = new Date( this );
+			copy.setMonth( month + 1 );
+			copy.setDate( 0 );
+
+			if ( dayOfMonth > copy.getDate() ) {
+				super.setDate( copy.getDate() );
+			}
+		}
+
 		const result = super.setMonth( ...args );
 
 		this._month = this.getMonth();
@@ -160,6 +182,20 @@ export class PartialDate extends Date {
 
 	/** @inheritDoc */
 	setDate( ...args ) {
+		const [dayOfMonth] = args;
+
+		if ( isNaN( this._month ) ) {
+			// adjust internally existing month to prevent auto-adjusting day of
+			// month when assigning desired value below
+			const copy = new Date( this );
+			copy.setMonth( super.getMonth() + 1 );
+			copy.setDate( 0 );
+
+			if ( dayOfMonth > 0 && dayOfMonth < 32 && dayOfMonth > copy.getDate() ) {
+				super.setMonth( ( super.getMonth() + 1 ) % 12 );
+			}
+		}
+
 		const result = super.setDate( ...args );
 
 		this._date = this.getDate();
@@ -215,31 +251,31 @@ export class PartialDate extends Date {
 	 * @return {boolean} true if both dates describe same day w/o obeying missing information in either date
 	 */
 	isSameDay( date ) {
-		if ( !date || !( date instanceof Date ) ) {
-			return false;
+		if ( date instanceof Date ) {
+			let y, m, d;
+
+			if ( date instanceof PartialDate ) {
+				y = date._year;
+				m = date._month;
+				d = date._date;
+			} else {
+				y = date.getFullYear();
+				m = date.getMonth();
+				d = date.getDate();
+			}
+
+			if ( !isNaN( this._year ) && !isNaN( y ) && this._year !== y ) {
+				return false;
+			}
+
+			if ( !isNaN( this._month ) && !isNaN( m ) && this._month !== m ) {
+				return false;
+			}
+
+			return isNaN( this._date ) || isNaN( d ) || this._date === d;
 		}
 
-		let y, m, d;
-
-		if ( date instanceof PartialDate ) {
-			y = date._year;
-			m = date._month;
-			d = date._date;
-		} else {
-			y = date.getFullYear();
-			m = date.getMonth();
-			d = date.getDate();
-		}
-
-		if ( !isNaN( this._year ) && !isNaN( y ) && this._year !== y ) {
-			return false;
-		}
-
-		if ( !isNaN( this._month ) && !isNaN( m ) && this._month !== m ) {
-			return false;
-		}
-
-		return isNaN( this._date ) || isNaN( d ) || this._date === d;
+		return false;
 	}
 
 	/**
@@ -530,15 +566,16 @@ export class DateProcessor {
 	 * @param {string|Date} selector description of a date
 	 * @param {object<int,boolean>} businessDays map of permitted weekdays into boolean `true` for calculating relative business days
 	 * @param {Date[]} holidays list of allowed dates
+	 * @param {Date} reference date selector is relative to instead of now
 	 * @return {Date} instance of Date matching date described by provided selector
 	 */
-	static normalizeSelector( selector, { businessDays = DefaultBusinessDays, holidays = DefaultHolidays } = {} ) {
+	static normalizeSelector( selector, { businessDays = DefaultBusinessDays, holidays = DefaultHolidays, reference = null } = {} ) {
 		if ( selector instanceof Date ) {
 			return selector;
 		}
 
 
-		const now = new PartialDate();
+		const now = reference instanceof Date ? new PartialDate( reference ) : new PartialDate();
 		const _selector = selector == null ? null : String( selector ).toLowerCase();
 
 		switch ( _selector ) {
@@ -587,26 +624,50 @@ export class DateProcessor {
 				now.setDate( now.getDate() + ( value * 7 ) );
 				return now;
 
-			case "m" :
-				now.setMonth( now.getMonth() + value );
-				return now;
+			case "m" : {
+				const ref = new Date( now );
+
+				// choose date available in any month to prevent `Date` auto-adjusting month below
+				ref.setDate( 20 );
+
+				// choose month following the one selected by range
+				ref.setMonth( now.getMonth() + value + 1 );
+
+				// choose last day of previous month a.k.a. the desired month
+				ref.setDate( 0 );
+
+				if ( now.getDate() < ref.getDate() ) {
+					ref.setDate( now.getDate() );
+				}
+
+				return ref;
+			}
 
 			case "bom" :
 				// choose first day of selected month
-				now.setMonth( now.getMonth() + value );
 				now.setDate( 1 );
+				now.setMonth( now.getMonth() + value );
 				return now;
 
 			case "eom" :
 				// choose last day of selected month
-				now.setMonth( now.getMonth() + value );
-				now.setMonth( now.getMonth() + 1 );
+				now.setDate( 20 ); // use safe day of month to prevent `setMonth()` auto-adjusting below
+				now.setMonth( now.getMonth() + value + 1 );
 				now.setDate( 0 );
 				return now;
 
-			case "y" :
+			case "y" : {
+				const fixed = now.getMonth() === 1 && now.getDate() === 29; // resulting year might be missing Feb 29th
+
 				now.setFullYear( now.getFullYear() + value );
+
+				if ( fixed && now.getDate( 1 ) ) {
+					now.setMonth( 1 );
+					now.setDate( 28 );
+				}
+
 				return now;
+			}
 
 			case "boy" :
 				// choose first day of selected year
@@ -751,36 +812,36 @@ export class DateNormalizer {
 		const date = new PartialDate();
 
 		if ( ( acceptPartial && isValid ) || isParsable ) {
+			const parsed = {};
+
 			for ( let index = 0, length = parts.length; index < length; index++ ) {
 				const part = parts[index];
 				const identifier = this.identifiers[index];
+
 				switch ( identifier.key ) {
 					case "day" :
-						date.setDate( Number( part ) );
+						parsed.date = Number( part );
 						break;
 
 					case "month" :
-						date.setMonth( Number( part ) - 1 );
+						parsed.month = Number( part ) - 1;
 						break;
 
 					case "year" :
 						switch ( identifier.value ) {
 							case "yy" : {
-								const currentYear = date.getFullYear();
+								const currentYear = new Date().getFullYear();
 								const upperLimit = currentYear + yearBuffer;
 								const lastTwoDigits = upperLimit % 100;
-								const overFlow = upperLimit - lastTwoDigits;
+								const century = currentYear - ( currentYear % 100 );
 								const year = Number( part );
-								if ( lastTwoDigits >= year ) {
-									date.setFullYear( year + overFlow );
-								} else {
-									date.setFullYear( year + overFlow - 100 );
-								}
+
+								parsed.year = century + year - ( year >= lastTwoDigits ? 100 : 0 );
 								break;
 							}
 
 							case "yyyy" :
-								date.setFullYear( Number( part ) );
+								parsed.year = Number( part );
 								break;
 
 							default :
@@ -791,6 +852,19 @@ export class DateNormalizer {
 					default :
 						throw new TypeError( "invalid input detected" );
 				}
+			}
+
+
+			if ( parsed.hasOwnProperty( "year" ) ) {
+				date.setFullYear( parsed.year );
+			}
+
+			if ( parsed.hasOwnProperty( "month" ) ) {
+				date.setMonth( parsed.month );
+			}
+
+			if ( parsed.hasOwnProperty( "date" ) ) {
+				date.setDate( parsed.date );
 			}
 		}
 

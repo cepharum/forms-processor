@@ -30,6 +30,33 @@ import Should from "should";
 
 import { DateProcessor } from "../../../../../src/model/form/utility/date";
 
+/**
+ * Calculates date different from provided one by given number of months.
+ *
+ * @param {Date} refDate reference date
+ * @param {int} numberOfMonths number of months to adjust provided date
+ * @return {Date} resulting date
+ */
+function adjustMonth( refDate, numberOfMonths ) {
+	const result = new Date( refDate );
+
+	// choose safe date to prevent auto-adjustments on using `setMonth()` below
+	result.setDate( 20 );
+
+	// find last day of desired month
+	result.setMonth( result.getMonth() + numberOfMonths + 1 );
+	result.setDate( 0 );
+
+	// recover day of month of reference date, but limit to valid range of dates
+	// in resulting month
+	if ( result.getDate() > refDate.getDate() ) {
+		result.setDate( refDate.getDate() );
+	}
+
+	return result;
+}
+
+
 describe( "Utility Class DateProcessor", () => {
 	it( "is available", () => {
 		Should.exist( DateProcessor );
@@ -103,6 +130,7 @@ describe( "Utility Class DateProcessor", () => {
 				Math.floor( today.getTime() / 8.64e+7 ).should.be.eql( Math.floor( date.getTime() / 8.64e+7 ) );
 				Math.floor( today.getTime() / 8.64e+7 ).should.be.eql( Math.floor( now.getTime() / 8.64e+7 ) );
 			} );
+
 			it( "-x", () => {
 				const date = normalizeSelector( "-9" );
 				const noTime = Math.floor( date.getTime() / 8.64e+7 );
@@ -110,6 +138,7 @@ describe( "Utility Class DateProcessor", () => {
 				const nowNoTime = Math.floor( now.getTime() / 8.64e+7 );
 				( nowNoTime - noTime ).should.be.eql( 9 );
 			} );
+
 			it( "+x", () => {
 				const date = normalizeSelector( "+9" );
 				const noTime = Math.floor( date.getTime() / 8.64e+7 );
@@ -117,60 +146,121 @@ describe( "Utility Class DateProcessor", () => {
 				const nowNoTime = Math.floor( now.getTime() / 8.64e+7 );
 				( nowNoTime - noTime ).should.be.eql( -9 );
 			} );
+
 			it( "-xM", () => {
-				const date = normalizeSelector( "-9M" );
-				const date2 = new Date();
-				date2.setMonth( date2.getMonth() - 9 );
-				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
-				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
-				date2NoTime.should.be.eql( dateNoTime );
+				const processed = normalizeSelector( "-9M" );
+				const calculated = adjustMonth( new Date(), -9 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
 			} );
+
 			it( "-xBOM", () => {
-				const date = normalizeSelector( "-9BOM" );
-				const date2 = new Date();
-				date2.setMonth( date2.getMonth() - 9 );
-				date2.setDate( 1 );
-				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
-				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
-				date2NoTime.should.be.eql( dateNoTime );
+				const processed = normalizeSelector( "-9BOM" );
+				const calculated = adjustMonth( new Date(), -9 );
+
+				calculated.setDate( 1 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
 			} );
+
+			it( "-xEOM", () => {
+				const processed = normalizeSelector( "-9EOM" );
+				const calculated = adjustMonth( new Date(), -9 );
+
+				calculated.setDate( 20 );
+				calculated.setMonth( calculated.getMonth() + 1 );
+				calculated.setDate( 0 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
+			} );
+
 			it( "+xM", () => {
-				const date = normalizeSelector( "+9M" );
-				const date2 = new Date();
-				date2.setMonth( date2.getMonth() + 9 );
-				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
-				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
-				date2NoTime.should.be.eql( dateNoTime );
+				const processed = normalizeSelector( "+9M" );
+				const calculated = adjustMonth( new Date(), 9 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
 			} );
+
 			it( "+xBOM", () => {
-				const date = normalizeSelector( "+9BOM" );
-				const date2 = new Date();
-				date2.setMonth( date2.getMonth() + 9 );
-				date2.setDate( 1 );
-				const dateNoTime = Math.floor( date.getTime() / 8.64e+7 );
-				const date2NoTime = Math.floor( date2.getTime() / 8.64e+7 );
-				date2NoTime.should.be.eql( dateNoTime );
+				const processed = normalizeSelector( "+9BOM" );
+				const calculated = adjustMonth( new Date(), 9 );
+
+				calculated.setDate( 1 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
 			} );
+
+			it( "+xEOM", () => {
+				const processed = normalizeSelector( "+9EOM" );
+				const calculated = adjustMonth( new Date(), 9 );
+
+				calculated.setDate( 20 );
+				calculated.setMonth( calculated.getMonth() + 1 );
+				calculated.setDate( 0 );
+
+				const processedNoTime = Math.floor( processed.getTime() / 8.64e+7 );
+				const calculatedNoTime = Math.floor( calculated.getTime() / 8.64e+7 );
+
+				calculatedNoTime.should.be.eql( processedNoTime );
+			} );
+
 			it( "-xY", () => {
-				const date = normalizeSelector( "-9Y" );
-				const date2 = new Date();
-				( date.getFullYear() - date2.getFullYear() ).should.be.eql( -9 );
+				const processed = normalizeSelector( "-9Y" );
+				const calculated = new Date();
+
+				( processed.getFullYear() - calculated.getFullYear() ).should.be.eql( -9 );
+
+				processed.getMonth().should.be.equal( calculated.getMonth() );
+				processed.getDate().should.be.equal( calculated.getDate() );
 			} );
+
 			it( "+xY", () => {
-				const date = normalizeSelector( "+9Y" );
-				const date2 = new Date();
-				( date.getFullYear() - date2.getFullYear() ).should.be.eql( 9 );
+				const processed = normalizeSelector( "+9Y" );
+				const calculated = new Date();
+
+				( processed.getFullYear() - calculated.getFullYear() ).should.be.eql( 9 );
+
+				processed.getMonth().should.be.equal( calculated.getMonth() );
+				processed.getDate().should.be.equal( calculated.getDate() );
 			} );
+
+			it( "+xY starting from 2016-02-29", () => {
+				const ref = new Date( 2016, 1, 29, 12, 0, 0 );
+				const processed = normalizeSelector( "+3Y", { reference: ref } );
+
+				( processed.getFullYear() - ref.getFullYear() ).should.be.eql( 3 );
+
+				processed.getMonth().should.be.equal( 1 );
+				processed.getDate().should.be.equal( 28 );
+			} );
+
 			it( "-xBD", () => {
-				const date = normalizeSelector( "-23BD" );
-				date.should.be.instanceof( Date );
+				const processed = normalizeSelector( "-23BD" );
+
+				processed.should.be.instanceof( Date );
 			} );
+
 			it( "+xBD", () => {
-				const date = normalizeSelector( "+39BD" );
-				date.should.be.instanceof( Date );
+				const processed = normalizeSelector( "+39BD" );
+
+				processed.should.be.instanceof( Date );
 			} );
 		} );
-
 	} );
 
 	describe( "exposes method normalize() which" ,() => {
@@ -201,9 +291,13 @@ describe( "Utility Class DateProcessor", () => {
 		} );
 
 		describe( "parses date with format 'yyyy-mm-dd'", () => {
-			let date = false;
-			it( "is instance of Date", () => {
+			let date;
+
+			before( () => {
 				date = new DateProcessor( "yyyy-mm-dd" ).normalize( "2012-09-12" );
+			} );
+
+			it( "is instance of Date", () => {
 				date.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {

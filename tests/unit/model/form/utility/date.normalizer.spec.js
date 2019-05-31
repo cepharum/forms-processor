@@ -345,9 +345,11 @@ describe( "Utility Class DateNormalizer", () => {
 		} );
 
 		describe( "parses date with format 'yyyy.mm.dd'", () => {
-			let date = false;
-			it( "is instance of Date", () => {
+			let date;
+			before( () => {
 				date = new DateNormalizer( "yyyy.mm.dd" ).normalize( "2012.09.12" );
+			} );
+			it( "is instance of Date", () => {
 				date.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {
@@ -362,9 +364,11 @@ describe( "Utility Class DateNormalizer", () => {
 		} );
 
 		describe( "parses date with format 'M.d.YY'", () => {
-			let date = false;
-			it( "is instance of Date", () => {
+			let date;
+			before( () => {
 				date = new DateNormalizer( "M.d.YY" ).normalize( "12.09.30" );
+			} );
+			it( "is instance of Date", () => {
 				date.should.be.instanceof( Date );
 			} );
 			it( "has the right day", () => {
@@ -379,7 +383,12 @@ describe( "Utility Class DateNormalizer", () => {
 		} );
 
 		describe( "parses date with format 'yyyy-mm-dd'", () => {
-			const date = new DateNormalizer( "yyyy-mm-dd" ).normalize( "20", { acceptPartial: true } );
+			let date;
+
+			before( () => {
+				date = new DateNormalizer( "yyyy-mm-dd" ).normalize( "20", { acceptPartial: true } );
+			} );
+
 			it( "is instance of Date", () => {
 				date.should.be.instanceof( Date );
 			} );
@@ -389,8 +398,13 @@ describe( "Utility Class DateNormalizer", () => {
 		} );
 
 		describe( "parses date with format 'yy-mm-dd'", () => {
-			const processor = new DateNormalizer( "yy-mm-dd" );
-			const date = processor.normalize( "12-09-12" );
+			let processor, date;
+
+			before( () => {
+				processor = new DateNormalizer( "yy-mm-dd" );
+				date = processor.normalize( "12-09-12" );
+			} );
+
 			it( "is instance of Date", () => {
 				date.should.be.instanceof( Date );
 			} );
@@ -403,16 +417,16 @@ describe( "Utility Class DateNormalizer", () => {
 			it( "has the right year", () => {
 				date.getFullYear().should.be.eql( 2012 );
 			} );
-			const date2 = processor.normalize( "22-09-12" );
 			it( "has the right year", () => {
+				const date2 = processor.normalize( "22-09-12" );
 				date2.getFullYear().should.be.eql( 1922 );
 			} );
-			const date3 = processor.normalize( "22-09-12" , { acceptPartial: true, yearBuffer: 20 } );
 			it( "handles year buffer right if year is in buffer", () => {
+				const date3 = processor.normalize( "22-09-12" , { acceptPartial: true, yearBuffer: 20 } );
 				date3.getFullYear().should.be.eql( 2022 );
 			} );
-			const date4 = processor.normalize( "70-09-12" , { acceptPartial: true, yearBuffer: 20 } );
 			it( "handles year buffer right if year is not in buffer", () => {
+				const date4 = processor.normalize( "70-09-12" , { acceptPartial: true, yearBuffer: 20 } );
 				date4.getFullYear().should.be.eql( 1970 );
 			} );
 		} );
