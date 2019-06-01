@@ -661,7 +661,7 @@ export class DateProcessor {
 
 				now.setFullYear( now.getFullYear() + value );
 
-				if ( fixed && now.getDate( 1 ) ) {
+				if ( fixed && now.getDate() === 1 ) {
 					now.setMonth( 1 );
 					now.setDate( 28 );
 				}
