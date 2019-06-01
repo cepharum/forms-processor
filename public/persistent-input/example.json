@@ -3,11 +3,12 @@
 		"localStore": {
 			"id": "1234",
 			"maxAge": 30
-		}
+		},
+		"onSuccess": "Great! You're done."
 	},
 	"processors": [
 		{
-			"url": "/"
+			"type": "dump"
 		}
 	],
 	"title": "Persistent Input",
