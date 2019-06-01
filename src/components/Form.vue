@@ -9,7 +9,7 @@
 				<FormTitle/>
 			</div>
 		</div>
-		<div class="progress" v-if="!hasResultOnSuccess && isVisible.progress !== false">
+		<div class="progress" v-if="isVisible.progress !== false">
 			<div class="inside">
 				<FormProgress/>
 			</div>
