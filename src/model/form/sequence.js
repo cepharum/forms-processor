@@ -61,6 +61,7 @@ export default class FormSequenceModel {
 		const reactiveInfo = {
 			forms: new Array( numDefinedForms ),
 			currentIndex: Math.min( numDefinedForms - 1, 0 ),
+			submissionState: null,
 		};
 
 		if ( !id || typeof id !== "string" ) {
@@ -239,6 +240,19 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			mode: { value: Data.deepClone( this.constructor.qualifyModeConfiguration( mode ), true ) },
+
+			/**
+			 * Indicates whether some final submission of input has succeeded or not.
+			 *
+			 * @name FormSequenceModel#submissionState
+			 * @property {boolean|null}
+			 */
+			submissionState: {
+				get() { return reactiveInfo.submissionState; },
+				set( value ) {
+					reactiveInfo.submissionState = value == null ? null : Data.normalizeToBoolean( value );
+				},
+			}
 		} );
 
 
@@ -747,6 +761,7 @@ export default class FormSequenceModel {
 	 */
 	rewind() {
 		if ( this.currentIndex > 0 ) {
+			this.submissionState = null;
 			this.events.$emit( "sequence:rewind", this.currentIndex, this.currentIndex - 1 );
 
 			this.currentIndex--;
@@ -773,6 +788,7 @@ export default class FormSequenceModel {
 		const { locale } = this;
 		const originalData = this.deriveOriginallyNamedData( this.data );
 
+		this.submissionState = null;
 		this.events.$emit( "sequence:submission:start", originalData );
 
 		return new Promise( ( resolve, reject ) => {
@@ -799,11 +815,13 @@ export default class FormSequenceModel {
 			return _process( this.processors, 0, originalData );
 		} )
 			.then( processedData => {
+				this.submissionState = true;
 				this.events.$emit( "sequence:submission:done", processedData );
 
 				return _prepareResultHandling( { success: true }, L10n.selectLocalized( this.mode.onSuccess, locale ), originalData, processedData );
 			} )
 			.catch( error => {
+				this.submissionState = false;
 				this.events.$emit( "sequence:submission:failed", error );
 
 				console.error( `Processing input failed: ${error.message}` ); // eslint-disable-line no-console
