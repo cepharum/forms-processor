@@ -1140,7 +1140,7 @@ export default class FormSequenceModel {
 					] );
 				}
 
-				const percent = String( Math.round( currentIndex / numForms * 100 ) );
+				const percent = String( Math.round( ( currentIndex + ( this.submissionState ? 1 : 0 ) ) / numForms * 100 ) );
 
 				return createElement( "nav", {
 					class: "progress-bar",
@@ -1156,6 +1156,7 @@ export default class FormSequenceModel {
 						class: "info",
 					}, [
 						createElement( "span", {
+							class: "bar",
 							style: {
 								width: percent + "%",
 							}
