@@ -1139,7 +1139,7 @@ export default class FormSequenceModel {
 					}, [
 						createElement( "span", {
 							style: {
-								width: percent,
+								width: percent + "%",
 							}
 						} ),
 						createElement( "div", {
