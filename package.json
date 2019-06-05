@@ -43,5 +43,9 @@
   "author": {
     "name": "cepharum GmbH",
     "email": "info@cepharum.de"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cepharum/forms-processor.git"
   }
 }

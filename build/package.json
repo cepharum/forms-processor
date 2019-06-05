@@ -1,8 +1,15 @@
 {
   "name": "forms-processor-browser",
   "version": "%%version%%",
-  "description": "build of forms processor",
+  "description": "pre-built version of forms processor",
   "main": "FormsProcessor.umd.min.js",
-  "author": "Thomas Urban",
-  "license": "MIT"
+  "author": {
+    "name": "cepharum GmbH",
+    "email": "info@cepharum.de"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cepharum/forms-processor.git"
+  }
 }
