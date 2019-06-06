@@ -67,6 +67,14 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 		super( form, definition, fieldIndex, reactiveFieldInfo, {
 			fields( v ) {
+				/**
+				 * Exposes sequential definitions of fields contained in current
+				 * group of fields.
+				 *
+				 * @name FormFieldGroupModel#fields
+				 * @property {FormFieldAbstractModel[]}
+				 * @readonly
+				 */
 				if ( !Array.isArray( v ) ) {
 					throw new Error( "no such array of grouped fields" );
 				}
@@ -233,8 +241,19 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 			}
 		}
 
-
 		return Object.keys( map );
+	}
+
+	/** @inheritDoc */
+	collectFields( collector ) {
+		super.collectFields( collector );
+
+		const subFields = this.fields;
+		const numSubs = subFields.length;
+
+		for ( let i = 0; i < numSubs; i++ ) {
+			subFields[i].collectFields( collector );
+		}
 	}
 
 	/** @inheritDoc */

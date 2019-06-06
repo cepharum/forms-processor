@@ -576,9 +576,7 @@ export default class FormSequenceModel {
 			const numFields = fields.length;
 
 			for ( let j = 0; j < numFields; j++ ) {
-				const field = fields[j];
-
-				map[field.qualifiedName] = field;
+				fields[j].collectFields( map );
 			}
 		}
 

@@ -963,6 +963,19 @@ export default class FormFieldAbstractModel {
 	}
 
 	/**
+	 * Maps names of subordinated fields into either field's manager.
+	 *
+	 * The method is expected to cover all immediately and mediately
+	 * subordinated fields.
+	 *
+	 * @param {object<string,FormFieldAbstractModel>} collector collects current field and some related fields
+	 * @returns {void}
+	 */
+	collectFields( collector ) {
+		collector[this.qualifiedName] = this;
+	}
+
+	/**
 	 * Detects whether current field is valid or not.
 	 *
 	 * This method is used by property FormFieldAbstractModel#valid internally,

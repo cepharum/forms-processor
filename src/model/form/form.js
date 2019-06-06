@@ -536,6 +536,5 @@ export default class FormModel {
 				}, blocks );
 			},
 		};
-
 	}
 }
