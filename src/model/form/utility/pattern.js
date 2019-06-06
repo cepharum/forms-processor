@@ -77,7 +77,7 @@
  * @type {object<string,array>}
  * @private
  */
-const _cache = {};
+const cache = {};
 
 /**
  * Provides utilities to format string according to some pattern definition.
@@ -126,13 +126,15 @@ export default class Pattern {
 	 * @param {string} pattern pattern to be compiled
 	 * @param {boolean} ignoreTrailingLiterals set true to prevent exception on pattern ending w/ literal characters
 	 * @param {boolean} keepTrailingLiterals set true to keep trailing literals in compiled pattern
+	 * @param {boolean} noCache set true to prevent use of previously cached compilation result
 	 * @returns {CompiledPattern} lists elements of compiled pattern
 	 */
-	static compilePattern( pattern, { ignoreTrailingLiterals = true, keepTrailingLiterals = false } = {} ) {
+	static compilePattern( pattern, { ignoreTrailingLiterals = true, keepTrailingLiterals = false, noCache = false } = {} ) {
 		const trimmedPattern = String( pattern == null ? "" : pattern ).trim().replace( /\s+/g, " " );
+		const cacheKey = ( ignoreTrailingLiterals ? "I" : "i" ) + ( keepTrailingLiterals ? "K" : "k" ) + trimmedPattern;
 
-		if ( _cache.hasOwnProperty( trimmedPattern ) ) {
-			return _cache[trimmedPattern];
+		if ( !noCache && cache.hasOwnProperty( cacheKey ) ) {
+			return cache[cacheKey];
 		}
 
 		const numPattern = trimmedPattern.length;
@@ -281,7 +283,9 @@ export default class Pattern {
 			}
 		}
 
-		_cache[trimmedPattern] = steps;
+
+		cache[cacheKey] = steps;
+
 
 		return steps;
 	}
