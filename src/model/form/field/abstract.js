@@ -541,17 +541,16 @@ export default class FormFieldAbstractModel {
 		 * --- expose dependencies and reactive data of field -----------------
 		 */
 
-		// collect combined dependencies of all terms processed before
-		const collectedDependencies = {};
-		for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
-			const dependencies = terms[i].dependsOn;
-
-			for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
-				collectedDependencies[dependencies[j].slice( 0, 2 ).join( "." )] = true;
-			}
-		}
-
+		// stop discovering dependencies of term used in field's definition
 		mayAdvertisedDependencies = false;
+
+		/**
+		 * Will be caching qualified field names terms used in current field's
+		 * definition depend on.
+		 *
+		 * @type {null|string[]}
+		 */
+		let collectedDependencies = null;
 
 
 
@@ -583,7 +582,33 @@ export default class FormFieldAbstractModel {
 			 * @readonly
 			 */
 			dependsOn: { get: () => {
-				const localDeps = Object.keys( collectedDependencies );
+				if ( !collectedDependencies ) {
+					const map = {};
+					const fields = form.sequence.fields;
+
+					for ( let i = 0, numTerms = terms.length; i < numTerms; i++ ) {
+						const dependencies = terms[i].dependsOn;
+
+						for ( let j = 0, numDependencies = dependencies.length; j < numDependencies; j++ ) {
+							const segments = dependencies[j];
+
+							while ( segments.length ) {
+								const joined = segments.join( "." );
+
+								if ( fields.hasOwnProperty( joined ) ) {
+									map[joined] = true;
+									break;
+								}
+
+								segments.pop();
+							}
+						}
+					}
+
+					collectedDependencies = Object.keys( map );
+				}
+
+				const localDeps = collectedDependencies;
 				const customDeps = this.listDependencies() || [];
 				const numCustomDeps = customDeps.length;
 
