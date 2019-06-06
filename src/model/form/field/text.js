@@ -133,7 +133,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				return termHandler( value, rawValue => Data.normalizeToBoolean( rawValue ) );
 			},
 
-			pattern( value ) {
+			pattern( value, _, __, termHandler ) {
 				/**
 				 * Exposes compiled pattern optionally defined on field.
 				 *
@@ -141,7 +141,9 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?CompiledPattern}
 				 * @readonly
 				 */
-				return { value: value == null ? null : Pattern.compilePattern( value ) };
+				return termHandler( this.selectLocalization( value ), rawValue => {
+					return rawValue == null ? null : Pattern.compilePattern( rawValue );
+				} );
 			},
 
 			normalization( value ) {
