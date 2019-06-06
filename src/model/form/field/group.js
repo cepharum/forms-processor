@@ -27,6 +27,7 @@
  */
 
 import FormFieldAbstractModel from "./abstract";
+import Data from "../../../service/data";
 
 /**
  * Manages multiple fields of form representing text input.
@@ -178,15 +179,18 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						if ( Array.isArray( v ) ) {
 							normalized.eager = v.findIndex( e => String( e ).trim().toLowerCase() === "eager" ) > -1;
 						} else if ( v ) {
-							normalized.eager = Boolean( v.eager );
+							normalized.eager = Data.normalizeToBoolean( v.eager );
 						}
 						break;
 
 					case "string" :
 						switch ( v.trim().toLowerCase() ) {
 							case "eager" :
-							default :
 								normalized.eager = true;
+								break;
+
+							default :
+								normalized.eager = Data.normalizeToBoolean( v, true );
 								break;
 
 							case "lazy" :
