@@ -71,6 +71,15 @@
  */
 
 /**
+ * Caches compiled patterns to improve performance while starting to support
+ * dynamic patterns in forms.
+ *
+ * @type {object<string,array>}
+ * @private
+ */
+const _cache = {};
+
+/**
  * Provides utilities to format string according to some pattern definition.
  */
 export default class Pattern {
@@ -120,11 +129,16 @@ export default class Pattern {
 	 * @returns {CompiledPattern} lists elements of compiled pattern
 	 */
 	static compilePattern( pattern, { ignoreTrailingLiterals = true, keepTrailingLiterals = false } = {} ) {
+		const trimmedPattern = String( pattern == null ? "" : pattern ).trim().replace( /\s+/g, " " );
+
+		if ( _cache.hasOwnProperty( trimmedPattern ) ) {
+			return _cache[trimmedPattern];
+		}
+
+		const numPattern = trimmedPattern.length;
+
 		const matchers = this.regularExpressions;
 		const formatters = this.formatters;
-
-		const trimmedPattern = String( pattern == null ? "" : pattern ).trim().replace( /\s+/g, " " );
-		const numPattern = trimmedPattern.length;
 
 		const steps = [];
 		let lastValuableIndex = -1;
@@ -266,6 +280,8 @@ export default class Pattern {
 				throw new TypeError( "Pattern must not end w/ literal characters." );
 			}
 		}
+
+		_cache[trimmedPattern] = steps;
 
 		return steps;
 	}
