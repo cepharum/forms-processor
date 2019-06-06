@@ -45,10 +45,8 @@ export default class FormFieldInfoModel extends FormFieldAbstractModel {
 				 * @property string
 				 * @readonly
 				 */
-				return cbTermHandler( _v, rawValue => {
-					const localized = this.selectLocalization( rawValue );
-
-					return this.markdown ? this.markdown.render( localized ) : localized;
+				return cbTermHandler( this.selectLocalization( _v ), rawValue => {
+					return this.markdown ? this.markdown.render( rawValue ) : rawValue;
 				} );
 			},
 
