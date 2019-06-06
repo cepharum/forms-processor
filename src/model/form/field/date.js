@@ -58,7 +58,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 				return termHandler( value, rawValue => ( rawValue == null ? null : DateProcessor.normalizeSelector( rawValue ) ) );
 			},
 
-			placeholder( value, _, __, termHandler ) {
+			placeholder( value, name ) {
 				/**
 				 * Defines some text to be displayed in bounds of text input
 				 * control unless user has entered some text already.
@@ -67,11 +67,7 @@ export default class FormFieldDateModel extends FormFieldAbstractModel {
 				 * @property {?string}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
-					const localized = this.selectLocalization( rawValue );
-
-					return localized == null ? null : String( localized ).trim() || null;
-				} );
+				return this.createGetter( value, name );
 			},
 
 			...customProperties

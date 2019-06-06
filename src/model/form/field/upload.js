@@ -105,7 +105,7 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				return { value: Data.normalizeToBoolean( v, true ) };
 			},
 
-			uploadLabel( v, _, __, termHandler ) {
+			uploadLabel( value, name ) {
 				/**
 				 * Provides label of button eventually triggering upload of
 				 * selected files.
@@ -114,16 +114,10 @@ export default class FormFieldUploadModel extends FormFieldAbstractModel {
 				 * @property {string}
 				 * @readonly
 				 */
-				return termHandler( v, rawValue => {
-					const value = rawValue == null ? {
-						de: "Datei auswählen",
-						any: "Add File",
-					} : rawValue;
-
-					const localized = this.selectLocalization( value );
-
-					return localized == null ? null : String( localized ).trim() || null;
-				} );
+				return this.createGetter( value == null ? {
+					de: "Datei auswählen",
+					any: "Add File",
+				} : value, name );
 			},
 
 			mimeType( v, _, __, termHandler ) {

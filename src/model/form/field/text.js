@@ -165,7 +165,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				}
 			},
 
-			placeholder( value, _, __, termHandler ) {
+			placeholder( value, name ) {
 				/**
 				 * Defines some text to be displayed in bounds of text input
 				 * control unless user has entered some text already.
@@ -174,11 +174,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?string}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
-					const localized = this.selectLocalization( rawValue );
-
-					return localized == null ? null : String( localized ).trim() || null;
-				} );
+				return this.createGetter( value, name );
 			},
 
 			align( value, _, __, termHandler ) {
@@ -189,7 +185,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?string}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
+				return termHandler( this.selectLocalization( value ), rawValue => {
 					const _value = rawValue == null ? null : String( rawValue ).trim().toLowerCase() || null;
 
 					switch ( _value ) {
@@ -203,7 +199,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				} );
 			},
 
-			prefix( value, _, __, termHandler ) {
+			prefix( value, name ) {
 				/**
 				 * Defines some static text to appear in front of text field.
 				 *
@@ -211,12 +207,10 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?string}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
-					return rawValue == null ? null : String( rawValue ).trim() || null;
-				} );
+				return this.createGetter( value, name );
 			},
 
-			suffix( value, _, __, termHandler ) {
+			suffix( value, name ) {
 				/**
 				 * Defines some static text to appear next to the text field.
 				 *
@@ -224,9 +218,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?string}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
-					return rawValue == null ? null : String( rawValue ).trim() || null;
-				} );
+				return this.createGetter( value, name );
 			},
 
 			reducer( value, _, __, termHandler ) {
@@ -238,7 +230,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?RegExp}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
+				return termHandler( this.selectLocalization( value ), rawValue => {
 					if ( rawValue == null ) {
 						return null;
 					}
@@ -265,7 +257,7 @@ export default class FormFieldTextModel extends FormFieldAbstractModel {
 				 * @property {?RegExp}
 				 * @readonly
 				 */
-				return termHandler( value, rawValue => {
+				return termHandler( this.selectLocalization( value ), rawValue => {
 					if ( rawValue == null ) {
 						return null;
 					}

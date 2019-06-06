@@ -424,7 +424,7 @@ export default class FormFieldAbstractModel {
 			 */
 			createGetter: {
 				value: ( value, key, data = null, normalizer = null ) => {
-					return handleComputableValue( value, key,
+					return handleComputableValue( this.selectLocalization( value ), key,
 						data || reactiveFieldInfo,
 						normalizer || ( v => this.normalizeDefinitionValue( v, key, qualifiedDefinition ) ) );
 				},
