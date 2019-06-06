@@ -79,77 +79,79 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 				reactiveFieldInfo.group = new Array( numFields );
 
 				for ( let di = 0; di < numFields; di++ ) {
-					const fieldDefinition = v[di];
+					( _index => {
+						const fieldDefinition = v[_index];
 
-					if ( typeof fieldDefinition !== "object" ) {
-						throw new Error( "provided invalid field description" );
-					}
+						if ( typeof fieldDefinition !== "object" ) {
+							throw new Error( "provided invalid field description" );
+						}
 
-					const fieldType = fieldDefinition.type || "text";
-					if ( !fieldsRegistry.hasOwnProperty( fieldType ) ) {
-						throw new Error( "group of fields contains field of unknown type" );
-					}
+						const fieldType = fieldDefinition.type || "text";
+						if ( !fieldsRegistry.hasOwnProperty( fieldType ) ) {
+							throw new Error( "group of fields contains field of unknown type" );
+						}
 
-					reactiveFieldInfo.group[di] = {};
+						reactiveFieldInfo.group[_index] = {};
 
-					const fieldForm = Object.create( form );
+						const fieldForm = Object.create( form );
 
-					Object.defineProperties( fieldForm, {
-						readValue: {
-							value: name => {
-								const field = fields[di];
+						Object.defineProperties( fieldForm, {
+							readValue: {
+								value: name => {
+									const field = fields[_index];
 
-								let localIndex = name === field.qualifiedName ? di : -1;
-								if ( localIndex < 0 ) {
-									for ( let i = 0; i < numFields; i++ ) {
-										if ( i !== di && name === fields[i].qualifiedName ) {
-											localIndex = i;
-											break;
+									let localIndex = name === field.qualifiedName ? _index : -1;
+									if ( localIndex < 0 ) {
+										for ( let i = 0; i < numFields; i++ ) {
+											if ( i !== _index && name === fields[i].qualifiedName ) {
+												localIndex = i;
+												break;
+											}
 										}
 									}
+
+									if ( localIndex > -1 ) {
+										const values = this.value;
+
+										return values && typeof values === "object" ? values[fields[localIndex].name] : undefined;
+									}
+
+									return form.readValue( name );
 								}
+							},
+							writeValue: {
+								value: ( name, value ) => {
+									const field = fields[_index];
 
-								if ( localIndex > -1 ) {
-									const values = this.value;
-
-									return values && typeof values === "object" ? values[fields[localIndex].name] : undefined;
-								}
-
-								return form.readValue( name );
-							}
-						},
-						writeValue: {
-							value: ( name, value ) => {
-								const field = fields[di];
-
-								let localIndex = name === field.qualifiedName ? di : -1;
-								if ( localIndex < 0 ) {
-									for ( let i = 0; i < numFields; i++ ) {
-										if ( i !== di && name === fields[i].qualifiedName ) {
-											localIndex = i;
-											break;
+									let localIndex = name === field.qualifiedName ? _index : -1;
+									if ( localIndex < 0 ) {
+										for ( let i = 0; i < numFields; i++ ) {
+											if ( i !== _index && name === fields[i].qualifiedName ) {
+												localIndex = i;
+												break;
+											}
 										}
 									}
+
+									if ( localIndex > -1 ) {
+										const values = this.value || {};
+
+										values[fields[localIndex].name] = value;
+
+										form.writeValue( this.qualifiedName, values );
+									} else {
+										form.writeValue( name, value );
+									}
 								}
+							},
+							name: { value: this.qualifiedName },
+						} );
 
-								if ( localIndex > -1 ) {
-									const values = this.value || {};
-
-									values[fields[localIndex].name] = value;
-
-									form.writeValue( this.qualifiedName, values );
-								} else {
-									form.writeValue( name, value );
-								}
-							}
-						},
-						name: { value: this.qualifiedName },
-					} );
-
-					fields[di] = new fieldsRegistry[fieldType]( fieldForm, {
-						...fieldDefinition,
-						suppress: { errors: true },
-					}, di, reactiveFieldInfo.group[di], {}, this );
+						fields[_index] = new fieldsRegistry[fieldType]( fieldForm, {
+							...fieldDefinition,
+							suppress: { errors: true },
+						}, _index, reactiveFieldInfo.group[_index], {}, this );
+					} )( di );
 				}
 
 				return { value: fields };
