@@ -719,6 +719,10 @@ export default class FormFieldAbstractModel {
 		} );
 
 
+		this.initializeReactive( this.$data );
+
+
+
 		/**
 		 * Collects term used in context of current field.
 		 *
@@ -1231,8 +1235,6 @@ export default class FormFieldAbstractModel {
 	renderComponent( reactiveFieldInfo ) {
 		const that = this;
 		const { type, originalName, name, qualifiedName, classes, suppress } = this;
-
-		this.initializeReactive( reactiveFieldInfo );
 
 		return {
 			components: {
