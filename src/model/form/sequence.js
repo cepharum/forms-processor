@@ -550,10 +550,10 @@ export default class FormSequenceModel {
 			 * @readonly
 			 */
 			$buttons: { value: {
-				previous: buttons.previous || null,
-				next: buttons.next || null,
-				continue: buttons.continue || null,
-				submit: buttons.submit || null,
+				previous: this.selectLocalized( buttons.previous || null ),
+				next: this.selectLocalized( buttons.next || null ),
+				continue: this.selectLocalized( buttons.continue || null ),
+				submit: this.selectLocalized( buttons.submit || null ),
 			} },
 		} );
 	}
@@ -581,6 +581,16 @@ export default class FormSequenceModel {
 		}
 
 		return map;
+	}
+
+	/**
+	 * Localizes optionally internationalized input according to current locale.
+	 *
+	 * @param {object<string,*>|*} input optionally internationalized data
+	 * @return {string|object<string,*>|*} localized data or provided non-internationalized data
+	 */
+	selectLocalized( input ) {
+		return L10n.selectLocalized( input, this.locale );
 	}
 
 	/**
