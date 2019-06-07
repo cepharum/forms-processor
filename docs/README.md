@@ -4,6 +4,6 @@ The FormsProcessor is a tool managing a sequence of one or more forms in browser
 
 It can be easily injected into any HTML document. It supports customizations by adding your own types of form fields as well as input data processors.
 
-* [Getting Started](quickstart.md)
+* [Getting Started](getting-started.md)
 * [Forms Definition](definition/README.md)
 * [API](api.md)
