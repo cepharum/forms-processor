@@ -104,54 +104,6 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 						const fieldForm = Object.create( form );
 
 						Object.defineProperties( fieldForm, {
-							readValue: {
-								value: name => {
-									const field = fields[_index];
-
-									let localIndex = name === field.qualifiedName ? _index : -1;
-									if ( localIndex < 0 ) {
-										for ( let i = 0; i < numFields; i++ ) {
-											if ( i !== _index && name === fields[i].qualifiedName ) {
-												localIndex = i;
-												break;
-											}
-										}
-									}
-
-									if ( localIndex > -1 ) {
-										const values = this.value;
-
-										return values && typeof values === "object" ? values[fields[localIndex].name] : undefined;
-									}
-
-									return form.readValue( name );
-								}
-							},
-							writeValue: {
-								value: ( name, value ) => {
-									const field = fields[_index];
-
-									let localIndex = name === field.qualifiedName ? _index : -1;
-									if ( localIndex < 0 ) {
-										for ( let i = 0; i < numFields; i++ ) {
-											if ( i !== _index && name === fields[i].qualifiedName ) {
-												localIndex = i;
-												break;
-											}
-										}
-									}
-
-									if ( localIndex > -1 ) {
-										const values = this.value || {};
-
-										values[fields[localIndex].name] = value;
-
-										form.writeValue( this.qualifiedName, values );
-									} else {
-										form.writeValue( name, value );
-									}
-								}
-							},
 							name: { value: this.qualifiedName },
 						} );
 
@@ -215,33 +167,6 @@ export default class FormFieldGroupModel extends FormFieldAbstractModel {
 
 			...customProperties,
 		}, container );
-	}
-
-	/** @inheritDoc */
-	listDependencies() {
-		const map = {};
-
-		const deps = super.listDependencies();
-		const numDeps = deps.length;
-
-		for ( let i = 0; i < numDeps; i++ ) {
-			map[deps[i]] = true;
-		}
-
-
-		const { fields } = this;
-		const numFields = fields.length;
-
-		for ( let i = 0; i < numFields; i++ ) {
-			const dependsOn = fields[i].dependsOn;
-			const numDependsOn = dependsOn.length;
-
-			for ( let j = 0; j < numDependsOn; j++ ) {
-				map[dependsOn[j]] = true;
-			}
-		}
-
-		return Object.keys( map );
 	}
 
 	/** @inheritDoc */
