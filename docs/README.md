@@ -5,6 +5,7 @@ Forms Processor is a tool for managing a sequence of forms presented in browser 
 Using a pre-built release via CDN Forms Processor can be easily injected into any HTML document. In addition it supports customizations by adding your own types of form fields as well as custom input data processors.
 
 * [Getting Started](getting-started.md)
-* [Forms Definition](definition/README.md)
-* [API](api/README.md)
-* [Development](development/README.md)
+* [Features](features/)
+* [Forms Definition](definition/)
+* [API](api/)
+* [Development](development/)
