@@ -1,17 +1,17 @@
-# The Forms API
+# The Forms Processor API
 
-By injecting forms processor into your HTML document an API is exposed as `FormsProcessor` in global scope of your document. It is thus replacing any preliminary configuration of forms to be injected into your document which happens to be provided in same global variable by design. On injection the API is instantly processing that configuration.
+By injecting Forms Processor into your HTML document an API is exposed as `FormsProcessor` in global scope of your document. It is thus replacing any preliminary configuration of forms to be injected into your document which happens to be provided in same global variable by design. On injection the API is instantly processing that configuration.
 
 ## Exposed API in Detail
 
 ### `create( element, options )`
 
-Invoke this method to create (another) forms processor attached to selected element of your HTML document.
+Invoke this method to create (another) Forms Processor instance attached to selected element of your HTML document.
 
-* `element` is referring to a single element of your document. Optionally, it might be a string containing CSS-like selector so the forms processor is choosing first matching element of your document.
+* `element` is referring to a single element of your document. Optionally, it might be a string containing CSS-like selector so the Forms Processor instance is choosing first matching element of your document.
 * `options` is an object providing created processor's configuration.
 
-#### Supported Processor Options
+#### Supported Options
 
 ##### id
 
@@ -39,7 +39,7 @@ Every sequence of forms may have a name which is an _temporary_ identifier to di
 * Default: _none_
 * Localizable: no
 
-This is the URL of a JSON file defining forms to be processed. See the separate description on [how to define a sequence of forms](definition/README.md).
+This is the URL of a JSON file defining forms to be processed. See the separate description on [how to define a sequence of forms](../definition/).
 
 ### `addField( typeName, implementationOrFactory )`
 
@@ -48,7 +48,7 @@ This method registers type of field with current instance of Forms Processor. Th
 * `typeName` is a string containing the name of type of field to be registered. This name is normalized by means of being trimmed and converted to all lowercase characters.
 * `implementationOrFactory` is either some _class_ implementing particular behaviour of new type of field or some function generating this implementation on demand.
 
-See the separate document on [how to create custom types of fields](./definition/fields/custom-fields.md) for more details.
+See the separate document on [how to create custom types of fields](../definition/fields/custom-fields.md) for more details.
 
 ### `addProcessor( typeName, implementationOrFactory )`
 
@@ -91,7 +91,7 @@ This method enables registration of new types of input data processors with curr
 
 A custom input data processor must overload this method:
 
-* `process( data )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/processor/abstract.js#L59))
+* `process( data )` ([see source](https://git.cepharum.de/cepharum/forms/client/blob/develop/src/model/form/processor/abstract.js))
 
   This method is invoked with all input data provided by user while filling the forms in a sequence (in case of being first selected input data processor) or with data as returned from previous input data processor in a row of such processors.
   
@@ -127,7 +127,7 @@ By invoking `FormsProcessor.runConfiguration()` a single configuration defining 
 
 ### Simple Structure
 
-If you don't want to register any custom input processor or type of field it's sufficient to provide an array of form components to be injected into HTML document as soon as the forms processor has been loaded.
+If you don't want to register any custom input processor or type of field it's sufficient to provide an array of form components to be injected into HTML document as soon as the Forms Processor has been loaded.
 
 Every element in this array is yet another array consisting of these sub-elements:
 
@@ -140,11 +140,11 @@ In case you want to register custom input processors or additional types of fiel
 
 #### sequences
 
-This property takes an array of component descriptors to be processed as soon as the forms processor has been loaded. This array is equivalent to the simple structure of configuration described before. 
+This property takes an array of component descriptors to be processed as soon as the Forms Processor has been loaded. This array is equivalent to the simple structure of configuration described before. 
 
 #### fields
 
-This object maps names a field's type name into a function returning class instantiated for every field of that type used in injected forms' definition. This pattern is required due to any such class must properly inherit from an abstract base class defined by loaded forms processor. Thus you can't preliminary configure custom types of fields without loading the forms processor first but have to postpone definition of a type's class until then. 
+This object maps names a field's type name into a function returning class instantiated for every field of that type used in injected forms' definition. This pattern is required due to any such class must properly inherit from an abstract base class defined by loaded Forms Processor. Thus you can't preliminary configure custom types of fields without loading the Forms Processor first but have to postpone definition of a type's class until then. 
 
 The factory callback is invoked with required base class in its first argument. This base class is exposing static method `makeInherit()` taking constructor of the desired sub-class to help with creating an actually inheriting class the original way. 
 

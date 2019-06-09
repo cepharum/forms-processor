@@ -81,7 +81,7 @@ This attribute is sole required one for every field needs a name which must be u
 In combination with name of either form in sequence this is used to organize data gathered by filling in the fields. This way a field's name is available for addressing its value in computable terms.
 
 ::: tip Info
-The name of a field is a simple keyword that mustn't contain period. It is used to derive the field's qualified name uniquely addressing it in scope of whole forms processor.
+The name of a field is a simple keyword that mustn't contain period. It is used to derive the field's qualified name uniquely addressing it in scope of whole Forms Processor.
 :::
 
 ### label
